@@ -3,6 +3,7 @@ import sys
 import os
 import math
 from itertools import chain, combinations
+import itertools
 
 
 def powerset(iterable):
