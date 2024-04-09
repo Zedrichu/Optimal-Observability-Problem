@@ -1,4 +1,4 @@
-# OOP (Optimal Observability Problem)
+# OOP (Optimal Observability Problem) [![DOI](https://zenodo.org/badge/784124809.svg)](https://zenodo.org/doi/10.5281/zenodo.10948053)
 
 This repository constitutes the artefact for the CAV 2024 paper
 
