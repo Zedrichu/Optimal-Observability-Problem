@@ -1,11 +1,7 @@
 #!/usr/bin/python3
-import more_itertools as mit
 import sys
 import os
-import itertools
 import math
-from six.moves import input
-from itertools import chain, combinations
 import copy
 
 
