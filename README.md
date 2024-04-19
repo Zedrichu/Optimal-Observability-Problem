@@ -23,7 +23,31 @@ The code provided here can be used to solve OOP problems (within the decidable f
 * All the scripts are written in Python. Some of the scripts generate additional code. In particular, the scripts that generate instances of the OOP produce scripts in Python and in PRISM's input language.
 * For executing the scripts provided in his repository we have used Z3 version 4.12.4 - 64 bit, Python 3.8.10 and PRISM version 4.8.dev. 
 
+# Docker
+
+One can use docker to run all scripts. The corresponding dockerfile is part of this repository.
+To build it, it suffices to run
+
+```
+docker build -t artifact . 
+```
+After that, the following command opens a shell in which one can run the scripts:
+
+```
+docker run -it artifact /bin/bash
+```
+
+For example, the following two commands can then be used to reproduce table 1 and table 2 from the paper:
+
+```
+python3 create_table_1.py
+
+python3 create_table_2.py
+
+```
+
 # Installation instructions
+
 For running the scripts it is requied to install:
 * Z3 : https://github.com/Z3Prover/z3 the installation instructions are in the link. Since we use the Python wrapper it can also be installd by the command:   pip install z3-solver
 * PRISM : https://www.prismmodelchecker.org/manual/InstallingPRISM/Instructions the installation instructions are in the link.

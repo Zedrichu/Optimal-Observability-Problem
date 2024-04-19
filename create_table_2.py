@@ -5,7 +5,7 @@ import csv
 
 timeout = 900
 
-path_to_prism = '/home/akon/prism/prism/bin/'
+path_to_prism = '/bin/'
 
 
 with open('table_2.csv', mode='w') as table_file:
