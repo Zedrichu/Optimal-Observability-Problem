@@ -33,7 +33,7 @@ with open('table_1.csv', mode='w') as table_file:
 	os.system('python3 createLine.py 249 124 2 \'<= Q(125,2)\' 0')
 
 	start = time.time()
-	os.system('timeout 60s python3 line_249_ran_z3.py')
+	os.system('timeout ' + str(timeout) + 's python3 line_249_ran_z3.py')
 	end = time.time()
 	total = end - start
 	
