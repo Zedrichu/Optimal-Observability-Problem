@@ -3,7 +3,7 @@ import os
 import time
 import csv
 
-timeout = 900
+timeout = 90
 
 path_to_prism = '/bin/'
 
