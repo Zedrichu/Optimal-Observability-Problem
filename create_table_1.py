@@ -3,7 +3,7 @@ import os
 import time
 import csv
 
-timeout = 900
+timeout = 90
 
 
 with open('table_1.csv', mode='w') as table_file:
