@@ -92,10 +92,10 @@ time python3 script.py
 
 ```
 
-For example, we can run the instance of the OOP located in folder `determimistic_strategies/POP/line/` by running 
+For example, we can run the instance of the OOP located in folder `deterministic_strategies/POP/line/` by running 
 
 ```
-python3 determimnistic_strategies/POP/line/line_5_det_z3.py 
+python3 deterministic_strategies/POP/line/line_5_det_z3.py 
 
 ```
 
