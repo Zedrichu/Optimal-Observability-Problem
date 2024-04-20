@@ -25,7 +25,12 @@ with open('table_1.csv', mode='w') as table_file:
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
-		rew = file.readlines()[0]
+		file.seek(0)
+		lines = file.readlines() 
+		if len(lines) > 0:
+			rew = lines[0]
+		else:
+			rew = 'N/A'
 		file.close()
 
 	table_writer.writerow(['L(249)', '<= 250/2', '2', str(total), str(rew)])
@@ -44,7 +49,12 @@ with open('table_1.csv', mode='w') as table_file:
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
-		rew = file.readlines()[0]
+		file.seek(0)
+		lines = file.readlines() 
+		if len(lines) > 0:
+			rew = lines[0]
+		else:
+			rew = 'N/A'
 		file.close()
 		if eval(rew) == eval('125/2'):
 			rew = '125/2'
@@ -63,7 +73,12 @@ with open('table_1.csv', mode='w') as table_file:
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
-		rew = file.readlines()[0]
+		file.seek(0)
+		lines = file.readlines() 
+		if len(lines) > 0:
+			rew = lines[0]
+		else:
+			rew = 'N/A'
 		file.close()
 
 	table_writer.writerow(['L(249)', '< 125/2', '2', str(total), str(rew)])
@@ -81,7 +96,12 @@ with open('table_1.csv', mode='w') as table_file:
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
-		rew = file.readlines()[0]
+		file.seek(0)
+		lines = file.readlines() 
+		if len(lines) > 0:
+			rew = lines[0]
+		else:
+			rew = 'N/A'
 		file.close()
 
 	table_writer.writerow(['G(20)', '<= 15200/399', '2', str(total), str(rew)])
@@ -100,7 +120,12 @@ with open('table_1.csv', mode='w') as table_file:
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
-		rew = file.readlines()[0]
+		file.seek(0)
+		lines = file.readlines() 
+		if len(lines) > 0:
+			rew = lines[0]
+		else:
+			rew = 'N/A'
 		file.close()
 		if eval(rew) == eval('7600/399'):
 				rew = '7600/399'
@@ -119,7 +144,12 @@ with open('table_1.csv', mode='w') as table_file:
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
-		rew = file.readlines()[0]
+		file.seek(0)
+		lines = file.readlines() 
+		if len(lines) > 0:
+			rew = lines[0]
+		else:
+			rew = 'N/A'
 		file.close()
 
 	table_writer.writerow(['G(20)', '< 7600/399', '2', str(total), str(rew)])
@@ -137,7 +167,12 @@ with open('table_1.csv', mode='w') as table_file:
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
-		rew = file.readlines()[0]
+		file.seek(0)
+		lines = file.readlines() 
+		if len(lines) > 0:
+			rew = lines[0]
+		else:
+			rew = 'N/A'
 		file.close()
 
 	table_writer.writerow(['M(7)', '<= 168/15', '4', str(total), str(rew)])
@@ -156,7 +191,12 @@ with open('table_1.csv', mode='w') as table_file:
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
-		rew = file.readlines()[0]
+		file.seek(0)
+		lines = file.readlines() 
+		if len(lines) > 0:
+			rew = lines[0]
+		else:
+			rew = 'N/A'
 		file.close()
 		if eval(rew) == eval('84/15'):
 			rew = '84/15'
@@ -175,7 +215,12 @@ with open('table_1.csv', mode='w') as table_file:
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
-		rew = file.readlines()[0]
+		file.seek(0)
+		lines = file.readlines() 
+		if len(lines) > 0:
+			rew = lines[0]
+		else:
+			rew = 'N/A'
 		file.close()
 
 	table_writer.writerow(['M(7)', '< 84/15', '4', str(total), str(rew)])
@@ -200,7 +245,12 @@ with open('table_1.csv', mode='w') as table_file:
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
-		rew = file.readlines()[0]
+		file.seek(0)
+		lines = file.readlines() 
+		if len(lines) > 0:
+			rew = lines[0]
+		else:
+			rew = 'N/A'
 		file.close()
 
 	table_writer.writerow(['L(61)', '<= 31', '30', str(total), str(rew)])
@@ -221,7 +271,12 @@ with open('table_1.csv', mode='w') as table_file:
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
-		rew = file.readlines()[0]
+		file.seek(0)
+		lines = file.readlines() 
+		if len(lines) > 0:
+			rew = lines[0]
+		else:
+			rew = 'N/A'
 		file.close()
 		if eval(rew) == eval('31/2'):
 			rew = '31/2'
@@ -243,7 +298,12 @@ with open('table_1.csv', mode='w') as table_file:
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
-		rew = file.readlines()[0]
+		file.seek(0)
+		lines = file.readlines() 
+		if len(lines) > 0:
+			rew = lines[0]
+		else:
+			rew = 'N/A'
 		file.close()
 
 
@@ -264,7 +324,12 @@ with open('table_1.csv', mode='w') as table_file:
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
-		rew = file.readlines()[0]
+		file.seek(0)
+		lines = file.readlines() 
+		if len(lines) > 0:
+			rew = lines[0]
+		else:
+			rew = 'N/A'
 		file.close()
 
 
@@ -286,7 +351,12 @@ with open('table_1.csv', mode='w') as table_file:
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
-		rew = file.readlines()[0]
+		file.seek(0)
+		lines = file.readlines() 
+		if len(lines) > 0:
+			rew = lines[0]
+		else:
+			rew = 'N/A'
 		file.close()
 		if eval(rew) == eval('180/35'):
 			rew = '180/35'
@@ -309,7 +379,12 @@ with open('table_1.csv', mode='w') as table_file:
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
-		rew = file.readlines()[0]
+		file.seek(0)
+		lines = file.readlines() 
+		if len(lines) > 0:
+			rew = lines[0]
+		else:
+			rew = 'N/A'
 		file.close()
 
 
@@ -329,7 +404,12 @@ with open('table_1.csv', mode='w') as table_file:
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
-		rew = file.readlines()[0]
+		file.seek(0)
+		lines = file.readlines() 
+		if len(lines) > 0:
+			rew = lines[0]
+		else:
+			rew = 'N/A'
 		file.close()
 	
 
@@ -352,7 +432,12 @@ with open('table_1.csv', mode='w') as table_file:
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
-		rew = file.readlines()[0]
+		file.seek(0)
+		lines = file.readlines() 
+		if len(lines) > 0:
+			rew = lines[0]
+		else:
+			rew = 'N/A'
 		file.close()
 		if eval(rew) == eval('434/35'):
 			rew = '434/35'
@@ -375,7 +460,12 @@ with open('table_1.csv', mode='w') as table_file:
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
-		rew = file.readlines()[0]
+		file.seek(0)
+		lines = file.readlines() 
+		if len(lines) > 0:
+			rew = lines[0]
+		else:
+			rew = 'N/A'
 		file.close()
 	
 
