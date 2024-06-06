@@ -75,7 +75,13 @@ def create_line_constrained(budget, target, size, threshold, det):
 		if i == target:
 			continue
 		if i < size - 1:
-			line = line + 'pi' + str(i) + '+'
+			if target == size - 1:
+				if i == size - 2 :
+					line = line + 'pi' + str(i) + ')'
+				else:
+					line = line + 'pi' + str(i) + '+'
+			else:
+				line = line + 'pi' + str(i) + '+'
 		else:
 			line = line + 'pi' + str(i) + ')'
 
@@ -127,7 +133,13 @@ def create_line_constrained(budget, target, size, threshold, det):
 		if i == size - 1:
 			file.write('\n)\n\n')
 		else:
-			file.write(',\n')
+			if i == size - 2:
+				if target == size - 1:
+					file.write('\n)\n\n')
+				else:
+					file.write(',\n')
+			else:
+				file.write(',\n')
 
 	file.write('set_option(max_args=1000000, max_lines=100000000)\n')
 
