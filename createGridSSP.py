@@ -152,8 +152,14 @@ def create_grid_pre(budget, target, sizex, sizey, threshold, det, pre):
 		if i == target:
 			file.write('pi' + str(i) + ' == 0, \n')
 			continue
-		file.write('pi' + str(i) + '== (' + save[str(i) + 'l'] + ') * (1 + pi' + str(max(i-1, 0)) + ') + ')
-		file.write('(' + save[str(i) + 'r'] + ') * (1 + pi' + str(min(i+1, size-1)) + ') + ')
+		if i%sizex == 0:
+			file.write('pi' + str(i) + '== (' + save[str(i) + 'l'] + ') * (1 + pi' + str(i) + ') + ')
+		else:
+			file.write('pi' + str(i) + '== (' + save[str(i) + 'l'] + ') * (1 + pi' + str(i - 1) + ') + ')
+		if i%sizex == sizex-1:
+			file.write('(' + save[str(i) + 'r'] + ') * (1 + pi' + str(i) + ') + ')
+		else:
+			file.write('(' + save[str(i) + 'r'] + ') * (1 + pi' + str(i + 1) + ') + ')
 		if i - sizex >=0:
 			file.write('(' + save[str(i) + 'u'] + ') * (1 + pi' + str(i - sizex) + ') + ')
 		else:
