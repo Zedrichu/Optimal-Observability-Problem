@@ -26,7 +26,7 @@ with open('table_1.csv', mode='w') as table_file:
 	else:
 		file = open('reward.txt', 'r')
 		file.seek(0)
-		lines = file.readlines() 
+		lines = file.readlines()
 		if len(lines) > 0:
 			rew = lines[0]
 		else:
