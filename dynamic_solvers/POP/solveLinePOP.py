@@ -5,7 +5,7 @@ from logging import Logger
 from typing import List
 from z3 import *
 
-from BenchmarkResult import BenchmarkResult
+from OOP.dynamic_solvers.BenchmarkResult import BenchmarkResult
 
 class LinePOPChain:
     """
