@@ -1,6 +1,5 @@
 #!/usr/bin/python3
-from z3 import *
-
+import sys
 
 def create_line_constrained(budget: int, target: int, size: int, threshold: str, det: int):
 	puzzle_type = "line"
@@ -27,8 +26,8 @@ def create_line_constrained(budget: int, target: int, size: int, threshold: str,
 	file.write(obs_vars + '\n')
 
 	file.write('\n# Rates of randomized strategies\n')
-	strategy_vars = '\n'.join([f"xo{s}{act} = Real('xo{s}{act}')"
-	                          for s in range(1, budget + 1)
+	strategy_vars = '\n'.join([f"xo{o}{act} = Real('xo{o}{act}')"
+	                          for o in range(1, budget + 1)
 	                          for act in actions])
 	file.write(strategy_vars + '\n')
 
@@ -46,18 +45,14 @@ def create_line_constrained(budget: int, target: int, size: int, threshold: str,
 		if s == target:
 			cost_equations.append(f'pi{s} == 0')
 		else:
-			# Generate terms for each action
+			# Generate terms for each action using efficient action-to-next-state mapping
+			next_states = {'l': max(s-1, 0), 'r': min(s+1, size-1)}
+			
 			action_terms = []
 			for act in actions:
 				obs_strategy_terms = [f'ys{s}o{o}*xo{o}{act}' for o in range(1, budget + 1)]
 				obs_strategy_sum = ' + '.join(obs_strategy_terms)
-
-				# Calculate next state based on action
-				if act == 'l':
-					next_state = max(s-1, 0)
-				else:  # act == 'r'
-					next_state = min(s+1, size-1)
-
+				next_state = next_states[act]
 				action_terms.append(f'({obs_strategy_sum})*(1 + pi{next_state})')
 
 			equation = f'pi{s} == ' + ' + '.join(action_terms)
@@ -98,7 +93,7 @@ def create_line_constrained(budget: int, target: int, size: int, threshold: str,
 		                  for act in actions]
 		file.write('\n'.join(det_constraints) + '\n')
 
-	file.write('# ysNM is a function that should map every state N to some observable class M\n')
+	file.write('# ysNoM is a function that should map every state N to some observable class M\n')
 	obs_binary_constraints = [f'Or(ys{s}o{o}== 0 , ys{s}o{o}== 1),'
 	                         for s in range(size) if s != target
 	                         for o in range(1, budget + 1)]

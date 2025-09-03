@@ -27,7 +27,7 @@ def create_line_pre(budget, target, size, threshold, det, pre):
 	file.write(pi_vars + '\n')
 
 	file.write('\n# Choice of observations\n')
-	
+
 	# Generate sensor variables - one per non-target state
 	sensor_vars = []
 	sensor_states = []
@@ -35,19 +35,19 @@ def create_line_pre(budget, target, size, threshold, det, pre):
 		if s != target:
 			sensor_vars.append(f'y{s} = Real(\'y{s}\')')
 			sensor_states.append(s)
-	
+
 	file.write('\n'.join(sensor_vars) + '\n')
 
 
 
 	file.write('\n# Rates of randomized strategies\n')
-	
+
 	# Generate state-specific strategy variables (when sensor is on for that state)
 	state_strategy_vars = []
 	for s in sensor_states:
 		for act in actions:
 			state_strategy_vars.append(f'xo{s}{act} = Real(\'xo{s}{act}\')')
-	
+
 	file.write('\n'.join(state_strategy_vars) + '\n')
 
 	# Default strategy variables (when no sensor observes - unknown state)
@@ -64,7 +64,7 @@ def create_line_pre(budget, target, size, threshold, det, pre):
 
 	file.write('# Expected cost/reward equations\n')
 
-	# Generate sensor selection cost equations  
+	# Generate sensor selection cost equations
 	cost_equations = []
 	for s in range(size):
 		if s == target:
@@ -73,13 +73,13 @@ def create_line_pre(budget, target, size, threshold, det, pre):
 			# For sensor selection: if sensor y_s is on, use xo_s_act, else use default xol/xor
 			left_next = max(s-1, 0)
 			right_next = min(s+1, size-1)
-			
+
 			left_strategy = f'((1 - y{s})*xol + y{s}*xo{s}l)'
 			right_strategy = f'((1 - y{s})*xor + y{s}*xo{s}r)'
-			
+
 			equation = f'pi{s} == {left_strategy} * (1 + pi{left_next}) + {right_strategy} * (1 + pi{right_next})'
 			cost_equations.append(equation)
-	
+
 	file.write(',\n'.join(cost_equations) + ',\n')
 
 	file.write(f'# We are dropped uniformly in the line\n# We want to check if the minimal expected cost is below some threshold {threshold}\n')
@@ -95,7 +95,7 @@ def create_line_pre(budget, target, size, threshold, det, pre):
 	file.write(threshold_constraint + '\n')
 
 	file.write('# Randomised strategies (proper probability distributions)\n')
-	
+
 	# Generate strategy constraints for state-specific sensors
 	strategy_constraints = []
 	for s in sensor_states:
@@ -105,16 +105,16 @@ def create_line_pre(budget, target, size, threshold, det, pre):
 				f'xo{s}{act} >= 0,'
 			])
 		strategy_constraints.append(f'xo{s}l + xo{s}r == 1,')
-	
+
 	# Add default strategy constraints
 	strategy_constraints.extend([
 		'xol <= 1,',
-		'xol >= 0,', 
+		'xol >= 0,',
 		'xor <= 1,',
 		'xor >= 0,',
 		'xol + xor == 1,'
 	])
-	
+
 	file.write('\n'.join(strategy_constraints) + '\n')
 
 	if det == 1:
@@ -130,7 +130,7 @@ def create_line_pre(budget, target, size, threshold, det, pre):
 		file.write('\n'.join(det_constraints) + '\n')
 
 	file.write('# y is a function that should map every state N to some observable class M\n')
-	
+
 	# Binary constraints for sensor variables
 	sensor_binary_constraints = [f'Or(y{s} == 0, y{s} == 1),' for s in sensor_states]
 	file.write('\n'.join(sensor_binary_constraints) + '\n')
@@ -158,9 +158,6 @@ def create_line_pre(budget, target, size, threshold, det, pre):
 	file.write('file_reward.write(\'N/A\')\n')
 	file.write('else:\n\t')
 	file.write('print(\'Unknown\')')
-
-
-
 
 
 size = int(sys.argv[1])
