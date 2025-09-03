@@ -17,11 +17,11 @@ The code provided here can be used to solve OOP problems (within the decidable f
 * We provide instructions and scripts to reproduce all experiments in the CAV paper.
 * We provide detailed instructions to generate and solve additional instances of the OOP.
 * We provide some pre-generated models for convenience.
-* We provide a script to test correctness of our code.
+* We provide a script to test the correctness of our code.
 
 # Implementation
 * All the scripts are written in Python. Some of the scripts generate additional code. In particular, the scripts that generate instances of the OOP produce scripts in Python and in PRISM's input language.
-* For executing the scripts provided in his repository we have used Z3 version 4.12.4 - 64 bit, Python 3.8.10 and PRISM version 4.8.dev. 
+* For executing the scripts provided in this repository, we have used Z3 version 4.12.4 - 64 bit, Python 3.8.10 and PRISM version 4.8.dev. 
 
 # Docker
 
@@ -281,7 +281,3 @@ python3 line_9_det_z3.py > results.txt
 python3 test_results.py 9 line
 
 ```
-
-
-
-

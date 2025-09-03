@@ -1,0 +1,6 @@
+.idea/
+.venv/
+
+# Generated solving output
+results.txt
+reward.txt
