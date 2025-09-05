@@ -5,7 +5,7 @@ from logging import Logger
 from typing import List
 from z3 import *
 
-from OOP.dynamic_solvers.BenchmarkResult import BenchmarkResult
+from dynamic_solvers.BenchmarkResult import BenchmarkResult
 
 class LinePOPChain:
     """
@@ -14,19 +14,22 @@ class LinePOPChain:
     Part of the OOP problem suites.
     """
     def __init__(self, budget: int, goal: int, size: int, det: int):
-        self.variables = None
-        self.ctx = None
-        self.solver = z3.Solver()
-
         self.budget = budget
         self.goal = goal
         self.size = size
-        self.logger = Logger("LinePOPChain")
-
-        self.puzzle_type = "line"
-        # self.strat_type = "det" if det == 1 else "ran"
+        self.det = det
 
         self.actions = ['l', 'r']
+
+        self.exp_rew = None
+        self.obs_fun = None
+        self.strategy = None
+
+        self.ctx = None
+        self.solver = None
+
+        self.evaluator = None
+        self.logger = Logger("LinePOPChain")
 
         self.reset()
 
@@ -35,14 +38,13 @@ class LinePOPChain:
         gc.collect() # Clean memory before starting
         self.ctx = Context()
         self.solver = Solver(ctx=self.ctx)
-        self.variables = {}
 
     def declare_variables(self):
-        self.variables['expRew'] = self.create_expected_rewards()
-        self.variables['obsFunction'] = self.create_observation_maps()
-        self.variables['obsPolicy'] = self.create_policy_maps()
+        self.exp_rew = self.compute_expected_rewards()
+        self.obs_fun = self.create_observation_maps()
+        self.strategy = self.create_policy_maps()
 
-    def create_expected_rewards(self) -> List[z3.ArithRef | None]:
+    def compute_expected_rewards(self) -> List[z3.ArithRef | None]:
         # Expected cost/reward of reaching the goal from each state.
         expected_rewards = [None for _ in range(0, self.size)]
         print("# Expected cost/reward of reaching the goal.")
