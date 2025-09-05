@@ -2,10 +2,8 @@
 import sys
 
 def create_grid_constrained(budget: int, target: int, size: int, threshold: int, det: int):
-	puzzle_type = "grid"
-	strat_type = "det" if det == 1 else "ran"
-
-	file = open(f'{puzzle_type}_{size}x{size}_{strat_type}_z3.py', 'w')
+	strat = "det" if det == 1 else "ran"
+	file = open(f'grid_{size}x{size}_{strat}_z3.py', 'w')
 
 	file.write('from z3 import *\n\n')
 
@@ -40,7 +38,7 @@ def create_grid_constrained(budget: int, target: int, size: int, threshold: int,
 	file.write('solver.add(\n')
 	file.write('#We cannot do better than the fully observable case\n')
 
-	# Optimize bounds constraints generation
+	# Generate constraints for optimal bounds on expected reward
 	bounds_constraints = []
 	count = 0
 	for s in range(size):
@@ -73,7 +71,7 @@ def create_grid_constrained(budget: int, target: int, size: int, threshold: int,
 
 		# Build action terms using efficient action-to-next-state mapping
 		next_states = {'l': left_next, 'r': right_next, 'u': up_next, 'd': down_next}
-		
+
 		action_terms = []
 		for act in actions:
 			obs_strategy_terms = [f'ys{s}o{o}*xo{o}{act}' for o in range(1, budget + 1)]

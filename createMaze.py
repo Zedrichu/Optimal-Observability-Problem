@@ -1,237 +1,170 @@
 #!/usr/bin/python3
 import sys
-import os
-import math
-from itertools import chain, combinations
-import copy
 
 
-def create_maze_constrained(budget, target, sizex, sizey, threshold, det):
-
-	if det == 0:
-		file = open('maze_' + str(sizex) + 'x' + str(sizey)  +'_ran_z3.py', 'w')
-	else:
-		file = open('maze_' + str(sizex) + 'x' + str(sizey) +'_det_z3.py', 'w')
-
+def create_maze_constrained(budget, target, height, width, threshold, det):
+	strat = "det" if det == 1 else "ran"
+	file = open(f'maze_{height}x{width}_{strat}_z3.py', 'w')
 
 	file.write('from z3 import *\n\n')
 
-	# Dictionary to keep the values
-	var = {}
-
 	actions = ['l', 'r', 'u', 'd']
 
-	size = sizex * sizey
-
-	if sizey%2 == 0:
+	if width % 2 == 0:
 		print('We need odd number for size y')
 		exit(1)
 
 	numbers = []
 	counter = 0
-	for i in range(0, sizex):
-		for j in range(0, sizey):
+	for i in range(0, height):
+		for j in range(0, width):
 			if i == 0:
 				numbers.append(counter)
 				counter = counter + 1
 			else:
-				if j == 0 or j == sizey-1 or j == (sizey-1)//2:
+				if j == 0 or j == width - 1 or j == (width - 1) // 2:
 					numbers.append(counter)
 					counter = counter + 1
 
-
-
 	file.write('# Expected cost/reward of reaching the goal.\n')
-
-	for i in numbers:
-		file.write('pi' + str(i) + ' = Real(\'pi' + str(i) + '\')\n')
-
+	pi_vars = '\n'.join([f'pi{s} = Real(\'pi{s}\')' for s in numbers])
+	file.write(pi_vars + '\n')
 
 	file.write('\n# Choice of observations (e.g. ys01 = 1 means that in state 0, observable 1 is observed)\n')
-	for i in numbers:
-		if i == target:
-			continue
-		for j in range(1, budget + 1):
-			file.write('ys' + str(i) + str(j) + ' = Real(\'ys' + str(i) + str(j) + '\')\n')
-
+	obs_vars = '\n'.join([f'ys{s}o{o} = Real(\'ys{s}o{o}\')'
+						  for s in numbers if s != target
+						  for o in range(1, budget + 1)])
+	file.write(obs_vars + '\n')
 
 	file.write('\n# Rates of randomized strategies\n')
-	for i in range(1, budget + 1):
-		file.write('xo' + str(i) + 'l' + ' = Real(\'xo' + str(i) + 'l\')\n')
-		file.write('xo' + str(i) + 'r' + ' = Real(\'xo' + str(i) + 'r\')\n')
-		file.write('xo' + str(i) + 'u' + ' = Real(\'xo' + str(i) + 'u\')\n')
-		file.write('xo' + str(i) + 'd' + ' = Real(\'xo' + str(i) + 'd\')\n')
-
+	strategy_vars = '\n'.join([f'xo{o}{act} = Real(\'xo{o}{act}\')'
+							   for o in range(1, budget + 1)
+							   for act in actions])
+	file.write(strategy_vars + '\n')
 
 	file.write('solver = Solver()\n\n\n')
-
 	file.write('solver.add(\n')
-
 	file.write('#We cannot do better than the fully observable case\n')
 
+	# Generate constraints for optimal bounds on expected reward
+	bounds_constraints = []
 	th = 0
 
 	for i in numbers:
-		if(i < sizey):
-			file.write('pi' + str(i) + '>=' + str(abs(i - sizey//2) + sizex - 1) + ', ')
-			th = th + abs(i - sizey//2) + sizex - 1
+		if i < width:
+			bound_value = abs(i - width // 2) + height - 1
+			bounds_constraints.append(f'pi{i}>={bound_value}')
+			th += bound_value
 		else:
-			if (i - sizey)%3 == 1:
-				#file.write('pi' + str(i) + '>=' + str(sizex - 1 - (i//3 - 1)) + ', ')
-				file.write('pi' + str(i) + '>=' + str((target - i)//3) + ', ')
-				th = th + (target - i)//3
+			if (i - width) % 3 == 1:
+				bound_value = (target - i) // 3
+				bounds_constraints.append(f'pi{i}>={bound_value}')
+				th += bound_value
 			else:
-				file.write('pi' + str(i) + '>=' + str(((i - sizey)//3) + (sizey - sizey//2) + sizex - 1) + ', ')
-				th = th + ((i - sizey)//3) + (sizey - sizey//2) + sizex - 1
+				bound_value = ((i - width) // 3) + (width - width // 2) + height - 1
+				bounds_constraints.append(f'pi{i}>={bound_value}')
+				th += bound_value
 
+	file.write(', '.join(bounds_constraints) + ', ')
 
-
-	#If you print th, you can find the optimal reward. And number[-1] the goal 
-	#print(th)
-	#print(numbers[-1])
+	# For optimal reward: print(th)
+	# For the maze goal: print(numbers[-1])
 
 	file.write('\n')
 	file.write('# Expected cost/reward equations\n')
 
-
-
-	for i in numbers:
-		left = ''
-		right = ''
-		up = ''
-		down = ''
-		if i == target:
-			file.write('pi' + str(i) + ' == 0, \n')
+	# Generate cost/reward equations for each state
+	cost_equations = []
+	for s in numbers:
+		if s == target:
+			cost_equations.append(f'pi{s} == 0')
 			continue
-		file.write('pi' + str(i) + ' == ' + '(')
 
-		for o in range(1, budget+1):
-			if i < sizey:
-				if o < budget:
-					left = left + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'l + '
-					right = right + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'r + '
-					up = up + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'u + '
-					down = down + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'd + '
-				else:
-					if i == 0:
-						left = left + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'l) * (1 + pi' + str(i) + ') + ('
-					else: 
-						left = left + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'l) * (1 + pi' + str(i - 1) + ') + ('
-					if i == sizey - 1:
-						right = right + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'r) * (1 + pi' + str(i) + ') + ('
-					else: 
-						right = right + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'r) * (1 + pi' + str(i + 1) + ') + ('
-					
-					up = up + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'u) * (1 + pi' + str(i) + ') + ('
-					
-					if i == (sizey-1)//2:
-						down = down + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'd) * (1 + pi' + str(sizey + 1) + '),\n'
-					elif i == sizey-1:
-						down = down + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'd) * (1 + pi' + str(sizey + 2) + '),\n'
-					elif i ==0:
-						down = down + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'd) * (1 + pi' + str(sizey) + '),\n'
-					else: 
-						down = down + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'd) * (1 + pi' + str(i) + '),\n'
-			else:
-				if o < budget:
-					left = left + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'l + '
-					right = right + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'r + '
-					up = up + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'u + '
-					down = down + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'd + '
-				else:
-					left = left + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'l) * (1 + pi' + str(i) + ') + ('
-					right = right + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'r) * (1 + pi' + str(i) + ') + ('
+		# Helper function to calculate next states for maze navigation
+		def get_next_state(state, action):
+			if action == 'l':
+				if 0 < state < width:
+					return state - 1
+			elif action == 'r':
+				if 0 <= state < width - 1:
+					return state + 1
+			elif action == 'u':
+				if state == width:
+					return 0
+				elif state == width + 1:
+					return (width - 1) // 2
+				elif state >= width + 2:
+					return state - 3
+			else: # action == 'd'
+				if state == 0:
+					return width
+				elif state == (width - 1) // 2:
+					return width + 1
+				elif width <= state <= numbers[-1] - 3:
+					return state + 3
+			return state
 
-					if i  <= sizey + 2:
-						if i == sizey:
-							up = up + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'u) * (1 + pi' + str(i - sizey)  + ') + ('
-						elif i == sizey + 1:
-							up = up + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'u) * (1 + pi' + str((sizey-1)//2)  + ') + ('
-						else:
-							up = up + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'u) * (1 + pi' + str(sizey-1)  + ') + ('
-					else:
-						up = up + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'u) * (1 + pi' + str(i - 3) + ') + ('
-					
-					if i + 3 <= numbers[-1]:
-						down = down + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'd) * (1 + pi' + str(i + 3) + '),\n'
-					else: 
-						down = down + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'd) * (1 + pi' + str(i) + '),\n'
+		# Build action terms for each direction using transition tables
+		action_terms = []
+		for act in actions:
+			obs_strategy_terms = [f'ys{s}o{o}*xo{o}{act}' for o in range(1, budget + 1)]
+			obs_strategy_sum = ' + '.join(obs_strategy_terms)
+			next_state = get_next_state(s, act)
+			action_terms.append(f'({obs_strategy_sum}) * (1 + pi{next_state})')
 
-		file.write(left + right + up + down)
+		equation = f'pi{s} == ' + ' + '.join(action_terms)
+		cost_equations.append(equation)
+
+	file.write(',\n'.join(cost_equations) + ',\n')
 
 
-	file.write('# We are dropped uniformly in the grid\n# We want to check if the minimal expected cost is below some threshold ' + str(threshold) + '\n')
+	file.write(f'# We are dropped uniformly in the maze\n'
+			   f'# We want to check if the minimal expected cost is below some threshold {threshold}\n')
 
-	line = '('
-	for i in numbers:
-		if i == target:
-			continue
-		if i < numbers[-1]:
-			if target == numbers[-1]:
-				if i == numbers[-2] :
-					line = line + 'pi' + str(i) + ')'
-				else:
-					line = line + 'pi' + str(i) + '+'
-			else:
-				line = line + 'pi' + str(i) + '+'
-		else:
-			line = line + 'pi' + str(i) + ')'
-	e = copy.deepcopy(line + ' * Q(1,' + str(numbers[-1]) + ') ')
-	line = line + ' * Q(1,' + str(numbers[-1]) + ') ' + str(threshold) + ','
+	# Generate threshold constraint using list comprehension
+	pi_terms = [f'pi{i}' for i in numbers if i != target]
+	pi_sum = '+'.join(pi_terms)
+	threshold_constraint = f'({pi_sum}) * Q(1,{numbers[-1]}) {threshold},'
+	e = f'({pi_sum}) * Q(1,{numbers[-1]}) '
 
-	file.write(line + '\n')
+	file.write(threshold_constraint + '\n')
 
 	file.write('# Randomised strategies (proper probability distributions)\n')
-	for i in range(1, budget + 1):
-		for a in actions:
-			file.write('xo' + str(i) + a + '>= 0,\n')
-			file.write('xo' + str(i) + a + '<= 1,\n')
-	
-	
-	for i in range(1, budget + 1):
-		for a in actions:
-			if a != 'd':
-				file.write('xo' + str(i) + a + ' + ')
-			else:
-				file.write('xo' + str(i) + a + ' == 1,\n')
+	# Generate bounds constraints using list comprehension
+	bounds_constraints = [f'xo{o}{act}>= 0,\nxo{o}{act}<= 1,'
+	                     for o in range(1, budget + 1)
+	                     for act in actions]
+	file.write('\n'.join(bounds_constraints) + '\n')
+
+	# Generate sum constraints for probability distributions
+	sum_constraints = []
+	for o in range(1, budget + 1):
+		action_sum = ' + '.join([f'xo{o}{act}' for act in actions])
+		sum_constraints.append(f'{action_sum} == 1,')
+	file.write('\n'.join(sum_constraints) + '\n')
 
 	if det == 1:
 		file.write('# Deterministic Strategies activated\n')
-		for i in range(1, budget + 1):
-			file.write('Or(xo' + str(i) + 'l ' + '== 0, xo' + str(i) + 'l' + ' == 1),\n')
-			file.write('Or(xo' + str(i) + 'r ' + '== 0, xo' + str(i) + 'r' + ' == 1),\n')
-			file.write('Or(xo' + str(i) + 'u ' + '== 0, xo' + str(i) + 'u' + ' == 1),\n')
-			file.write('Or(xo' + str(i) + 'd ' + '== 0, xo' + str(i) + 'd' + ' == 1),\n')
+		det_constraints = [f'Or(xo{o}{act} == 0, xo{o}{act} == 1),'
+		                  for o in range(1, budget + 1)
+		                  for act in actions]
+		file.write('\n'.join(det_constraints) + '\n')
 
 	file.write('# ysNM is a function that should map every state N to some observable class M\n')
-
-	for i in numbers:
-		if i == target:
-			continue
-		for j in range(1, budget + 1):
-			file.write('Or(ys' + str(i) + str(j) +  '== 0 , ys' + str(i) + str(j) + '== 1),\n')
+	obs_binary_constraints = [f'Or(ys{s}o{o}== 0 , ys{s}o{o}== 1),'
+	                         for s in numbers if s != target
+	                         for o in range(1, budget + 1)]
+	file.write('\n'.join(obs_binary_constraints) + '\n')
 
 	file.write('# Every state should be mapped to exactly one equivalence class\n')
-
-	for i in numbers:
-		if i == target:
-			continue
-		for j in range(1, budget + 1):
-			file.write('ys' + str(i) + str(j))
-			if j < budget:
-				file.write(' + ')
-			else:
-				file.write(' == 1')
-		if i == numbers[-1]:
-			file.write('\n)\n\n')
-		else:
-			if target == numbers[-1]:
-				if i == numbers[-2]:
-					file.write('\n)\n\n')
-				else:
-					file.write(',\n')
-			else:
-				file.write(',\n')
+	equiv_class_constraints = []
+	for s in numbers:
+		if s != target:
+			obs_sum = ' + '.join([f'ys{s}o{o}' for o in range(1, budget + 1)])
+			equiv_class_constraints.append(f'{obs_sum} == 1')
+	file.write('\n'.join([constraint + (',' if i < len(equiv_class_constraints) - 1 else '')
+	                     for i, constraint in enumerate(equiv_class_constraints)]))
+	file.write('\n)\n\n')
 
 	file.write('set_option(max_args=1000000, max_lines=100000000)\n')
 
@@ -260,4 +193,3 @@ threshold = sys.argv[5]
 det = int(sys.argv[6])
 
 create_maze_constrained(budget, target, sizex, sizey, threshold, det)
-
