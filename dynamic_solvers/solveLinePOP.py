@@ -3,7 +3,9 @@ import re
 import time
 from logging import Logger
 from typing import List
-from z3 import *
+from z3 import (Solver, Context,
+                z3, set_option, sat, unsat,
+                Real, Q, Or)
 
 from dynamic_solvers.BenchmarkResult import BenchmarkResult
 
@@ -40,18 +42,15 @@ class LinePOPChain:
         self.solver = Solver(ctx=self.ctx)
 
     def declare_variables(self):
-        self.exp_rew = self.compute_expected_rewards()
+        self.exp_rew = self.compute_expected_rewards(self.size)
         self.obs_fun = self.create_observation_maps()
         self.strategy = self.create_policy_maps()
 
-    def compute_expected_rewards(self) -> List[z3.ArithRef | None]:
-        # Expected cost/reward of reaching the goal from each state.
-        expected_rewards = [None for _ in range(0, self.size)]
-        print("# Expected cost/reward of reaching the goal.")
-        for s in range(0, self.size):
-            expected_rewards[s] = Real(f'pi{str(s)}', self.ctx)
-            print(expected_rewards[s])
-
+    def compute_expected_rewards(self, states) -> List[z3.ArithRef | None]:
+        # Expected cost/reward of reaching the goal from each corresponding state.
+        print("# Expected cost/reward of reaching the goal from each corresponding state.")
+        expected_rewards = [Real(f'pi{s}', self.ctx) for s in range(states)]
+        print(expected_rewards)
         return expected_rewards
 
     def create_observation_maps(self) -> List[List[z3.ArithRef | None]]:
@@ -64,7 +63,6 @@ class LinePOPChain:
             for o in range(1, self.budget + 1):
                 state_to_observation[s][o] = Real(f'ys{str(s)}o{str(o)}', self.ctx)
             print(state_to_observation[s])
-
         return state_to_observation
 
     def create_policy_maps(self) -> List[List[z3.ArithRef | None]]:
