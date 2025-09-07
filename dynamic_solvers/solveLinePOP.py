@@ -259,9 +259,9 @@ if __name__ == "__main__":
 
         solver = tpMC.solver
 
-        ExpRew = tpMC.variables['expRew']
-        X = tpMC.variables['obsPolicy']
-        Y = tpMC.variables['obsFunction']
+        ExpRew = tpMC.exp_rew
+        X = tpMC.strategy
+        Y = tpMC.obs_fun
 
         cost_constraints = tpMC.build_cost_rewards_equations(ExpRew, X, Y)
         threshold_constraint = tpMC.build_threshold_constraint(ExpRew, threshold)
