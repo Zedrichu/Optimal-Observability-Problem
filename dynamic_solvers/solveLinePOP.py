@@ -263,10 +263,12 @@ if __name__ == "__main__":
         X = tpMC.strategy
         Y = tpMC.obs_fun
 
+        bound_constraints = tpMC.extend_full_obs_pomdp_constraints(ExpRew)
         cost_constraints = tpMC.build_cost_rewards_equations(ExpRew, X, Y)
         threshold_constraint = tpMC.build_threshold_constraint(ExpRew, threshold)
         strategy_constraints = tpMC.extend_strategy_constraints(X, determinism=det == 1)
         observation_constraints = tpMC.extend_observation_constraints(Y)
+        solver.add(bound_constraints)
         solver.add(cost_constraints)
         solver.add(threshold_constraint)
         solver.add(strategy_constraints)
