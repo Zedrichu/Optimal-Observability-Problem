@@ -1,16 +1,9 @@
 #!/usr/bin/python3
 import sys
-import os
-import math
-import copy
 
-
-def create_grid_constrained(budget, target, size, threshold, det):
-
-	if det == 0:
-		file = open('grid_' + str(size) +  'x' + str(size) +'_ran_z3.py', 'w')
-	else:
-		file = open('grid_' + str(size) +  'x' + str(size) +'_det_z3.py', 'w')
+def create_grid_constrained(budget: int, target: int, size: int, threshold: int, det: int):
+	strat = "det" if det == 1 else "ran"
+	file = open(f'grid_{size}x{size}_{strat}_z3.py', 'w')
 
 	file.write('from z3 import *\n\n')
 
@@ -26,158 +19,115 @@ def create_grid_constrained(budget, target, size, threshold, det):
 	size = size * size
 
 	file.write('# Expected cost/reward of reaching the goal.\n')
-	for i in range(0, size):
-		file.write('pi' + str(i) + ' = Real(\'pi' + str(i) + '\')\n')
+	pi_vars = '\n'.join([f'pi{s} = Real(\'pi{s}\')' for s in range(size)])
+	file.write(pi_vars + '\n')
 
-
-	file.write('\n# Choice of observations (e.g. ys01 = 1 means that in state 0, observable 1 is observed)\n')
-	for i in range(0, size):
-		if i == target:
-			continue
-		for j in range(1, budget + 1):
-			file.write('ys' + str(i) + str(j) + ' = Real(\'ys' + str(i) + str(j) + '\')\n')
-
+	file.write('\n# Choice of observations (e.g. ys0o1 = 1 means that in state 0, observable 1 is observed)\n')
+	obs_vars = '\n'.join([f'ys{s}o{o} = Real(\'ys{s}o{o}\')'
+	                     for s in range(size) if s != target
+	                     for o in range(1, budget + 1)])
+	file.write(obs_vars + '\n')
 
 	file.write('\n# Rates of randomized strategies\n')
-	for i in range(1, budget + 1):
-		file.write('xo' + str(i) + 'l' + ' = Real(\'xo' + str(i) + 'l\')\n')
-		file.write('xo' + str(i) + 'r' + ' = Real(\'xo' + str(i) + 'r\')\n')
-		file.write('xo' + str(i) + 'u' + ' = Real(\'xo' + str(i) + 'u\')\n')
-		file.write('xo' + str(i) + 'd' + ' = Real(\'xo' + str(i) + 'd\')\n')
-
+	strategy_vars = '\n'.join([f'xo{o}{act} = Real(\'xo{o}{act}\')'
+	                          for o in range(1, budget + 1)
+	                          for act in actions])
+	file.write(strategy_vars + '\n')
 
 	file.write('solver = Solver()\n\n\n')
-
 	file.write('solver.add(\n')
-
 	file.write('#We cannot do better than the fully observable case\n')
 
+	# Generate constraints for optimal bounds on expected reward
+	bounds_constraints = []
 	count = 0
-
-	for i in range(0, size):
-		if i%target == column:
-			file.write('pi' + str(i) + '>=' + str(abs(target - i)//side) + ', ')
-			count = count + abs(target - i)//side
+	for s in range(size):
+		if s % target == column:
+			bound_value = abs(target - s) // side
+			bounds_constraints.append(f'pi{s}>={bound_value}')
+			count += bound_value
 		else:
-			file.write('pi' + str(i) + '>=' + str(abs(column - i%side) + (abs(target - i)//side)) + ', ')
-			count = count + abs(column - i%side) + (abs(target - i)//side)
-	file.write('\n# Expected cost/reward equations\n')
-	
-	#If you print count, you can find the optimal reward.
-	#print(count)
+			bound_value = abs(column - s % side) + (abs(target - s) // side)
+			bounds_constraints.append(f'pi{s}>={bound_value}')
+			count += bound_value
 
+	file.write(', '.join(bounds_constraints) + ', \n')
+	file.write('# Expected cost/reward equations\n')
 
+    # For optimal rewards: print(count)
 
-	for i in range(0, size):
-		left = ''
-		right = ''
-		up = ''
-		down = ''
-		if i == target:
-			file.write('pi' + str(i) + ' == 0, \n')
+	# Generate optimized cost equations for grid
+	cost_equations = []
+	for s in range(size):
+		if s == target:
+			cost_equations.append(f'pi{s} == 0')
 			continue
-		file.write('pi' + str(i) + ' == ' + '(')
 
-		for o in range(1, budget+1):
-			if o < budget:
-				left = left + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'l + '
-				right = right + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'r + '
-				up = up + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'u + '
-				down = down + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'd + '
-			else:
-				if i%side == 0:
-					left = left + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'l) * (1 + pi' + str(i) + ') + ('
-				else: 
-					left = left + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'l) * (1 + pi' + str(i - 1) + ') + ('
-				if i%side == side-1:
-					right = right + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'r) * (1 + pi' + str(i) + ') + ('
-				else: 
-					right = right + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'r) * (1 + pi' + str(i + 1) + ') + ('
-				if i - side >=0:
-					up = up + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'u) * (1 + pi' + str(i - side) + ') + ('
-				else: 
-					up = up + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'u) * (1 + pi' + str(i) + ') + ('
-				if i + side < size:
-					down = down + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'd) * (1 + pi' + str(i + side) + '),\n'
-				else: 
-					down = down + 'ys' + str(i) + str(o) + '*xo' + str(o) + 'd) * (1 + pi' + str(i) + '),\n'
-		file.write(left + right + up + down)
+		# Calculate next states for each direction
+		left_next = s if s % side == 0 else s - 1
+		right_next = s if s % side == side - 1 else s + 1
+		up_next = s if s - side < 0 else s - side
+		down_next = s if s + side >= size else s + side
 
+		# Build action terms using efficient action-to-next-state mapping
+		next_states = {'l': left_next, 'r': right_next, 'u': up_next, 'd': down_next}
 
-	file.write('# We are dropped uniformly in the grid\n# We want to check if the minimal expected cost is below some threshold ' + str(threshold) + '\n')
+		action_terms = []
+		for act in actions:
+			obs_strategy_terms = [f'ys{s}o{o}*xo{o}{act}' for o in range(1, budget + 1)]
+			obs_strategy_sum = ' + '.join(obs_strategy_terms)
+			next_state = next_states[act]
+			action_terms.append(f'({obs_strategy_sum}) * (1 + pi{next_state})')
 
-	line = '('
-	for i in range(0, size):
-		if i == target:
-			continue
-		if i < size - 1:
-			if target == size - 1:
-				if i == size - 2 :
-					line = line + 'pi' + str(i) + ')'
-				else:
-					line = line + 'pi' + str(i) + '+'
-			else:
-				line = line + 'pi' + str(i) + '+'
-		else:
-			line = line + 'pi' + str(i) + ')'
-	
-	e = copy.deepcopy(line + ' * Q(1,' + str(size-1) + ') ')
-	
-	line = line + ' * Q(1,' + str(size-1) + ') ' + str(threshold) + ','
+		equation = f'pi{s} == ' + ' + '.join(action_terms)
+		cost_equations.append(equation)
 
-	file.write(line + '\n')
+	file.write(',\n'.join(cost_equations) + ',\n')
 
+	# Optimize threshold constraint generation
+	file.write(f'# We are dropped uniformly in the grid\n# We want to check if the minimal expected cost is below some threshold {threshold}\n')
+	pi_terms = [f'pi{s}' for s in range(size) if s != target]
+	pi_sum = '+'.join(pi_terms)
+	threshold_constraint = f'({pi_sum}) * Q(1,{size-1}) {threshold},'
+	e = f'({pi_sum}) * Q(1,{size-1}) '
+	file.write(threshold_constraint + '\n')
+
+	# Optimize strategy constraints
 	file.write('# Randomised strategies (proper probability distributions)\n')
-	for i in range(1, budget + 1):
-		for a in actions:
-			file.write('xo' + str(i) + a + '>= 0,\n')
-			file.write('xo' + str(i) + a + '<= 1,\n')
-	
-	
-	for i in range(1, budget + 1):
-		for a in actions:
-			if a != 'd':
-				file.write('xo' + str(i) + a + ' + ')
-			else:
-				file.write('xo' + str(i) + a + ' == 1,\n')
+	bounds_constraints = [f'xo{o}{act}>= 0,\nxo{o}{act}<= 1,'
+	                     for o in range(1, budget + 1)
+	                     for act in actions]
+	file.write('\n'.join(bounds_constraints) + '\n')
+
+	# Generate probability sum constraints for all actions
+	sum_constraints = []
+	for o in range(1, budget + 1):
+		action_sum = ' + '.join([f'xo{o}{act}' for act in actions])
+		sum_constraints.append(f'{action_sum} == 1,')
+	file.write('\n'.join(sum_constraints) + '\n')
 
 	if det == 1:
 		file.write('# Deterministic Strategies activated\n')
-		for i in range(1, budget + 1):
-			file.write('Or(xo' + str(i) + 'l ' + '== 0, xo' + str(i) + 'l' + ' == 1),\n')
-			file.write('Or(xo' + str(i) + 'r ' + '== 0, xo' + str(i) + 'r' + ' == 1),\n')
-			file.write('Or(xo' + str(i) + 'u ' + '== 0, xo' + str(i) + 'u' + ' == 1),\n')
-			file.write('Or(xo' + str(i) + 'd ' + '== 0, xo' + str(i) + 'd' + ' == 1),\n')
+		det_constraints = [f'Or(xo{o}{act} == 0, xo{o}{act} == 1),'
+		                  for o in range(1, budget + 1)
+		                  for act in actions]
+		file.write('\n'.join(det_constraints) + '\n')
 
-	file.write('# ysNM is a function that should map every state N to some observable class M\n')
-
-	for i in range(0, size):
-		if i == target:
-			continue
-		for j in range(1, budget + 1):
-			file.write('Or(ys' + str(i) + str(j) +  '== 0 , ys' + str(i) + str(j) + '== 1),\n')
+	file.write('# ysNoM is a function that should map every state N to some observable class M\n')
+	obs_binary_constraints = [f'Or(ys{s}o{o}== 0 , ys{s}o{o}== 1),'
+	                         for s in range(size) if s != target
+	                         for o in range(1, budget + 1)]
+	file.write('\n'.join(obs_binary_constraints) + '\n')
 
 	file.write('# Every state should be mapped to exactly one equivalence class\n')
-
-	for i in range(0, size):
-		if i == target:
-			continue
-		for j in range(1, budget + 1):
-			file.write('ys' + str(i) + str(j))
-			if j < budget:
-				file.write(' + ')
-			else:
-				file.write(' == 1')
-		if i == size - 1:
-			file.write('\n)\n\n')
-		else:
-			if target == size - 1:
-				if i == size - 2:
-					file.write('\n)\n\n')
-				else:
-					file.write(',\n')
-			else:
-				file.write(',\n')
+	equiv_class_constraints = []
+	for s in range(size):
+		if s != target:
+			obs_sum = ' + '.join([f'ys{s}o{o}' for o in range(1, budget + 1)])
+			equiv_class_constraints.append(f'{obs_sum} == 1')
+	file.write('\n'.join([constraint + (',' if i < len(equiv_class_constraints) - 1 else '')
+	                     for i, constraint in enumerate(equiv_class_constraints)]))
+	file.write('\n)\n\n')
 
 	file.write('set_option(max_args=1000000, max_lines=100000000)\n')
 
@@ -206,4 +156,3 @@ det = int(sys.argv[5])
 
 
 create_grid_constrained(budget, target, size, threshold, det)
-

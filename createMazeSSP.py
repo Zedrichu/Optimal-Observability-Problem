@@ -1,300 +1,182 @@
 #!/usr/bin/python3
 import sys
-import os
-import math
-from itertools import chain, combinations
-import copy
 
 
-def powerset(iterable):
-    s = list(iterable)
-    return chain.from_iterable(combinations(s, r) for r in range(len(s)+1))
+def create_maze_pre(budget, target, height, width, threshold, det, pre):
+	actions = ['l', 'r', 'u', 'd']
 
-
-def create_maze_pre(budget, target, sizex, sizey, threshold, det, pre):
-	
-	states_obs = pre.split('|')
-
-	obs = {} #mapping states observables
-
-	total = {} #total number of observables and which ones
-
-	if det == 0:
-		file = open('ssp_maze_' + str(sizex) + 'x' + str(sizey)  +'_ran_z3.py', 'w')
-	else:
-		file = open('ssp_maze_' + str(sizex) + 'x' + str(sizey) +'_det_z3.py', 'w')
-
-	for sub in states_obs:
-		sub = sub.strip()
-		spl = sub.split(' ')
-		observales = spl[1].split(',')
-		obs[spl[0]] = observales
-		for i in observales:
-			if i in total:
-				pass
-			else:
-				total[i] = ''
+	puzzle_type = "ssp_maze"
+	strat_type = "det" if det == 1 else "ran"
+	file = open(f'{puzzle_type}_{height}x{width}_{strat_type}_z3.py', 'w')
 
 	file.write('from z3 import *\n\n')
 
-	power = []
-
-	if sizey%2 == 0:
+	if width % 2 == 0:
 		print('We need odd number for size y')
 		exit(1)
 
+	# Generate maze state numbers
 	numbers = []
 	counter = 0
-	for i in range(0, sizex):
-		for j in range(0, sizey):
+	for i in range(height):
+		for j in range(width):
 			if i == 0:
 				numbers.append(counter)
-				counter = counter + 1
+				counter += 1
 			else:
-				if j == 0 or j == sizey-1 or j == (sizey-1)//2:
+				if j == 0 or j == width-1 or j == (width - 1)//2:
 					numbers.append(counter)
-					counter = counter + 1
+					counter += 1
 
 	size = len(numbers)
 
-	for i in range(0, size):
-		if(str(i) in obs):
-			power.append(list(powerset(obs[str(i)])))
-
-
 	file.write('# Expected cost/reward of reaching the goal.\n')
-	for i in range(0, size):
-		file.write('pi' + str(i) + ' = Real(\'pi' + str(i) + '\')\n')
+	pi_vars = '\n'.join([f'pi{s} = Real(\'pi{s}\')' for s in range(size)])
+	file.write(pi_vars + '\n')
 
 	file.write('\n# Choice of observations\n')
 
-	keep_power = copy.deepcopy(power)
-
-
-	used = {}
-	y = []
-
-	for i in range(0, size):
-		if i == target:
-			continue
-		for o in obs[str(i)]:
-			if 'y' + str(o) in used:
-				continue
-			file.write('y' + str(o) + ' = Real(\'y' + str(o) + '\')\n')
-			used['y' + str(o)] = ''
-			y.append('y' + str(o))
-
-
+	# Generate sensor variables - one per non-target state (sensor selection approach)
+	sensor_states = [s for s in range(size) if s != target]
+	sensor_vars = [f'y{s} = Real(\'y{s}\')' for s in sensor_states]
+	file.write('\n'.join(sensor_vars) + '\n')
 
 	file.write('\n# Rates of randomized strategies\n')
 
-	for state in range(0,len(power)):
-		for o in power[state]:
-			if len(o) == 0:
-				continue
-			if 'xo' + ''.join([str(ele) + '' for ele in o]) in used:
-				continue
-			file.write('xo' + ''.join([str(ele) + '' for ele in o]) + 'l' + ' = Real(\'xo' + ''.join([str(ele) + '' for ele in o]) + 'l' + '\')\n')
-			file.write('xo' + ''.join([str(ele) + '' for ele in o]) + 'r' + ' = Real(\'xo' + ''.join([str(ele) + '' for ele in o]) + 'r' + '\')\n')
-			file.write('xo' + ''.join([str(ele) + '' for ele in o]) + 'u' + ' = Real(\'xo' + ''.join([str(ele) + '' for ele in o]) + 'u' + '\')\n')
-			file.write('xo' + ''.join([str(ele) + '' for ele in o]) + 'd' + ' = Real(\'xo' + ''.join([str(ele) + '' for ele in o]) + 'd' + '\')\n')
-			used['xo' + ''.join([str(ele) + '' for ele in o]) + 'l'] = ''
+	# Generate state-specific strategy variables (when sensor is on for that state)
+	state_strategy_vars = [f'xo{s}{act} = Real(\'xo{s}{act}\')'
+	                      for s in sensor_states
+	                      for act in actions]
+	file.write('\n'.join(state_strategy_vars) + '\n')
 
-
-
-	file.write('xol = Real(\'xol\')\n')
-	file.write('xor = Real(\'xor\')\n')
-	file.write('xod = Real(\'xod\')\n')
-	file.write('xou = Real(\'xou\')\n')
+	# Default strategy variables (when no sensor observes - unknown state)
+	default_strategies = [f'xo{act} = Real(\'xo{act}\')' for act in actions]
+	file.write('\n'.join(default_strategies) + '\n')
 
 	file.write('solver = Solver()\n\n\n')
-
 	file.write('solver.add(\n')
-
 	file.write('#We cannot do better than the fully observable case\n')
 
+	# Generate bounds constraints for maze
+	bounds_constraints = []
 	th = 0
-
 	for i in numbers:
-		if(i < sizey):
-			file.write('pi' + str(i) + '>=' + str(abs(i - sizey//2) + sizex - 1) + ', ')
-			th = th + abs(i - sizey//2) + sizex - 1
+		if i < width:
+			bound_value = abs(i - width // 2) + height - 1
+			bounds_constraints.append(f'pi{i}>={bound_value}')
+			th += bound_value
 		else:
-			if (i - sizey)%3 == 1:
-				#file.write('pi' + str(i) + '>=' + str(sizex - 1 - (i//3 - 1)) + ', ')
-				file.write('pi' + str(i) + '>=' + str((target - i)//3) + ', ')
-				th = th + (target - i)//3
+			if (i - width) % 3 == 1:
+				bound_value = (target - i) // 3
+				bounds_constraints.append(f'pi{i}>={bound_value}')
+				th += bound_value
 			else:
-				file.write('pi' + str(i) + '>=' + str(((i - sizey)//3) + (sizey - sizey//2) + sizex - 1) + ', ')
-				th = th + ((i - sizey)//3) + (sizey - sizey//2) + sizex - 1
+				bound_value = ((i - width) // 3) + (width - width // 2) + height - 1
+				bounds_constraints.append(f'pi{i}>={bound_value}')
+				th += bound_value
 
-	#If you print th, you can find the optimal reward. And number[-1] the goal 
-	#print(th)
-	#print(numbers[-1])
+	file.write(', '.join(bounds_constraints) + ', \n')
 
-	file.write('\n')
+	# For optimal reward: print(th)
 
-	
 	file.write('# Expected cost/reward equations\n')
 
-	save = {}
+	# Helper function to get next state for maze navigation
+	def get_next_state(state, action):
+		if action == 'l':
+			if 0 < state < width:
+				return state - 1
+		elif action == 'r':
+			if 0 <= state < width - 1:
+				return state + 1
+		elif action == 'u':
+			if state == width:
+				return 0
+			elif state == width + 1:
+				return (width - 1) // 2
+			elif state >= width + 2:
+				return state - 3
+		else:  # action == 'd'
+			if state == 0:
+				return width
+			elif state == (width - 1) // 2:
+				return width + 1
+			elif width <= state <= numbers[-1] - 3:
+				return state + 3
+		return state
 
-	power.clear()
-	for i in range (0, size):
-		if str(i) in obs:
-			state_obs = obs[str(i)]
-			power.append(list(powerset(state_obs)))
-			for a in ['l', 'r', 'u', 'd']:
-				constraint = ''
-				for j in range (0, len(power[0])):
-					con = {}
-					tot = ''
-					if len(power[0][j]) > 0:
-						for element in power[0][j]:
-							constraint = constraint + 'y' + element + '*'
-							con[element] = ''
-							tot = tot + element
-
-					for o in state_obs:
-						if o in con:
-							pass
-						else:
-							constraint = constraint + '(1 - y' + o + ')*'
-					if j == len(power[0]) - 1:
-						constraint = constraint + 'xo' + tot + str(a)
-					else:
-						constraint = constraint + 'xo' + tot + str(a) + ' + '
-				save[str(i) + str(a)] = constraint
-		power.clear()
-
-
-	for i in range(0, size):
-		if i == target:
-			file.write('pi' + str(i) + ' == 0, \n')
+	# Generate cost equations for sensor selection
+	cost_equations = []
+	for s in range(size):
+		if s == target:
+			cost_equations.append(f'pi{s} == 0')
 			continue
 
-		if i < sizey:
-			file.write('pi' + str(i) + '== (' + save[str(i) + 'l'] + ') * (1 + pi' + str(max(i-1, 0)) + ') + ')
-			file.write('(' + save[str(i) + 'r'] + ') * (1 + pi' + str(min(i+1, sizey-1)) + ') + ')
-			file.write('(' + save[str(i) + 'u'] + ') * (1 + pi' + str(i) + ') + ')
-			if i == (sizey-1)//2:
-				file.write('(' + save[str(i) + 'd'] + ') * (1 + pi' + str(sizey + 1) + '),\n')
-			elif i == sizey-1:
-				file.write('(' + save[str(i) + 'd'] + ') * (1 + pi' + str(sizey + 2) + '),\n')
-			elif i ==0:
-				file.write('(' + save[str(i) + 'd'] + ') * (1 + pi' + str(sizey) + '),\n')
-			else:
-				file.write('(' + save[str(i) + 'd'] + ') * (1 + pi' + str(i) + '),\n')
-		else:
-			file.write('pi' + str(i) + '== (' + save[str(i) + 'l'] + ') * (1 + pi' + str(i) + ') + ')
-			file.write('(' + save[str(i) + 'r'] + ') * (1 + pi' + str(i) + ') + ')
-			if i  <= sizey + 2:
-				if i == sizey:
-					file.write('(' + save[str(i) + 'u'] + ') * (1 + pi' + str((i - sizey)) + ') + ')
-				elif i == sizey + 1:
-					file.write('(' + save[str(i) + 'u'] + ') * (1 + pi' + str((sizey-1)//2) + ') + ')
-				else:
-					file.write('(' + save[str(i) + 'u'] + ') * (1 + pi' + str(sizey-1) + ') + ')
-			else:
-				file.write('(' + save[str(i) + 'u'] + ') * (1 + pi' + str(i - 3) + ') + ')
-			if i + 3 <= numbers[-1]:
-				file.write('(' + save[str(i) + 'd'] + ') * (1 + pi' + str(i + 3) + '),\n')
-			else:
-				file.write('(' + save[str(i) + 'd'] + ') * (1 + pi' + str(i) + '), \n')
+		# Build sensor selection strategies
+		action_terms = []
+		for act in actions:
+			strategy_term = f'((1 - y{s})*xo{act} + y{s}*xo{s}{act})'
+			next_state = get_next_state(s, act)
+			action_terms.append(f'{strategy_term} * (1 + pi{next_state})')
 
-	file.write('# We are dropped uniformly in the line\n# We want to check if the minimal expected cost is below some threshold ' + str(threshold) + '\n')
+		equation = f'pi{s} == ' + ' + '.join(action_terms)
+		cost_equations.append(equation)
 
-	line = '('
-	for i in range(0, size):
-		if i == target:
-			continue
-		if i < size - 1:
-			if target == size - 1:
-				if i == size - 2 :
-					line = line + 'pi' + str(i) + ')'
-				else:
-					line = line + 'pi' + str(i) + '+'
-			else:
-				line = line + 'pi' + str(i) + '+'
-		else:
-			line = line + 'pi' + str(i) + ')'
-	e = copy.deepcopy(line + ' * Q(1,' + str(size-1) + ') ')
-	line = line + ' * Q(1,' + str(size-1) + ') ' + str(threshold) + ','
+	file.write(',\n'.join(cost_equations) + ',\n')
 
-	file.write(line + '\n')
+	# Generate threshold constraint
+	file.write(f'# We are dropped uniformly in the maze\n# We want to check if the minimal expected cost is below some threshold {threshold}\n')
+	pi_terms = [f'pi{s}' for s in range(size) if s != target]
+	pi_sum = '+'.join(pi_terms)
+	threshold_constraint = f'({pi_sum}) * Q(1,{size-1}) {threshold},'
+	e = f'({pi_sum}) * Q(1,{size-1}) '
+	file.write(threshold_constraint + '\n')
 
+	# Generate strategy constraints
 	file.write('# Randomised strategies (proper probability distributions)\n')
-	used.clear()
 
-	for state in range(0,len(keep_power)):
-		for o in keep_power[state]:
-			if len(o) == 0:
-				continue
-			if 'xo' + ''.join([str(ele) + '' for ele in o]) in used:
-				continue
-			file.write('xo' + ''.join([str(ele) + '' for ele in o]) + 'l <= 1,\n')
-			file.write('xo' + ''.join([str(ele) + '' for ele in o])+ 'l >= 0,\n')
-			file.write('xo' + ''.join([str(ele) + '' for ele in o]) + 'r <= 1,\n')
-			file.write('xo' + ''.join([str(ele) + '' for ele in o]) + 'r >= 0,\n')
-			file.write('xo' + ''.join([str(ele) + '' for ele in o]) + 'u <= 1,\n')
-			file.write('xo' + ''.join([str(ele) + '' for ele in o])+ 'u >= 0,\n')
-			file.write('xo' + ''.join([str(ele) + '' for ele in o]) + 'd <= 1,\n')
-			file.write('xo' + ''.join([str(ele) + '' for ele in o]) + 'd >= 0,\n')
-			file.write('xo' + ''.join([str(ele) + '' for ele in o]) + 'l' + ' + xo' + ''.join([str(ele) + '' for ele in o]) + 'r'
-			+ ' + xo' + ''.join([str(ele) + '' for ele in o]) + 'u' + ' + xo' + ''.join([str(ele) + '' for ele in o]) + 'd == 1,\n')
-			
-			used['xo' + ''.join([str(ele) + '' for ele in o]) + 'l'] = ''
+	# Generate strategy constraints
+	strategy_constraints = []
 
-	file.write('xol <= 1,\n')
-	file.write('xol >= 0,\n')
-	file.write('xor <= 1,\n')
-	file.write('xor >= 0,\n')
+	# State-specific sensor constraints
+	for s in sensor_states:
+		strategy_constraints.extend([f'xo{s}{act} <= 1,\nxo{s}{act} >= 0,'
+		                           for act in actions])
+		action_sum = ' + '.join([f'xo{s}{act}' for act in actions])
+		strategy_constraints.append(f'{action_sum} == 1,')
 
-	file.write('xou <= 1,\n')
-	file.write('xou >= 0,\n')
-	file.write('xod <= 1,\n')
-	file.write('xod >= 0,\n')
-	file.write('xol + xor + xou + xod == 1,\n')
+	# Default strategy constraints
+	strategy_constraints.extend([f'xo{act} <= 1,\nxo{act} >= 0,'
+	                           for act in actions])
+	default_action_sum = ' + '.join([f'xo{act}' for act in actions])
+	strategy_constraints.append(f'{default_action_sum} == 1,')
+
+	file.write('\n'.join(strategy_constraints) + '\n')
 
 	if det == 1:
 		file.write('#Deterministic strategies activated\n')
-		used.clear()
-		for state in range(0,len(keep_power)):
-			for o in keep_power[state]:
-				if len(o) == 0:
-					continue
-				if 'xo' + ''.join([str(ele) + '' for ele in o]) in used:
-					continue
-				file.write('Or(xo' + ''.join([str(ele) + '' for ele in o]) + 'l == 0 , xo' + ''.join([str(ele) + '' for ele in o]) + 'l == 1),\n')
-				file.write('Or(xo' + ''.join([str(ele) + '' for ele in o]) + 'r == 0 , xo' + ''.join([str(ele) + '' for ele in o]) + 'r == 1),\n')
-				file.write('Or(xo' + ''.join([str(ele) + '' for ele in o]) + 'u == 0 , xo' + ''.join([str(ele) + '' for ele in o]) + 'u == 1),\n')
-				file.write('Or(xo' + ''.join([str(ele) + '' for ele in o]) + 'd == 0 , xo' + ''.join([str(ele) + '' for ele in o]) + 'd == 1),\n')
-				used['xo' + ''.join([str(ele) + '' for ele in o]) + 'l'] = ''
-		file.write('Or(xol == 0 , xol == 1),\n')
-		file.write('Or(xor == 0 , xor == 1),\n')
-		file.write('Or(xou == 0 , xou == 1),\n')
-		file.write('Or(xod == 0 , xod == 1),\n')
+		det_constraints = [f'Or(xo{s}{act} == 0, xo{s}{act} == 1),'
+		                  for s in sensor_states
+		                  for act in actions]
 
+		# Add default deterministic constraints
+		det_constraints.extend([f'Or(xo{act} == 0, xo{act} == 1),'
+		                       for act in actions])
 
-	used.clear()
+		file.write('\n'.join(det_constraints) + '\n')
+
 	file.write('# y is a function that should map every state N to some observable class M\n')
-	
-	for i in range(0, size):
-		if i == target:
-			continue
-		for o in obs[str(i)]:
-			if 'y' + str(o) in used:
-				continue
-			file.write('Or (y' + str(o) + ' == 0 , y' +  str(o) + ' == 1 ),\n')
-			used['y' + str(o)] = ''
 
-	for i in range (0, len(y)):
-		if i == len(y) - 1:
-			file.write(y[i] + ' == ' + str(budget))
-		else:
-			file.write(y[i] + ' + ')
+	# Binary constraints for sensor variables
+	sensor_binary_constraints = [f'Or(y{s} == 0, y{s} == 1),' for s in sensor_states]
+	file.write('\n'.join(sensor_binary_constraints) + '\n')
 
-	file.write('\n)\n')
+	# Budget constraint - total sensors used <= budget
+	file.write('# Budget constraint on total no. of sensors used\n')
+	sensor_sum = ' + '.join([f'y{s}' for s in sensor_states])
+	file.write(f'{sensor_sum} == {budget}')
+
+	file.write('\n)\n\n')
 
 	file.write('set_option(max_args=1000000, max_lines=100000000)\n')
 
@@ -313,9 +195,6 @@ def create_maze_pre(budget, target, sizex, sizey, threshold, det, pre):
 	file.write('file_reward.write(\'N/A\')\n')
 	file.write('else:\n\t')
 	file.write('print(\'Unknown\')')
-
-
-	
 
 
 sizex = int(sys.argv[1])
