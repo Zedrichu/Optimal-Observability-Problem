@@ -23,9 +23,9 @@ class LinePOPChain:
 
         self.actions = ['l', 'r']
 
-        self.exp_rew = None
-        self.obs_fun = None
-        self.strategy = None
+        self.expected_rewards = None
+        self.observation_fun = None
+        self.strategy_rates = None
 
         self.ctx = None
         self.solver = None
@@ -42,9 +42,9 @@ class LinePOPChain:
         self.solver = Solver(ctx=self.ctx)
 
     def declare_variables(self):
-        self.exp_rew = self.compute_expected_rewards(self.size)
-        self.obs_fun = self.create_observation_maps()
-        self.strategy = self.create_policy_maps()
+        self.expected_rewards = self.compute_expected_rewards(self.size)
+        self.observation_fun = self.create_observation_maps()
+        self.strategy_rates = self.create_policy_maps()
 
     def compute_expected_rewards(self, states) -> List[z3.ArithRef | None]:
         # Expected cost/reward of reaching the goal from each corresponding state.
@@ -66,7 +66,7 @@ class LinePOPChain:
         return state_to_observation
 
     def create_policy_maps(self) -> List[List[z3.ArithRef | None]]:
-        # Rates of randomized strategies
+        # Action rates of randomized strategies
         observation_to_action = [[None for _ in self.actions] for _ in range(self.budget + 1)]
         print("# Rates of randomized strategies")
         for s in range(1, self.budget + 1):
@@ -90,7 +90,14 @@ class LinePOPChain:
 
         return constraints
 
-    def build_cost_rewards_equations(self, ExpRew, X, Y):
+    def navigate(self, state: int, action_idx: int) -> int:
+        action = self.actions[action_idx]
+        if action == 'l':
+            return max(state - 1, 0)
+        else: # action == 'r'
+            return min(state + 1, self.size - 1)
+
+    def build_cost_reward_equations(self, ExpRew, X, Y):
         constraints = []
 
         # Expected cost/reward equations
@@ -109,10 +116,9 @@ class LinePOPChain:
                     action_prob += Y[s][o] * X[o][act]
 
                 # Next state after action
-                next_state = s - 1 if self.actions[act] == 'l' else s + 1
-                next_state = max(0, min(next_state, self.size - 1))
+                next_state = self.navigate(s, act)
 
-                # Additional component to cost expression
+                # Additional action-based component to cost expression
                 cost_expr += action_prob * ExpRew[next_state]
 
             constraints.append(ExpRew[s] == cost_expr)
@@ -140,8 +146,8 @@ class LinePOPChain:
         return constraint
 
     def extend_strategy_constraints(self, X, determinism: bool):
-        # Randomised strategies (proper probability distributions)
-        print('# Randomised strategies (proper probability distributions)')
+        # Randomized strategies (proper probability distributions)
+        print('# Randomized strategies (proper probability distributions)')
         constraints = []
         act_no = len(self.actions)
         for o in range(1, budget + 1):
@@ -198,14 +204,14 @@ class LinePOPChain:
 
         if result == sat:
             model = self.solver.model()
-            print('✅Solution found!')
+            print(' ✅ Solution found!')
             self.file_results.write(str(model))
             self.file_rewards.write(str(model.eval(self.evaluator)))
         elif result == unsat:
-            print('❌No solution!')
+            print(' ❌ No solution!')
             self.file_rewards.write('N/A')
         else:
-            print('❔Unknown!')
+            print(' ❔ Unknown!')
 
         return BenchmarkResult(
             solve_time=solve_time,
@@ -220,8 +226,8 @@ class LinePOPChain:
             self.file_rewards.close()
 
         # Clean up Z3 objects
-        del tpMC.solver
-        del tpMC.ctx
+        del self.solver
+        del self.ctx
         gc.collect()
         pass
 
@@ -259,11 +265,11 @@ if __name__ == "__main__":
 
         solver = tpMC.solver
 
-        ExpRew = tpMC.variables['expRew']
-        X = tpMC.variables['obsPolicy']
-        Y = tpMC.variables['obsFunction']
+        ExpRew = tpMC.expected_rewards
+        X = tpMC.strategy_rates
+        Y = tpMC.observation_fun
 
-        cost_constraints = tpMC.build_cost_rewards_equations(ExpRew, X, Y)
+        cost_constraints = tpMC.build_cost_reward_equations(ExpRew, X, Y)
         threshold_constraint = tpMC.build_threshold_constraint(ExpRew, threshold)
         strategy_constraints = tpMC.extend_strategy_constraints(X, determinism=det == 1)
         observation_constraints = tpMC.extend_observation_constraints(Y)
@@ -276,7 +282,7 @@ if __name__ == "__main__":
 
         try:
             result = tpMC.solve_benchmark()
-            print(f"🚀Solve time: {result.solve_time:.4f}s")
+            print(f" 🚀 Solve time: {result.solve_time:.4f}s")
             # print(f"Setup time: {result.setup_time:.4f}s")
             # print(f"Memory used: {result.memory_used / 1024 / 1024:.2f} MB")
             # print(f"Constraints: {result.constraint_count}")
