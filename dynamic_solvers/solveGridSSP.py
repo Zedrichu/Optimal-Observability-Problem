@@ -11,20 +11,22 @@ from z3 import (Solver, Context,
 from dynamic_solvers.BenchmarkResult import BenchmarkResult
 
 
-class LineSSPChain:
+class GridSSPChain:
     """
-    Z3 API solver for "Line" instances in the SSP problem with benchmarking
+    Z3 API solver for "Grid" instances in the SSP problem with benchmarking
 
     Part of the OOP problem suites.
     """
 
-    def __init__(self, budget: int, goal: int, size: int, det: int):
+    def __init__(self, budget: int, goal: int, size_x: int, size_y: int, det: int):
         self.budget = budget
         self.goal = goal
-        self.size = size
+        self.size_x = size_x
+        self.size_y = size_y
+        self.size = size_x * size_y
         self.det = det
 
-        self.actions = ['l', 'r']
+        self.actions = ['l', 'r', 'u', 'd']
 
         self.expected_rewards = None
         self.observation_fun = None
@@ -35,13 +37,16 @@ class LineSSPChain:
 
         self.evaluator = None
         self.console = Console()
-        self.logger = Logger("LinePOPChain")
+        self.logger = Logger("GridSSPChain")
+
+        self.file_results = None
+        self.file_rewards = None
 
         self.reset()
 
     def reset(self):
         """Reset for fresh solving context"""
-        gc.collect() # Clean memory before starting
+        gc.collect()  # Clean memory before starting
         self.ctx = Context()
         self.solver = Solver(ctx=self.ctx)
 
@@ -58,11 +63,11 @@ class LineSSPChain:
         self.console.print(expected_rewards)
         return expected_rewards
 
-    def create_observation_maps(self, sensor_states: List[int]) -> List[List[z3.ArithRef]]:
+    def create_observation_maps(self, sensor_states: List[int]) -> List[z3.ArithRef]:
         # Choice of observations on each non-goal state (state sensors)
         # e.g. `ys0 == 1` means that in state 0 the sensor is on, `ys0 == 0` - state sensor is off
         print("# Choice of observation on each non-goal state (state sensors that are on/off)")
-        state_to_observation = [ Real(f'ys{s}', self.ctx) for s in sensor_states]
+        state_to_observation = [Real(f'ys{s}', self.ctx) for s in sensor_states]
         self.console.print(state_to_observation)
         return state_to_observation
 
@@ -76,27 +81,63 @@ class LineSSPChain:
         self.console.print(sensor_to_action)
         return sensor_to_action
 
-    def extend_fully_observable_pomdp_constraints(self, exp_rewards: List[z3.ArithRef]):
+    def extend_fully_observable_pomdp_constraints(self, exp_rewards: List[z3.ArithRef]) -> List[z3.BoolRef]:
         """
         Build basic POMDP constraints - a POMDP instance cannot perform better than the fully observable variant.
+        Compute Manhattan distances between each state and the goal state based on the grid topology.
         """
         print('#A POMDP instance cannot perform better than the fully observable variant\n')
-        pomdp_bounds = [exp_rewards[s] >= abs(self.goal - s) for s in range(self.size)]
+
+        # Grid-specific bounds calculation
+        goal_column = self.goal % self.size_x
+        pomdp_bounds = []
+        count = 0
+        for s in range(self.size):
+            column = s % self.size_x
+            if column == goal_column:  # same column as target
+                bound_value = abs(self.goal - s) // self.size_x
+            else:
+                bound_value = abs(goal_column - column) + (abs(self.goal - s) // self.size_x)
+            pomdp_bounds.append(exp_rewards[s] >= bound_value)
+            count += bound_value
+
         self.console.print(pomdp_bounds)
         return pomdp_bounds
 
     def navigate(self, state: int, action_idx: int) -> int:
+        """Navigate in 2D grid based on action"""
         action = self.actions[action_idx]
-        if action == 'l':
-            return max(state - 1, 0)
-        else: # action == 'r'
-            return min(state + 1, self.size - 1)
+        x = state % self.size_x
+        y = state // self.size_x
+
+        if action == 'l':  # left
+            if x != 0:
+                return state - 1
+        elif action == 'r':  # right
+            if x != self.size_x - 1:
+                return state + 1
+        elif action == 'u':  # up
+            if y != 0:
+                return state - self.size_x
+        else:  # action == 'd' (down)
+            if y != self.size_y - 1:
+                return state + self.size_x
+        return state
+
+    # size_x = 4; size_y = 3; column = 11 % 4 = 3
+    # 3 -> 3 % 4 == 3 -> (11 - 3) // 4 == 2
+    # 5 -> 5 % 4 == 1 -> (3 - 1) + 6 // 4 = 2 + 1 = 3
+
+    # size_x -> size_y |
+    # 0 1 2 3          v  5 4 3 2
+    # 4 5 6 7             4 3 2 1
+    # 8 9 10 11           3 2 1 0
 
     def build_cost_reward_equations(self, ExpRew, X, Y):
         # Expected cost/reward equations from each world state
         print("# Expected cost/reward equations from each world state")
         cost_equations = []
-        for s in range(self.size - 1):
+        for s in range(self.size):
             if s == self.goal:
                 cost_equations.append(ExpRew[s] == 0)
             else:
@@ -110,9 +151,9 @@ class LineSSPChain:
         return cost_equations
 
     def build_threshold_constraint(self, ExpRew, threshold: str):
-        # Agent dropped in the line under uniform distribution
+        # Agent dropped in the grid under uniform distribution
         # Check if the minimal expected cost is below some threshold
-        print(f"\n# Agent dropped uniformly in the line\n"
+        print(f"\n# Agent dropped uniformly in the grid\n"
               f"# Objective: check if the minimal expected cost is below some threshold '{threshold}'")
 
         # Generate the sum of expected reward variables for non-target states (uniform distribution)
@@ -208,19 +249,22 @@ class LineSSPChain:
         gc.collect()
         pass
 
+
 if __name__ == "__main__":
     import sys
 
     if len(sys.argv) >= 6:
-        size = int(sys.argv[1])
-        goal = int(sys.argv[2])
-        budget = int(sys.argv[3])
-        threshold = sys.argv[4]
-        det = int(sys.argv[5])
+        size_x = int(sys.argv[1])
+        size_y = int(sys.argv[2])
+        goal = int(sys.argv[3])
+        budget = int(sys.argv[4])
+        threshold = sys.argv[5]
+        det = int(sys.argv[6])
 
-        tpMC = LineSSPChain(budget, goal, size, det)
+        tpMC = GridSSPChain(budget, goal, size_x, size_y, det)
 
         tpMC.declare_variables()
+
 
         ExpRew = tpMC.expected_rewards
         X = tpMC.strategy_rates
@@ -228,10 +272,10 @@ if __name__ == "__main__":
 
         pomdp_constraints = tpMC.extend_fully_observable_pomdp_constraints(ExpRew)
         cost_constraints = tpMC.build_cost_reward_equations(ExpRew, X, Y)
-        threshold_constraint = tpMC.build_threshold_constraint(ExpRew, threshold, )
+        threshold_constraint = tpMC.build_threshold_constraint(ExpRew, threshold)
         strategy_constraints = tpMC.extend_strategy_constraints(X, determinism=det == 1)
         observation_constraints = tpMC.extend_observation_constraints(Y)
-        budget_constraint = tpMC.build_budget_constraint(ExpRew, budget)
+        budget_constraint = tpMC.build_budget_constraint(Y, budget)
 
         solver = tpMC.solver
         solver.add(pomdp_constraints)
@@ -246,8 +290,5 @@ if __name__ == "__main__":
         try:
             result = tpMC.solve_benchmark()
             print(f" 🚀 Solve time: {result.solve_time:.4f}s")
-            # print(f"Setup time: {result.setup_time:.4f}s")
-            # print(f"Memory used: {result.memory_used / 1024 / 1024:.2f} MB")
-            # print(f"Constraints: {result.constraint_count}")
         finally:
             tpMC.cleanup()
