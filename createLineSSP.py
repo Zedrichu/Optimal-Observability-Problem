@@ -1,14 +1,5 @@
 #!/usr/bin/python3
 import sys
-import os
-import math
-from itertools import chain, combinations
-import copy
-
-
-def powerset(iterable):
-    s = list(iterable)
-    return chain.from_iterable(combinations(s, r) for r in range(len(s)+1))
 
 
 def create_line_pre(budget, target, size, threshold, det, pre):
