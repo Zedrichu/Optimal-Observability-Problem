@@ -90,7 +90,7 @@ class MazeSSPChain:
         Build basic POMDP constraints - a POMDP instance cannot perform better than the fully observable variant.
         Compute Manhattan distances between each state and the goal state based on the maze topology.
         """
-        print('#A POMDP instance cannot perform better than the fully observable variant\n')
+        print('\n#A POMDP instance cannot perform better than the fully observable variant')
 
         # Maze-specific bounds calculation
         pomdp_bounds = []
@@ -103,7 +103,8 @@ class MazeSSPChain:
             else:
                 column = (s - self.width) % 3 * (self.width // 2)
                 row = (s - self.width) // 3 + 1
-                bound_value = abs(column - goal_column) + abs(row - goal_height)
+                diff = int(goal_column != column)
+                bound_value = abs(column - goal_column) + abs(row - goal_height + 2 * goal_height * diff)
             pomdp_bounds.append(exp_rewards[s] >= bound_value)
 
     def navigate(self, state: int, action_idx: int) -> int:
@@ -139,13 +140,15 @@ class MazeSSPChain:
         for s in range(self.size):
             if s == self.goal:
                 cost_equations.append(ExpRew[s] == 0)
-            else:
-                equation = 1
-                for act in range(len(self.actions)):
-                    strategy = (1 - Y[s]) * X[-1][act] + Y[s] * X[s][act]
-                    next_state = self.navigate(s, act)
-                    equation += strategy * ExpRew[next_state]
-                cost_equations.append(ExpRew[s] == equation)
+                continue
+            equation = 1
+            for act in range(len(self.actions)):
+                # After the goal state, the index is decremented (offset from states)
+                idx = s - 1 if s > self.goal else s
+                strategy = (1 - Y[idx]) * X[-1][act] + Y[idx] * X[idx][act]
+                next_state = self.navigate(s, act)
+                equation += strategy * ExpRew[next_state]
+            cost_equations.append(ExpRew[s] == equation)
         self.console.print(cost_equations)
         return cost_equations
 

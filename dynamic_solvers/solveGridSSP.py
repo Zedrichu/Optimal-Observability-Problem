@@ -141,13 +141,15 @@ class GridSSPChain:
         for s in range(self.size):
             if s == self.goal:
                 cost_equations.append(ExpRew[s] == 0)
-            else:
-                equation = 1
-                for act in range(len(self.actions)):
-                    strategy = (1 - Y[s]) * X[-1][act] + Y[s] * X[s][act]
-                    next_state = self.navigate(s, act)
-                    equation += strategy * ExpRew[next_state]
-                cost_equations.append(ExpRew[s] == equation)
+                continue
+            equation = 1
+            for act in range(len(self.actions)):
+                # After the goal state, the index is decremented (offset from states)
+                idx = s - 1 if s > self.goal else s
+                strategy = (1 - Y[idx]) * X[-1][act] + Y[idx] * X[idx][act]
+                next_state = self.navigate(s, act)
+                equation += strategy * ExpRew[next_state]
+            cost_equations.append(ExpRew[s] == equation)
         self.console.print(cost_equations)
         return cost_equations
 

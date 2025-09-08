@@ -80,7 +80,7 @@ class LineSSPChain:
         """
         Build basic POMDP constraints - a POMDP instance cannot perform better than the fully observable variant.
         """
-        print('#A POMDP instance cannot perform better than the fully observable variant\n')
+        print('\n#A POMDP instance cannot perform better than the fully observable variant')
         pomdp_bounds = [exp_rewards[s] >= abs(self.goal - s) for s in range(self.size)]
         self.console.print(pomdp_bounds)
         return pomdp_bounds
@@ -96,16 +96,18 @@ class LineSSPChain:
         # Expected cost/reward equations from each world state
         print("# Expected cost/reward equations from each world state")
         cost_equations = []
-        for s in range(self.size - 1):
+        for s in range(self.size):
             if s == self.goal:
                 cost_equations.append(ExpRew[s] == 0)
-            else:
-                equation = 1
-                for act in range(len(self.actions)):
-                    strategy = (1 - Y[s]) * X[-1][act] + Y[s] * X[s][act]
-                    next_state = self.navigate(s, act)
-                    equation += strategy * ExpRew[next_state]
-                cost_equations.append(ExpRew[s] == equation)
+                continue
+            equation = 1
+            for act in range(len(self.actions)):
+                # After the goal state, the index is decremented (offset from states)
+                idx = s - 1 if s > self.goal else s
+                strategy = (1 - Y[idx]) * X[-1][act] + Y[idx] * X[idx][act]
+                next_state = self.navigate(s, act)
+                equation += strategy * ExpRew[next_state]
+            cost_equations.append(ExpRew[s] == equation)
         self.console.print(cost_equations)
         return cost_equations
 
@@ -185,7 +187,7 @@ class LineSSPChain:
             self.file_results.write(str(model))
             self.file_rewards.write(str(model.eval(self.evaluator)))
         elif result == unsat:
-            print(' ❌ No solution!')
+            print(' ❌  No solution!')
             self.file_rewards.write('N/A')
         else:
             print(' ❔ Unknown!')
@@ -231,7 +233,7 @@ if __name__ == "__main__":
         threshold_constraint = tpMC.build_threshold_constraint(ExpRew, threshold, )
         strategy_constraints = tpMC.extend_strategy_constraints(X, determinism=det == 1)
         observation_constraints = tpMC.extend_observation_constraints(Y)
-        budget_constraint = tpMC.build_budget_constraint(ExpRew, budget)
+        budget_constraint = tpMC.build_budget_constraint(Y, budget)
 
         solver = tpMC.solver
         solver.add(pomdp_constraints)
