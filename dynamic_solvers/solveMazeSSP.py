@@ -18,12 +18,12 @@ class MazeSSPChain:
     Part of the OOP problem suites.
     """
 
-    def __init__(self, budget: int, goal: int, height: int, width: int, det: int):
+    def __init__(self, budget: int, goal: int, height: int, width: int, threshold: str):
         self.budget = budget
         self.goal = goal
         self.height = height
         self.width = width
-        self.det = det
+        self.threshold = threshold
 
         if width % 2 == 0:
             raise ValueError('Width must be odd for maze generation')
@@ -206,8 +206,9 @@ class MazeSSPChain:
         self.console.print(budget_constraint)
         return budget_constraint
 
-    def set_solver_options(self, result_path: str, reward_path: str):
+    def set_solver_options(self, result_path: str, reward_path: str, timeout: int):
         set_option(max_args=1000000, max_lines=100000000)
+        self.solver.set("timeout", timeout)
         self.file_results = open(result_path, "w")
         self.file_rewards = open(reward_path, "w")
         return
@@ -263,7 +264,7 @@ if __name__ == "__main__":
         threshold = sys.argv[5]
         det = int(sys.argv[6])
 
-        tpMC = MazeSSPChain(budget, goal, height, width, det)
+        tpMC = MazeSSPChain(budget, goal, height, width, threshold)
 
         tpMC.declare_variables()
 

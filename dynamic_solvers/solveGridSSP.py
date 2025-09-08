@@ -18,13 +18,13 @@ class GridSSPChain:
     Part of the OOP problem suites.
     """
 
-    def __init__(self, budget: int, goal: int, size_x: int, size_y: int, det: int):
+    def __init__(self, budget: int, goal: int, size_x: int, size_y: int, threshold: str):
         self.budget = budget
         self.goal = goal
         self.size_x = size_x
         self.size_y = size_y
         self.size = size_x * size_y
-        self.det = det
+        self.threshold = threshold
 
         self.actions = ['l', 'r', 'u', 'd']
 
@@ -207,8 +207,9 @@ class GridSSPChain:
         self.console.print(budget_constraint)
         return budget_constraint
 
-    def set_solver_options(self, result_path: str, reward_path: str):
+    def set_solver_options(self, result_path: str, reward_path: str, timeout: int):
         set_option(max_args=1000000, max_lines=100000000)
+        self.solver.set("timeout", timeout)
         self.file_results = open(result_path, "w")
         self.file_rewards = open(reward_path, "w")
         return
@@ -264,7 +265,7 @@ if __name__ == "__main__":
         threshold = sys.argv[5]
         det = int(sys.argv[6])
 
-        tpMC = GridSSPChain(budget, goal, size_x, size_y, det)
+        tpMC = GridSSPChain(budget, goal, size_x, size_y, threshold)
 
         tpMC.declare_variables()
 

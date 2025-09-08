@@ -18,11 +18,11 @@ class LineSSPChain:
     Part of the OOP problem suites.
     """
 
-    def __init__(self, budget: int, goal: int, size: int, det: int):
+    def __init__(self, budget: int, goal: int, size: int, threshold: str):
         self.budget = budget
         self.goal = goal
         self.size = size
-        self.det = det
+        self.threshold = threshold
 
         self.actions = ['l', 'r']
 
@@ -47,6 +47,11 @@ class LineSSPChain:
 
     def declare_variables(self):
         nongoal_states = [s for s in range(self.size) if s != self.goal]
+
+        # TODO! Use pre-compute dictionary for sensor mapping (especially with multiple goals)
+        # O(1) lookup - minimal overhead, big readability gain
+        # self.state_to_sensor = {state: idx for idx, state in enumerate(self.nongoal_states)}
+
         self.expected_rewards = self.compute_expected_rewards(self.size)
         self.observation_fun = self.create_observation_maps(nongoal_states)
         self.strategy_rates = self.create_policy_maps(nongoal_states)
@@ -165,8 +170,9 @@ class LineSSPChain:
         self.console.print(budget_constraint)
         return budget_constraint
 
-    def set_solver_options(self, result_path: str, reward_path: str):
+    def set_solver_options(self, result_path: str, reward_path: str, timeout: int):
         set_option(max_args=1000000, max_lines=100000000)
+        self.solver.set("timeout", timeout)
         self.file_results = open(result_path, "w")
         self.file_rewards = open(reward_path, "w")
         return
@@ -220,7 +226,7 @@ if __name__ == "__main__":
         threshold = sys.argv[4]
         det = int(sys.argv[5])
 
-        tpMC = LineSSPChain(budget, goal, size, det)
+        tpMC = LineSSPChain(budget, goal, size, threshold)
 
         tpMC.declare_variables()
 
