@@ -289,7 +289,7 @@ if __name__ == "__main__":
         solver.add(observation_constraints)
         solver.add(budget_constraint)
 
-        tpMC.set_solver_options("results.txt", "reward.txt")
+        tpMC.set_solver_options("results.txt", "reward.txt", 90000)
 
         try:
             result = tpMC.solve_benchmark()
