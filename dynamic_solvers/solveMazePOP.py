@@ -9,18 +9,18 @@ from z3 import (Solver, Context,
 
 from dynamic_solvers.BenchmarkResult import BenchmarkResult
 
-class GridPOPChain:
+class MazePOPChain:
     """
-    Z3 API solver for "Grid" instances in the POP problem with benchmarking
+    Z3 API solver for "Maze" instances in the POP problem with benchmarking
 
     Part of the OOP problem suites.
     """
-    def __init__(self, budget: int, goal: int, size: int, det: int):
+    def __init__(self, budget: int, goal: int, width: int, depth: int, det: int):
         self.budget = budget
         self.goal = goal
-        self.goal_col = goal % size
-        self.width = size
-        self.size = size*size
+        self.width = width
+        self.depth = depth
+        self.size = width + 3*(depth - 1)  # Total number of states in the maze
         self.det = det
 
         self.actions = ['l', 'r', 'u', 'd']
@@ -33,7 +33,7 @@ class GridPOPChain:
         self.solver = None
 
         self.evaluator = None
-        self.logger = Logger("GridPOPChain")
+        self.logger = Logger("MazePOPChain")
 
         self.reset()
 
@@ -85,36 +85,64 @@ class GridPOPChain:
         constraints = []
 
         print("#We cannot do better than the fully observable case")
+
+        # Maze-specific bounds calculation
+        pomdp_bounds = []
+        goal_column = self.goal if self.goal < self.width else (self.goal - self.width) % 3 * (self.width // 2)
+        goal_height = 0 if self.goal < self.width else (self.goal - self.width) // 3 + 1
         for s in range(self.size):
-            bound_value = abs(self.goal_col - s % self.width) + (abs(self.goal - s) // self.width)
-            constraints.append(exp_rewards[s]>=bound_value)
-            print(constraints[s])
+            if s < self.width:
+                bound_value = goal_height + abs(s - goal_column)
+            else:
+                column = (s - self.width) % 3 * (self.width // 2)
+                row = (s - self.width) // 3 + 1
+                diff = int(column != goal_column)
+                bound_value = abs(column - goal_column) + abs(row - goal_height + 2 * goal_height * diff)
+            constraints.append(exp_rewards[s] >= bound_value)
+        print(constraints)
         return constraints
 
     def build_cost_rewards_equations(self, ExpRew, X, Y):
         constraints = []
-
+        numbers = [i for i in range(self.size)]
         # Expected cost/reward equations
         print("# Expected cost/reward equations")
-        for s in range(0, self.size):
+
+        for s in numbers:
             if s == self.goal:
                 constraints.append(ExpRew[s] == 0)
                 continue
 
-            # Calculate next states for each direction
-            left_next = s if s % self.width == 0 else s - 1
-            right_next = s if s % self.width == self.width - 1 else s + 1
-            up_next = s if s - self.width < 0 else s - self.width
-            down_next = s if s + self.width >= self.size else s + self.width
+            # Helper function to calculate next states for maze navigation
+            def get_next_state(state, action):
+                if action == 'l':
+                    if 0 < state < width:
+                        return state - 1
+                elif action == 'r':
+                    if 0 <= state < width - 1:
+                        return state + 1
+                elif action == 'u':
+                    if state == width:
+                        return 0
+                    elif state == width + 1:
+                        return (width - 1) // 2
+                    elif state >= width + 2:
+                        return state - 3
+                else:  # action == 'd'
+                    if state == 0:
+                        return width
+                    elif state == (width - 1) // 2:
+                        return width + 1
+                    elif width <= state <= numbers[-1] - 3:
+                        return state + 3
+                return state
 
-            # Build action terms using efficient action-to-next-state mapping
-            next_states = {'l': left_next, 'r': right_next, 'u': up_next, 'd': down_next}
-
+            # Build action terms for each direction using transition tables
             action_terms = []
-            for a in range(len(self.actions)):
+            for (a, act) in enumerate(self.actions):
                 obs_strategy_terms = [Y[s][o]*X[o][a] for o in range(1, budget + 1)]
                 obs_strategy_sum = sum(obs_strategy_terms)
-                next_state = next_states[self.actions[a]]
+                next_state = get_next_state(s, act)
                 action_terms.append(obs_strategy_sum * (1 + ExpRew[next_state]))
 
             constraints.append(ExpRew[s] == sum(action_terms))
@@ -123,8 +151,8 @@ class GridPOPChain:
         return constraints
 
     def build_threshold_constraint(self, ExpRew, threshold):
-        # We are dropped uniformly in the grid
-        print("# We are dropped uniformly in the grid")
+        # We are dropped uniformly in the maze
+        print("# We are dropped uniformly in the maze")
         # We want to check if the minimal expected cost is below some threshold {threshold}
         print(f"# We want to check if the minimal expected cost is below some threshold {threshold}")
 
@@ -228,13 +256,13 @@ class GridPOPChain:
         pass
 
 
-def benchmark_grid_pomdp(budget: int, target: int, size: int,
+def benchmark_maze_pomdp(budget: int, target: int, size: int,
                          threshold: float, det: int, runs: int = 1) -> list:
     """Run multiple benchmark runs for statistical significance"""
     results = []
 
     for run in range(runs):
-        solver = GridPOPChain(budget, target, size, det)
+        solver = MazePOPChain(budget, target, size, det)
         result = solver.solve_benchmark(budget, target, size, threshold, det)
         results.append(result)
 
@@ -249,13 +277,14 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) >= 6:
-        size = int(sys.argv[1])
-        goal = int(sys.argv[2])
-        budget = int(sys.argv[3])
-        threshold = sys.argv[4]
-        det = int(sys.argv[5])
+        width = int(sys.argv[1])
+        depth = int(sys.argv[2])
+        goal = int(sys.argv[3])
+        budget = int(sys.argv[4])
+        threshold = sys.argv[5]
+        det = int(sys.argv[6])
 
-        tpMC = GridPOPChain(budget, goal, size, det)
+        tpMC = MazePOPChain(budget, goal, width, depth, det)
 
         tpMC.declare_variables()
 
