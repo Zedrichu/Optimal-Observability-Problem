@@ -9,29 +9,31 @@ from z3 import (Solver, Context,
 
 from dynamic_solvers.BenchmarkResult import BenchmarkResult
 
-class LinePOPChain:
+class MazePOPChain:
     """
-    Z3 API solver for "Line" instances in the POP problem with benchmarking
+    Z3 API solver for "Maze" instances in the POP problem with benchmarking
 
     Part of the OOP problem suites.
     """
-    def __init__(self, budget: int, goal: int, size: int, det: int):
+    def __init__(self, budget: int, goal: int, width: int, depth: int, det: int):
         self.budget = budget
         self.goal = goal
-        self.size = size
+        self.width = width
+        self.depth = depth
+        self.size = width + 3*(depth - 1)  # Total number of states in the maze
         self.det = det
 
-        self.actions = ['l', 'r']
+        self.actions = ['l', 'r', 'u', 'd']
 
-        self.expected_rewards = None
-        self.observation_fun = None
-        self.strategy_rates = None
+        self.exp_rew = None
+        self.obs_fun = None
+        self.strategy = None
 
         self.ctx = None
         self.solver = None
 
         self.evaluator = None
-        self.logger = Logger("LinePOPChain")
+        self.logger = Logger("MazePOPChain")
 
         self.reset()
 
@@ -42,9 +44,9 @@ class LinePOPChain:
         self.solver = Solver(ctx=self.ctx)
 
     def declare_variables(self):
-        self.expected_rewards = self.compute_expected_rewards(self.size)
-        self.observation_fun = self.create_observation_maps()
-        self.strategy_rates = self.create_policy_maps()
+        self.exp_rew = self.compute_expected_rewards(self.size)
+        self.obs_fun = self.create_observation_maps()
+        self.strategy = self.create_policy_maps()
 
     def compute_expected_rewards(self, states) -> List[z3.ArithRef | None]:
         # Expected cost/reward of reaching the goal from each corresponding state.
@@ -66,9 +68,9 @@ class LinePOPChain:
         return state_to_observation
 
     def create_policy_maps(self) -> List[List[z3.ArithRef | None]]:
-        # Action rates of randomized strategies
-        observation_to_action = [[None for _ in self.actions] for _ in range(self.budget + 1)]
+        # Rates of randomized strategies
         print("# Rates of randomized strategies")
+        observation_to_action = [[None for _ in self.actions] for _ in range(self.budget + 1)]
         for s in range(1, self.budget + 1):
             for a in range(len(self.actions)):
                 observation_to_action[s][a] = Real(f'xo{str(s)}{self.actions[a]}', self.ctx)
@@ -83,71 +85,93 @@ class LinePOPChain:
         constraints = []
 
         print("#We cannot do better than the fully observable case")
-        for i in range(self.size):
-            # file.write(f'pi{str(i)} >= {str(abs(goal - i))}, ')
-            constraints.append(exp_rewards[i] >= abs(self.goal - i))
-            print(f"{exp_rewards[i]} >= {abs(self.goal - i)}")
 
+        # Maze-specific bounds calculation
+        pomdp_bounds = []
+        goal_column = self.goal if self.goal < self.width else (self.goal - self.width) % 3 * (self.width // 2)
+        goal_height = 0 if self.goal < self.width else (self.goal - self.width) // 3 + 1
+        for s in range(self.size):
+            if s < self.width:
+                bound_value = goal_height + abs(s - goal_column)
+            else:
+                column = (s - self.width) % 3 * (self.width // 2)
+                row = (s - self.width) // 3 + 1
+                diff = int(column != goal_column)
+                bound_value = abs(column - goal_column) + abs(row - goal_height + 2 * goal_height * diff)
+            constraints.append(exp_rewards[s] >= bound_value)
+        print(constraints)
         return constraints
 
-    def navigate(self, state: int, action_idx: int) -> int:
-        action = self.actions[action_idx]
-        if action == 'l':
-            return max(state - 1, 0)
-        else: # action == 'r'
-            return min(state + 1, self.size - 1)
-
-    def build_cost_reward_equations(self, ExpRew, X, Y):
+    def build_cost_rewards_equations(self, ExpRew, X, Y):
         constraints = []
-
+        numbers = [i for i in range(self.size)]
         # Expected cost/reward equations
         print("# Expected cost/reward equations")
-        for s in range(0, self.size):
+
+        for s in numbers:
             if s == self.goal:
                 constraints.append(ExpRew[s] == 0)
                 continue
 
-            # Build cost equation for state i
-            cost_expr = 1
-            for act in range(len(self.actions)):
-                # Probability of taking action `a` in state `i`
-                action_prob = 0
-                for o in range(1, self.budget + 1):
-                    action_prob += Y[s][o] * X[o][act]
+            # Helper function to calculate next states for maze navigation
+            def get_next_state(state, action):
+                if action == 'l':
+                    if 0 < state < width:
+                        return state - 1
+                elif action == 'r':
+                    if 0 <= state < width - 1:
+                        return state + 1
+                elif action == 'u':
+                    if state == width:
+                        return 0
+                    elif state == width + 1:
+                        return (width - 1) // 2
+                    elif state >= width + 2:
+                        return state - 3
+                else:  # action == 'd'
+                    if state == 0:
+                        return width
+                    elif state == (width - 1) // 2:
+                        return width + 1
+                    elif width <= state <= numbers[-1] - 3:
+                        return state + 3
+                return state
 
-                # Next state after action
-                next_state = self.navigate(s, act)
+            # Build action terms for each direction using transition tables
+            action_terms = []
+            for (a, act) in enumerate(self.actions):
+                obs_strategy_terms = [Y[s][o]*X[o][a] for o in range(1, budget + 1)]
+                obs_strategy_sum = sum(obs_strategy_terms)
+                next_state = get_next_state(s, act)
+                action_terms.append(obs_strategy_sum * (1 + ExpRew[next_state]))
 
-                # Additional action-based component to cost expression
-                cost_expr += action_prob * ExpRew[next_state]
-
-            constraints.append(ExpRew[s] == cost_expr)
+            constraints.append(ExpRew[s] == sum(action_terms))
 
         print(constraints)
         return constraints
 
     def build_threshold_constraint(self, ExpRew, threshold):
-        # We are dropped uniformly in the line
-        print("# We are dropped uniformly in the line")
+        # We are dropped uniformly in the maze
+        print("# We are dropped uniformly in the maze")
         # We want to check if the minimal expected cost is below some threshold {threshold}
         print(f"# We want to check if the minimal expected cost is below some threshold {threshold}")
 
-        sum_rewards = sum(ExpRew[i] for i in range(size) if i != self.goal)
+        sum_rewards = sum(ExpRew[i] for i in range(self.size) if i != self.goal)
         sign_idx = threshold.find('<')
         if sign_idx == -1:
             return ValueError("No sign in threshold")
         sign = (lambda x, y: x <= y) if threshold[sign_idx + 1] == '=' else (lambda x, y: x < y)
         nominator, denominator = map(int, re.findall(r"\d+", threshold))
 
-        self.evaluator = sum_rewards * Q(1, size - 1, self.ctx)
-        print(sign(sum_rewards * Q(1, size - 1, self.ctx), Q(nominator, denominator, self.ctx)))
+        self.evaluator = sum_rewards * Q(1, self.size - 1, self.ctx)
+        print(sign(sum_rewards * Q(1, self.size - 1, self.ctx), Q(nominator, denominator, self.ctx)))
 
-        constraint = sign(sum_rewards * Q(1, size - 1, self.ctx), Q(nominator, denominator, self.ctx))
+        constraint = sign(sum_rewards * Q(1, self.size - 1, self.ctx), Q(nominator, denominator, self.ctx))
         return constraint
 
     def extend_strategy_constraints(self, X, determinism: bool):
-        # Randomized strategies (proper probability distributions)
-        print('# Randomized strategies (proper probability distributions)')
+        # Randomised strategies (proper probability distributions)
+        print('# Randomised strategies (proper probability distributions)')
         constraints = []
         act_no = len(self.actions)
         for o in range(1, budget + 1):
@@ -170,7 +194,7 @@ class LinePOPChain:
         # Observation function constraints - every state should be mapped to some observable class
         print("# Observation function constraints - every state should be mapped to some observable class")
         constraints = []
-        for s in range(0, size):
+        for s in range(0, self.size):
             if s == self.goal:
                 continue
             for o in range(1, budget + 1):
@@ -178,7 +202,7 @@ class LinePOPChain:
 
         print('# Every state should be mapped to exactly one equivalence class\n')
 
-        for s in range(0, size):
+        for s in range(0, self.size):
             if s == self.goal:
                 continue
             sum_state_obs = sum(Y[s][o] for o in range(1, budget + 1))
@@ -204,14 +228,14 @@ class LinePOPChain:
 
         if result == sat:
             model = self.solver.model()
-            print(' ✅ Solution found!')
+            print('✅Solution found!')
             self.file_results.write(str(model))
             self.file_rewards.write(str(model.eval(self.evaluator)))
         elif result == unsat:
-            print(' ❌ No solution!')
+            print('❌No solution!')
             self.file_rewards.write('N/A')
         else:
-            print(' ❔ Unknown!')
+            print('❔Unknown!')
 
         return BenchmarkResult(
             solve_time=solve_time,
@@ -226,19 +250,19 @@ class LinePOPChain:
             self.file_rewards.close()
 
         # Clean up Z3 objects
-        del self.solver
-        del self.ctx
+        del tpMC.solver
+        del tpMC.ctx
         gc.collect()
         pass
 
 
-def benchmark_line_pomdp(budget: int, target: int, size: int,
+def benchmark_maze_pomdp(budget: int, target: int, size: int,
                          threshold: float, det: int, runs: int = 1) -> list:
     """Run multiple benchmark runs for statistical significance"""
     results = []
 
     for run in range(runs):
-        solver = LinePOPChain(budget, target, size, det)
+        solver = MazePOPChain(budget, target, size, det)
         result = solver.solve_benchmark(budget, target, size, threshold, det)
         results.append(result)
 
@@ -253,24 +277,25 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) >= 6:
-        size = int(sys.argv[1])
-        goal = int(sys.argv[2])
-        budget = int(sys.argv[3])
-        threshold = sys.argv[4]
-        det = int(sys.argv[5])
+        width = int(sys.argv[1])
+        depth = int(sys.argv[2])
+        goal = int(sys.argv[3])
+        budget = int(sys.argv[4])
+        threshold = sys.argv[5]
+        det = int(sys.argv[6])
 
-        tpMC = LinePOPChain(budget, goal, size, det)
+        tpMC = MazePOPChain(budget, goal, width, depth, det)
 
         tpMC.declare_variables()
 
         solver = tpMC.solver
 
-        ExpRew = tpMC.expected_rewards
-        X = tpMC.strategy_rates
-        Y = tpMC.observation_fun
+        ExpRew = tpMC.exp_rew
+        X = tpMC.strategy
+        Y = tpMC.obs_fun
 
         bound_constraints = tpMC.extend_full_obs_pomdp_constraints(ExpRew)
-        cost_constraints = tpMC.build_cost_reward_equations(ExpRew, X, Y)
+        cost_constraints = tpMC.build_cost_rewards_equations(ExpRew, X, Y)
         threshold_constraint = tpMC.build_threshold_constraint(ExpRew, threshold)
         strategy_constraints = tpMC.extend_strategy_constraints(X, determinism=det == 1)
         observation_constraints = tpMC.extend_observation_constraints(Y)
@@ -284,7 +309,7 @@ if __name__ == "__main__":
 
         try:
             result = tpMC.solve_benchmark()
-            print(f" 🚀 Solve time: {result.solve_time:.4f}s")
+            print(f"🚀Solve time: {result.solve_time:.4f}s")
             # print(f"Setup time: {result.setup_time:.4f}s")
             # print(f"Memory used: {result.memory_used / 1024 / 1024:.2f} MB")
             # print(f"Constraints: {result.constraint_count}")
