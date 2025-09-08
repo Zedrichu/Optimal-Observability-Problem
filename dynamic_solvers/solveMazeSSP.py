@@ -1,30 +1,34 @@
 import gc
 import re
 import time
-from rich.console import Console
 from logging import Logger
 from typing import List
-from z3 import (Solver, Context,
-                z3, set_option, sat, unsat,
+from rich.console import Console
+from z3 import (Context, Solver,
+                z3, sat, unsat, set_option,
                 Real, Q, Or)
 
 from dynamic_solvers.BenchmarkResult import BenchmarkResult
 
 
-class GridSSPChain:
+class MazeSSPChain:
     """
-    Z3 API solver for "Grid" instances in the SSP problem with benchmarking
+    Z3 API solver for "Maze" instances in the SSP problem with benchmarking
 
     Part of the OOP problem suites.
     """
 
-    def __init__(self, budget: int, goal: int, size_x: int, size_y: int, det: int):
+    def __init__(self, budget: int, goal: int, height: int, width: int, det: int):
         self.budget = budget
         self.goal = goal
-        self.size_x = size_x
-        self.size_y = size_y
-        self.size = size_x * size_y
+        self.height = height
+        self.width = width
         self.det = det
+
+        if width % 2 == 0:
+            raise ValueError('Width must be odd for maze generation')
+
+        self.size = self.width + (self.height - 1) * 3
 
         self.actions = ['l', 'r', 'u', 'd']
 
@@ -37,7 +41,7 @@ class GridSSPChain:
 
         self.evaluator = None
         self.console = Console()
-        self.logger = Logger("GridSSPChain")
+        self.logger = Logger("MazeSSPChain")
 
         self.file_results = None
         self.file_rewards = None
@@ -84,55 +88,49 @@ class GridSSPChain:
     def extend_fully_observable_pomdp_constraints(self, exp_rewards: List[z3.ArithRef]) -> List[z3.BoolRef]:
         """
         Build basic POMDP constraints - a POMDP instance cannot perform better than the fully observable variant.
-        Compute Manhattan distances between each state and the goal state based on the grid topology.
+        Compute Manhattan distances between each state and the goal state based on the maze topology.
         """
         print('#A POMDP instance cannot perform better than the fully observable variant\n')
 
-        # Grid-specific bounds calculation
-        goal_column = self.goal % self.size_x
+        # Maze-specific bounds calculation
         pomdp_bounds = []
-        count = 0
+        goal_column = self.goal if self.goal < self.width \
+                                else (self.goal - self.width) % 3 * (self.width // 2)
+        goal_height = 0 if self.goal < self.width else (self.goal - self.width) // 3 + 1
         for s in range(self.size):
-            column = s % self.size_x
-            if column == goal_column:  # same column as target
-                bound_value = abs(self.goal - s) // self.size_x
+            if s < self.width:
+                bound_value = goal_height + abs(s - goal_column)
             else:
-                bound_value = abs(goal_column - column) + (abs(self.goal - s) // self.size_x)
+                column = (s - self.width) % 3 * (self.width // 2)
+                row = (s - self.width) // 3 + 1
+                bound_value = abs(column - goal_column) + abs(row - goal_height)
             pomdp_bounds.append(exp_rewards[s] >= bound_value)
-            count += bound_value
-
-        self.console.print(pomdp_bounds)
-        return pomdp_bounds
-
-    # size_x = 4; size_y = 3; column = 11 % 4 = 3
-    # 3 -> 3 % 4 == 3 -> (11 - 3) // 4 == 2
-    # 5 -> 5 % 4 == 1 -> (3 - 1) + 6 // 4 = 2 + 1 = 3
-
-    # size_x -> size_y |
-    # 0 1 2 3          v  5 4 3 2
-    # 4 5 6 7             4 3 2 1
-    # 8 9 10 11           3 2 1 0
 
     def navigate(self, state: int, action_idx: int) -> int:
-        """Navigate in 2D grid based on action"""
+        """Navigate in 2D maze based on action"""
         action = self.actions[action_idx]
-        x = state % self.size_x
-        y = state // self.size_x
 
-        if action == 'l':  # left
-            if x != 0:
+        if action == 'l':
+            if 0 < state < self.width:
                 return state - 1
-        elif action == 'r':  # right
-            if x != self.size_x - 1:
+        elif action == 'r':
+            if 0 <= state < self.width - 1:
                 return state + 1
-        elif action == 'u':  # up
-            if y != 0:
-                return state - self.size_x
-        else:  # action == 'd' (down)
-            if y != self.size_y - 1:
-                return state + self.size_x
+        elif action == 'u':
+            if state == self.width:
+                return 0
+            elif state == self.width + 1:
+                return (self.width - 1) // 2
+            elif state >= self.width + 2:
+                return state - 3
+        else:  # action == 'd'
+            if state == 0:
+                return self.width
+            elif state == (self.width - 1) // 2:
+                return self.width + 1
+            elif self.width <= state < self.size - 3:
+                return state + 3
         return state
-
 
     def build_cost_reward_equations(self, ExpRew, X, Y):
         # Expected cost/reward equations from each world state
@@ -152,10 +150,10 @@ class GridSSPChain:
         return cost_equations
 
     def build_threshold_constraint(self, ExpRew, threshold: str):
-        # Agent dropped in the grid under uniform distribution
+        # Agent dropped in the maze under uniform distribution
         # Check if the minimal expected cost is below some threshold
-        print(f"\n# Agent dropped uniformly in the grid\n"
-              f"# Objective: check if the minimal expected cost is below some threshold '{threshold}'")
+        print(f"\n# Agent dropped uniformly in the maze"
+              f"\n# Objective: check if the minimal expected cost is below some threshold '{threshold}'")
 
         # Generate the sum of expected reward variables for non-target states (uniform distribution)
         sumExpRew = sum([ExpRew[s] for s in range(self.size) if s != self.goal])
@@ -254,18 +252,19 @@ class GridSSPChain:
 if __name__ == "__main__":
     import sys
 
-    if len(sys.argv) >= 6:
-        size_x = int(sys.argv[1])
-        size_y = int(sys.argv[2])
+    if len(sys.argv) >= 7:
+        height = int(sys.argv[1])
+        width = int(sys.argv[2])
         goal = int(sys.argv[3])
         budget = int(sys.argv[4])
         threshold = sys.argv[5]
         det = int(sys.argv[6])
 
-        tpMC = GridSSPChain(budget, goal, size_x, size_y, det)
+        tpMC = MazeSSPChain(budget, goal, height, width, det)
 
         tpMC.declare_variables()
 
+        solver = tpMC.solver
 
         ExpRew = tpMC.expected_rewards
         X = tpMC.strategy_rates
@@ -278,7 +277,6 @@ if __name__ == "__main__":
         observation_constraints = tpMC.extend_observation_constraints(Y)
         budget_constraint = tpMC.build_budget_constraint(Y, budget)
 
-        solver = tpMC.solver
         solver.add(pomdp_constraints)
         solver.add(cost_constraints)
         solver.add(threshold_constraint)
