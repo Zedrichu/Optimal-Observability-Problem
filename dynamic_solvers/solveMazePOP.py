@@ -8,6 +8,9 @@ class MazeTPMC(POPSpec):
         size = width + 3 * (depth - 1)
         super().__init__(budget, size, goal)
 
+        if width % 2 == 0:
+            raise ValueError('Width must be odd for maze generation')
+
         self.width = width
         self.depth = depth
         self.actions = ['l', 'r', 'u', 'd']
@@ -42,6 +45,7 @@ class MazeTPMC(POPSpec):
         return constraints
 
     def navigate(self, state: int, action_index: int) -> int:
+        """Navigate in 2D maze based on action"""
         action = self.actions[action_index]
         if action == 'l':
             if 0 < state < self.width:

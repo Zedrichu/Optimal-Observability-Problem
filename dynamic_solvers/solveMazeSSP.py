@@ -1,102 +1,40 @@
-import gc
 import re
-import time
-from logging import Logger
 from typing import List
-from rich.console import Console
-from z3 import (Context, Solver,
-                z3, sat, unsat, set_option,
-                Real, Q, Or)
 
-from dynamic_solvers.BenchmarkResult import BenchmarkResult
+from z3 import (z3, Q, Or)
+
+from dynamic_solvers.SSPSpec import SSPSpec
 
 
-class MazeSSPChain:
-    """
-    Z3 API solver for "Maze" instances in the SSP problem with benchmarking
-
-    Part of the OOP problem suites.
-    """
-
-    def __init__(self, budget: int, goal: int, height: int, width: int, threshold: str):
-        self.budget = budget
-        self.goal = goal
-        self.height = height
-        self.width = width
-        self.threshold = threshold
+class MazeTMPC(SSPSpec):
+    def __init__(self, budget: int, goal: int, width: int, depth: int, threshold: str):
+        size = width + 3 * (depth - 1)
+        super().__init__(budget, size, goal)
 
         if width % 2 == 0:
             raise ValueError('Width must be odd for maze generation')
 
-        self.size = self.width + (self.height - 1) * 3
-
+        self.width = width
+        self.depth = depth
         self.actions = ['l', 'r', 'u', 'd']
-
-        self.expected_rewards = None
-        self.observation_fun = None
-        self.strategy_rates = None
-
-        self.ctx = None
-        self.solver = None
-
-        self.evaluator = None
-        self.console = Console()
-        self.logger = Logger("MazeSSPChain")
-
-        self.file_results = None
-        self.file_rewards = None
+        self.threshold = threshold
 
         self.reset()
 
-    def reset(self):
-        """Reset for fresh solving context"""
-        gc.collect()  # Clean memory before starting
-        self.ctx = Context()
-        self.solver = Solver(ctx=self.ctx)
-
-    def declare_variables(self):
-        nongoal_states = [s for s in range(self.size) if s != self.goal]
-        self.expected_rewards = self.compute_expected_rewards(self.size)
-        self.observation_fun = self.create_observation_maps(nongoal_states)
-        self.strategy_rates = self.create_policy_maps(nongoal_states)
-
-    def compute_expected_rewards(self, size: int) -> List[z3.ArithRef]:
-        # Expected cost/reward of reaching the goal from each corresponding state.
-        print("# Expected cost/reward of reaching the goal from each corresponding state.")
-        expected_rewards = [Real(f'pi{s}', self.ctx) for s in range(size)]
-        self.console.print(expected_rewards)
-        return expected_rewards
-
-    def create_observation_maps(self, sensor_states: List[int]) -> List[z3.ArithRef]:
-        # Choice of observations on each non-goal state (state sensors)
-        # e.g. `ys0 == 1` means that in state 0 the sensor is on, `ys0 == 0` - state sensor is off
-        print("# Choice of observation on each non-goal state (state sensors that are on/off)")
-        state_to_observation = [Real(f'ys{s}', self.ctx) for s in sensor_states]
-        self.console.print(state_to_observation)
-        return state_to_observation
-
-    def create_policy_maps(self, sensor_states: List[int]) -> List[List[z3.ArithRef]]:
-        # Action rates of randomized strategies per state (when the sensor is on)
-        print("# Action rates of randomized strategies per state (when sensor is on)")
-        sensor_to_action = [[Real(f'xo{s}{act}', self.ctx) for act in self.actions] for s in sensor_states]
-        # Default strategy variables per action (when no sensor is observed - unknown state)
-        default_policy = [Real(f'x⊥{act}', self.ctx) for act in self.actions]
-        sensor_to_action.append(default_policy)
-        self.console.print(sensor_to_action)
-        return sensor_to_action
-
-    def extend_fully_observable_pomdp_constraints(self, exp_rewards: List[z3.ArithRef]) -> List[z3.BoolRef]:
+    def build_fully_observable_constraints(self) -> List[z3.BoolRef]:
         """
         Build basic POMDP constraints - a POMDP instance cannot perform better than the fully observable variant.
-        Compute Manhattan distances between each state and the goal state based on the maze topology.
+        Compute shortest-path distances between each state and the goal state based on the maze topology.
         """
         print('\n#A POMDP instance cannot perform better than the fully observable variant')
+        constraints = []
+
+        goal_column = self.goal if self.goal < self.width \
+            else (self.goal - self.width) % 3 * (self.width // 2)
+        goal_height = 0 if self.goal < self.width \
+            else (self.goal - self.width) // 3 + 1
 
         # Maze-specific bounds calculation
-        pomdp_bounds = []
-        goal_column = self.goal if self.goal < self.width \
-                                else (self.goal - self.width) % 3 * (self.width // 2)
-        goal_height = 0 if self.goal < self.width else (self.goal - self.width) // 3 + 1
         for s in range(self.size):
             if s < self.width:
                 bound_value = goal_height + abs(s - goal_column)
@@ -105,7 +43,10 @@ class MazeSSPChain:
                 row = (s - self.width) // 3 + 1
                 diff = int(goal_column != column)
                 bound_value = abs(column - goal_column) + abs(row - goal_height + 2 * goal_height * diff)
-            pomdp_bounds.append(exp_rewards[s] >= bound_value)
+            constraints.append(self.ExpRew[s] >= bound_value)
+
+        self.console.print(constraints)
+        return constraints
 
     def navigate(self, state: int, action_idx: int) -> int:
         """Navigate in 2D maze based on action"""
@@ -192,79 +133,19 @@ class MazeSSPChain:
         self.console.print(constraints)
         return constraints
 
-    def extend_observation_constraints(self, Y: List[z3.ArithRef]):
-        # Observation function constraints - every state should be mapped to some observable class
-        print("# Observation function constraints - every state should be mapped to some observable class")
-        constraints = [Or(sensor == 0, sensor == 1) for sensor in Y]
-        self.console.print(constraints)
-        return constraints
-
-    def build_budget_constraint(self, Y: List[z3.ArithRef], budget: int):
-        # Budget constraint - total sensors used <= budget
-        print("# Budget constraint - total no. of sensors activate <= budget")
-        budget_constraint = sum(Y) <= budget # ?? original mentions == budget
-        self.console.print(budget_constraint)
-        return budget_constraint
-
-    def set_solver_options(self, result_path: str, reward_path: str, timeout: int):
-        set_option(max_args=1000000, max_lines=100000000)
-        self.solver.set("timeout", timeout)
-        self.file_results = open(result_path, "w")
-        self.file_rewards = open(reward_path, "w")
-        return
-
-    def solve_benchmark(self) -> BenchmarkResult:
-
-        # Solving phase timing for benchmarks
-        solve_start = time.perf_counter()
-        result = self.solver.check()
-        solve_time = time.perf_counter() - solve_start
-
-        # Get model if satisfiable
-        model = self.solver.model() if result == sat else None
-
-        if result == sat:
-            model = self.solver.model()
-            print(' ✅  Solution found!')
-            self.file_results.write(str(model))
-            self.file_rewards.write(str(model.eval(self.evaluator)))
-        elif result == unsat:
-            print(' ❌ No solution!')
-            self.file_rewards.write('N/A')
-        else:
-            print(' ❔ Unknown!')
-
-        return BenchmarkResult(
-            solve_time=solve_time,
-            result=result,
-            model=model
-        )
-
-    def cleanup(self):
-        if self.file_results:
-            self.file_results.close()
-        if self.file_rewards:
-            self.file_rewards.close()
-
-        # Clean up Z3 objects
-        del self.solver
-        del self.ctx
-        gc.collect()
-        pass
-
 
 if __name__ == "__main__":
     import sys
 
     if len(sys.argv) >= 7:
-        height = int(sys.argv[1])
-        width = int(sys.argv[2])
+        width = int(sys.argv[1])
+        depth = int(sys.argv[2])
         goal = int(sys.argv[3])
         budget = int(sys.argv[4])
         threshold = sys.argv[5]
         det = int(sys.argv[6])
 
-        tpMC = MazeSSPChain(budget, goal, height, width, threshold)
+        tpMC = MazeTMPC(budget, goal, width, depth, threshold)
 
         tpMC.declare_variables()
 
@@ -274,11 +155,11 @@ if __name__ == "__main__":
         X = tpMC.strategy_rates
         Y = tpMC.observation_fun
 
-        pomdp_constraints = tpMC.extend_fully_observable_pomdp_constraints(ExpRew)
+        pomdp_constraints = tpMC.build_fully_observable_constraints(ExpRew)
         cost_constraints = tpMC.build_cost_reward_equations(ExpRew, X, Y)
         threshold_constraint = tpMC.build_threshold_constraint(ExpRew, threshold)
         strategy_constraints = tpMC.extend_strategy_constraints(X, determinism=det == 1)
-        observation_constraints = tpMC.extend_observation_constraints(Y)
+        observation_constraints = tpMC.build_observation_constraints(Y)
         budget_constraint = tpMC.build_budget_constraint(Y, budget)
 
         solver.add(pomdp_constraints)
