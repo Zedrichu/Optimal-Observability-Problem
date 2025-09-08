@@ -1,4 +1,4 @@
-from z3 import *
+from z3 import CheckSatResult, ModelRef
 from typing import Optional
 from dataclasses import dataclass
 

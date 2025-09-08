@@ -1,14 +1,5 @@
 #!/usr/bin/python3
 import sys
-import os
-import math
-from itertools import chain, combinations
-import copy
-
-
-def powerset(iterable):
-    s = list(iterable)
-    return chain.from_iterable(combinations(s, r) for r in range(len(s)+1))
 
 
 def create_line_pre(budget, target, size, threshold, det, pre):
@@ -33,7 +24,7 @@ def create_line_pre(budget, target, size, threshold, det, pre):
 	sensor_states = []
 	for s in range(size):
 		if s != target:
-			sensor_vars.append(f'y{s} = Real(\'y{s}\')')
+			sensor_vars.append(f'ys{s} = Real(\'ys{s}\')')
 			sensor_states.append(s)
 
 	file.write('\n'.join(sensor_vars) + '\n')
@@ -74,8 +65,8 @@ def create_line_pre(budget, target, size, threshold, det, pre):
 			left_next = max(s-1, 0)
 			right_next = min(s+1, size-1)
 
-			left_strategy = f'((1 - y{s})*xol + y{s}*xo{s}l)'
-			right_strategy = f'((1 - y{s})*xor + y{s}*xo{s}r)'
+			left_strategy = f'((1 - ys{s})*xol + ys{s}*xo{s}l)'
+			right_strategy = f'((1 - ys{s})*xor + ys{s}*xo{s}r)'
 
 			equation = f'pi{s} == {left_strategy} * (1 + pi{left_next}) + {right_strategy} * (1 + pi{right_next})'
 			cost_equations.append(equation)
@@ -132,11 +123,11 @@ def create_line_pre(budget, target, size, threshold, det, pre):
 	file.write('# y is a function that should map every state N to some observable class M\n')
 
 	# Binary constraints for sensor variables
-	sensor_binary_constraints = [f'Or(y{s} == 0, y{s} == 1),' for s in sensor_states]
+	sensor_binary_constraints = [f'Or(ys{s} == 0, ys{s} == 1),' for s in sensor_states]
 	file.write('\n'.join(sensor_binary_constraints) + '\n')
 
 	# Budget constraint - total sensors used <= budget
-	sensor_sum = ' + '.join([f'y{s}' for s in sensor_states])
+	sensor_sum = ' + '.join([f'ys{s}' for s in sensor_states])
 	file.write(f'{sensor_sum} == {budget}')
 
 	file.write('\n)\n')
