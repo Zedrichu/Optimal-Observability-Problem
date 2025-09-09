@@ -1,6 +1,6 @@
 import gc
 import time
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import List
 
 from rich.console import Console
@@ -29,6 +29,14 @@ class SSPSpec(ABC):
         self.file_rewards = None
         self.file_results = None
         self.console = Console()
+
+    @abstractmethod
+    def build_fully_observable_constraints(self) -> List[z3.BoolRef]:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def navigate(self, state: int, action_index: int) -> int:
+        raise NotImplementedError()
 
     def reset(self):
         """Reset for fresh solving context"""
@@ -71,7 +79,8 @@ class SSPSpec(ABC):
         self.console.print(sensor_to_action)
         return sensor_to_action
 
-    def build_observation_constraints(self):
+
+    def build_observation_constraints(self) -> List[z3.BoolRef]:
         # Observation function constraints - every state should be mapped to some observable class
         # For SSP, 2 observation classes exist: activated sensor or unknown
         print(f"\n# Observation function constraints - every state should be mapped to some observable class"
@@ -80,7 +89,7 @@ class SSPSpec(ABC):
         self.console.print(constraints)
         return constraints
 
-    def build_budget_constraint(self):
+    def build_budget_constraint(self) -> z3.BoolRef:
         # Budget constraint - total sensors used <= budget
         print("# Budget constraint - total no. of sensors activate <= budget")
         constraint = sum(self.Y) <= self.budget # ?? original mentions == budget

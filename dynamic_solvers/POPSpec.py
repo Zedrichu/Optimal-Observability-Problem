@@ -85,10 +85,10 @@ class POPSpec(ABC):
                 equations.append(self.ExpRew[s] == 0)
                 continue
 
-            # Build action terms for each direction using transition function
+            # Build action terms for each direction using a transition function
             action_terms = []
             for a in range(len(self.actions)):
-                # Decrement the index after processing the goal state
+                # Decrement the state index after processing the goal state
                 idx = s - 1 if s > self.goal else s
 
                 obs_strategy_terms = [self.Y[idx][o] * self.X[o][a] for o in range(self.budget)]
@@ -101,10 +101,10 @@ class POPSpec(ABC):
         return equations
 
     def build_threshold_constraint(self, threshold: str) -> bool:
-        # We are dropped uniformly in the maze
-        print("# We are dropped uniformly in the maze")
-        # We want to check if the minimal expected cost is below some threshold {threshold}
-        print(f"# We want to check if the minimal expected cost is below some threshold {threshold}")
+        # Agent dropped in the world under uniform distribution
+        # Check if the minimal expected cost is below some threshold
+        print(f"\n# Agent dropped uniformly in the world"
+              f"\n# Objective: check if the minimal expected cost is below some threshold `{threshold}`")
 
         sum_rewards = sum(self.ExpRew[s] for s in range(self.size) if s != self.goal)
         sign_idx = threshold.find('<')
@@ -114,9 +114,9 @@ class POPSpec(ABC):
         nominator, denominator = map(int, re.findall(r"\d+", threshold))
 
         self.exp_rew_evaluator = sum_rewards * Q(1, self.size - 1, self.ctx)
-        self.console.print(sign(sum_rewards * Q(1, self.size - 1, self.ctx), Q(nominator, denominator, self.ctx)))
-
         constraint = sign(sum_rewards * Q(1, self.size - 1, self.ctx), Q(nominator, denominator, self.ctx))
+
+        self.console.print(constraint)
         return constraint
 
     def build_strategy_constraints(self, determinism: bool) -> List[z3.BoolRef]:

@@ -30,9 +30,9 @@ class MazeTMPC(SSPSpec):
         constraints = []
 
         goal_column = self.goal if self.goal < self.width \
-            else (self.goal - self.width) % 3 * (self.width // 2)
+                                else (self.goal - self.width) % 3 * (self.width // 2)
         goal_height = 0 if self.goal < self.width \
-            else (self.goal - self.width) // 3 + 1
+                        else (self.goal - self.width) // 3 + 1
 
         # Maze-specific bounds calculation
         for s in range(self.size):

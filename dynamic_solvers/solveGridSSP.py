@@ -18,57 +18,51 @@ class GridTPMC(SSPSpec):
 
         self.reset()
 
-    def extend_fully_observable_pomdp_constraints(self, exp_rewards: List[z3.ArithRef]) -> List[z3.BoolRef]:
+    def build_fully_observable_constraints(self) -> List[z3.BoolRef]:
         """
         Build basic POMDP constraints - a POMDP instance cannot perform better than the fully observable variant.
         Compute Manhattan distances between each state and the goal state based on the grid topology.
         """
         print('#A POMDP instance cannot perform better than the fully observable variant\n')
+        constraints = []
 
         # Grid-specific bounds calculation
-        goal_column = self.goal % self.size_x
-        pomdp_bounds = []
-        count = 0
+        goal_column = self.goal % self.width
         for s in range(self.size):
-            column = s % self.size_x
-            if column == goal_column:  # same column as target
-                bound_value = abs(self.goal - s) // self.size_x
-            else:
-                bound_value = abs(goal_column - column) + (abs(self.goal - s) // self.size_x)
-            pomdp_bounds.append(exp_rewards[s] >= bound_value)
-            count += bound_value
+            column = s % self.width
+            bound_value = abs(goal_column - column) + (abs(self.goal - s) // self.width)
+            constraints.append(self.ExpRew[s] >= bound_value)
 
-        self.console.print(pomdp_bounds)
-        return pomdp_bounds
-
-    # size_x = 4; size_y = 3; column = 11 % 4 = 3
-    # 3 -> 3 % 4 == 3 -> (11 - 3) // 4 == 2
-    # 5 -> 5 % 4 == 1 -> (3 - 1) + 6 // 4 = 2 + 1 = 3
-
-    # size_x -> size_y |
-    # 0 1 2 3          v  5 4 3 2
-    # 4 5 6 7             4 3 2 1
-    # 8 9 10 11           3 2 1 0
+        self.console.print(constraints)
+        return constraints
 
     def navigate(self, state: int, action_idx: int) -> int:
         """Navigate in 2D grid based on action"""
         action = self.actions[action_idx]
-        x = state % self.size_x
-        y = state // self.size_x
+        x = state % self.width
+        y = state // self.width
 
         if action == 'l':  # left
             if x != 0:
                 return state - 1
         elif action == 'r':  # right
-            if x != self.size_x - 1:
+            if x != self.width - 1:
                 return state + 1
         elif action == 'u':  # up
             if y != 0:
-                return state - self.size_x
+                return state - self.width
         else:  # action == 'd' (down)
-            if y != self.size_y - 1:
-                return state + self.size_x
+            if y != self.height - 1:
+                return state + self.width
         return state
+
+    # size_x = 4; size_y = 3; column = 11 % 4 = 3
+    # 3 -> 3 % 4 == 3 -> (11 - 3) // 4 == 2
+    # 5 -> 5 % 4 == 1 -> (3 - 1) + 6 // 4 = 2 + 1 = 3
+    # size_x -> size_y |
+    # 0 1 2 3          v  5 4 3 2
+    # 4 5 6 7             4 3 2 1
+    # 8 9 10 11           3 2 1 0
 
 
     def build_cost_reward_equations(self, ExpRew, X, Y):

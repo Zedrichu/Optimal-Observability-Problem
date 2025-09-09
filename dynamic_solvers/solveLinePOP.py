@@ -14,7 +14,6 @@ class LineTPMC(POPSpec):
     def build_fully_observable_constraints(self) -> List[z3.BoolRef]:
         """
         Build basic POMDP constraints - a POMDP instance cannot perform better than the fully observable variant.
-        Compute Manhattan distances between each state and the goal state based on the grid topology.
         """
         print('\n# A POMDP instance cannot perform better than the fully observable variant')
         constraints = [self.ExpRew[s] >= abs(self.goal - s) for s in range(self.size)]
