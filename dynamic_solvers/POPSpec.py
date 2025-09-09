@@ -11,9 +11,10 @@ from dynamic_solvers.utils import parse_threshold
 
 
 class POPSpec(ABC):
-    def __init__(self, budget: int, size: int, goal: int):
+    size: int
+
+    def __init__(self, budget: int, goal: int):
         self.budget = budget
-        self.size = size
         self.goal = goal
 
         self.actions = []
@@ -32,7 +33,7 @@ class POPSpec(ABC):
         self.console = Console()
 
     @abstractmethod
-    def build_fully_observable_constraints(self) -> List[z3.BoolRef]:
+    def dist(self, state: int, target: int) -> int:
         raise NotImplementedError()
 
     @abstractmethod
@@ -74,6 +75,16 @@ class POPSpec(ABC):
                                     for act in self.actions]
                                     for o in range(self.budget)]
         return observation_to_action
+
+    def build_fully_observable_constraints(self) -> List[bool]:
+        """
+        Build basic POMDP constraints - a POMDP instance cannot perform better than the fully observable variant.
+        """
+        print('\n# A POMDP instance cannot perform better than the fully observable variant')
+        constraints = [self.ExpRew[s] >= self.dist(s, self.goal) for s in range(self.size)]
+
+        self.console.print(constraints)
+        return constraints
 
     def build_cost_reward_equations(self) -> List[z3.BoolRef]:
         # Expected cost/reward equations from each world state
