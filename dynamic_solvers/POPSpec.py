@@ -1,6 +1,7 @@
 import gc
 import time
 from abc import ABC, abstractmethod
+from argparse import Action
 from typing import List
 
 from rich.console import Console
@@ -12,12 +13,11 @@ from dynamic_solvers.utils import parse_threshold
 
 class POPSpec(ABC):
     size: int
+    actions: List[str]
 
     def __init__(self, budget: int, goal: int):
         self.budget = budget
         self.goal = goal
-
-        self.actions = []
 
         self.ExpRew = None  # Expected reward variables
         self.Y = None       # Observation function variables
@@ -47,6 +47,7 @@ class POPSpec(ABC):
         self.solver = Solver(ctx=self.ctx)
 
     def declare_variables(self):
+        self.console.print("\n  ⚙️  Declaring variables...")
         observable_states = [s for s in range(self.size) if s != self.goal]
 
         self.ExpRew = self.declare_expected_rewards()
@@ -66,6 +67,7 @@ class POPSpec(ABC):
         state_to_observation = [[Real(f'ys{s}o{o+1}', self.ctx)
                                     for o in range(self.budget)]
                                     for s in observable_states]
+        print(state_to_observation)
         return state_to_observation
 
     def declare_strategy_mapping(self) -> List[List[z3.ArithRef]]:
@@ -74,6 +76,7 @@ class POPSpec(ABC):
         observation_to_action = [[Real(f'xo{o+1}{act}', self.ctx)
                                     for act in self.actions]
                                     for o in range(self.budget)]
+        print(observation_to_action)
         return observation_to_action
 
     def build_fully_observable_constraints(self) -> List[bool]:
@@ -88,7 +91,7 @@ class POPSpec(ABC):
 
     def build_cost_reward_equations(self) -> List[z3.BoolRef]:
         # Expected cost/reward equations from each world state
-        print("# Expected cost/reward equations from each world state")
+        print("\n# Expected cost/reward equations from each world state")
 
         equations = []
         for s in range(self.size):
@@ -128,7 +131,7 @@ class POPSpec(ABC):
 
     def build_strategy_constraints(self, determinism: bool) -> List[z3.BoolRef]:
         # Randomised strategies (proper probability distributions)
-        print('# Randomised strategies (proper probability distributions)')
+        print('\n# Randomised strategies (proper probability distributions)')
         constraints = []
         act_no = len(self.actions)
         for o in range(self.budget):
@@ -152,18 +155,20 @@ class POPSpec(ABC):
 
     def build_observation_constraints(self) -> List[z3.BoolRef]:
         # Observation function constraints - every state should be mapped to some observable class
-        print("# Observation function constraints - every state should be mapped to some observable class")
+        print("\n# Observation function constraints - every state should be mapped to some observable class")
         constraints = []
         for state_obs in self.Y:
             constraints.extend([Or(obs == 0, obs == 1, self.ctx) for obs in state_obs])
 
-        print('# Every state should be mapped to exactly one equivalence class\n')
+        print('# Every state should be mapped to exactly one equivalence class')
         constraints.extend([sum(state_obs) == 1 for state_obs in self.Y])
 
         self.console.print(constraints)
         return constraints
 
     def collect_constraints(self, threshold: str, determinism: bool):
+        self.console.print("\n  🛠️  Building constraints...")
+
         bound_constraints = self.build_fully_observable_constraints()
         self.solver.add(bound_constraints)
         cost_constraints = self.build_cost_reward_equations()
@@ -192,6 +197,7 @@ class POPSpec(ABC):
         # Get model if satisfiable
         model = self.solver.model() if result == sat else None
 
+        print()
         if result == sat:
             model = self.solver.model()
             print(' ✅  Solution found!')

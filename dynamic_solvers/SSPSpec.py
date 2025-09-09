@@ -12,12 +12,11 @@ from dynamic_solvers.utils import parse_threshold
 
 class SSPSpec(ABC):
     size: int
+    actions: List[str]
 
     def __init__(self, budget: int, goal: int):
         self.budget = budget
         self.goal = goal
-
-        self.actions = []
 
         self.ExpRew = None  # Expected reward variables
         self.Y = None  # Observation function variables
@@ -50,6 +49,7 @@ class SSPSpec(ABC):
         # TODO! Use pre-computed dictionary for sensor mapping (especially with multiple goals)
         # O(1) lookup - minimal overhead, big readability gain
         # self.state_to_sensor = {state: idx for idx, state in enumerate(self.nongoal_states)}
+        self.console.print("\n  ⚙️  Declaring variables...")
 
         nongoal_states = [s for s in range(self.size) if s != self.goal]
         self.ExpRew = self.declare_expected_rewards()
@@ -58,7 +58,7 @@ class SSPSpec(ABC):
 
     def declare_expected_rewards(self) -> List[z3.ArithRef]:
         # Expected cost/reward of reaching the goal from each corresponding state.
-        print("# Expected cost/reward of reaching the goal from each corresponding state.")
+        print("\n# Expected cost/reward of reaching the goal from each corresponding state.")
         expected_rewards = [Real(f'pi{s}', self.ctx) for s in range(self.size)]
         self.console.print(expected_rewards)
         return expected_rewards
@@ -66,14 +66,14 @@ class SSPSpec(ABC):
     def declare_observation_function(self, sensor_states: List[int]) -> List[z3.ArithRef]:
         # Choice of observations on each non-goal state (state sensors)
         # e.g. `ys0 == 1` means that in state 0 the sensor is on, `ys0 == 0` - state sensor is off
-        print("# Choice of observation on each non-goal state (state sensors that are on/off)")
+        print("\n# Choice of observation on each non-goal state (state sensors that are on/off)")
         state_to_observation = [Real(f'ys{s}', self.ctx) for s in sensor_states]
         self.console.print(state_to_observation)
         return state_to_observation
 
     def declare_strategy_mapping(self, sensor_states: List[int]) -> List[List[z3.ArithRef]]:
         # Action rates of randomized strategies per state (when the sensor is on)
-        print("# Action rates of randomized strategies per state (when sensor is on)")
+        print("\n# Action rates of randomized strategies per state (when sensor is on)")
         sensor_to_action = [[Real(f'xo{s}{act}', self.ctx) for act in self.actions] for s in sensor_states]
         # Default strategy variables per action (when no sensor is observed - unknown state)
         default_policy = [Real(f'x⊥{act}', self.ctx) for act in self.actions]
@@ -158,12 +158,14 @@ class SSPSpec(ABC):
 
     def build_budget_constraint(self) -> z3.BoolRef:
         # Budget constraint - total sensors used <= budget
-        print("# Budget constraint - total no. of sensors activate <= budget")
+        print("# Budget constraint - total no. of sensors activated <= budget")
         constraint = sum(self.Y) <= self.budget # ?? original mentions == budget
         self.console.print(constraint)
         return constraint
 
     def collect_constraints(self, threshold: str, determinism: bool):
+        self.console.print("\n  🛠️  Building constraints...")
+
         bound_constraints = self.build_fully_observable_constraints()
         self.solver.add(bound_constraints)
         cost_constraints = self.build_cost_reward_equations()
@@ -194,6 +196,7 @@ class SSPSpec(ABC):
         # Get model if satisfiable
         model = self.solver.model() if result == sat else None
 
+        print()
         if result == sat:
             model = self.solver.model()
             print(' ✅  Solution found!')
