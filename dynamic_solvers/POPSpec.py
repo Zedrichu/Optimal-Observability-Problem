@@ -1,5 +1,4 @@
 import gc
-import re
 import time
 from abc import ABC, abstractmethod
 from typing import List
@@ -8,6 +7,7 @@ from rich.console import Console
 from z3 import Context, Solver, z3, Real, Q, Or, set_option, sat, unsat
 
 from dynamic_solvers.BenchmarkResult import BenchmarkResult
+from dynamic_solvers.utils import parse_threshold
 
 
 class POPSpec(ABC):
@@ -75,7 +75,7 @@ class POPSpec(ABC):
                                     for o in range(self.budget)]
         return observation_to_action
 
-    def build_cost_rewards_equations(self) -> List[z3.BoolRef]:
+    def build_cost_reward_equations(self) -> List[z3.BoolRef]:
         # Expected cost/reward equations from each world state
         print("# Expected cost/reward equations from each world state")
 
@@ -107,14 +107,10 @@ class POPSpec(ABC):
               f"\n# Objective: check if the minimal expected cost is below some threshold `{threshold}`")
 
         sum_rewards = sum(self.ExpRew[s] for s in range(self.size) if s != self.goal)
-        sign_idx = threshold.find('<')
-        if sign_idx == -1:
-            raise ValueError("No sign in threshold")
-        sign = (lambda x, y: x <= y) if threshold[sign_idx + 1] == '=' else (lambda x, y: x < y)
-        nominator, denominator = map(int, re.findall(r"\d+", threshold))
+        numerator, denominator, sign = parse_threshold(threshold)
 
         self.exp_rew_evaluator = sum_rewards * Q(1, self.size - 1, self.ctx)
-        constraint = sign(sum_rewards * Q(1, self.size - 1, self.ctx), Q(nominator, denominator, self.ctx))
+        constraint = sign(sum_rewards * Q(1, self.size - 1, self.ctx), Q(numerator, denominator, self.ctx))
 
         self.console.print(constraint)
         return constraint
@@ -159,7 +155,7 @@ class POPSpec(ABC):
     def collect_constraints(self, threshold: str, determinism: bool):
         bound_constraints = self.build_fully_observable_constraints()
         self.solver.add(bound_constraints)
-        cost_constraints = self.build_cost_rewards_equations()
+        cost_constraints = self.build_cost_reward_equations()
         self.solver.add(cost_constraints)
         threshold_constraint = self.build_threshold_constraint(threshold)
         self.solver.add(threshold_constraint)

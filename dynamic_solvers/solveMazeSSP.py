@@ -1,7 +1,6 @@
-import re
 from typing import List
 
-from z3 import (z3, Q, Or)
+from z3 import (z3)
 
 from dynamic_solvers.SSPSpec import SSPSpec
 
@@ -74,65 +73,6 @@ class MazeTMPC(SSPSpec):
                 return state + 3
         return state
 
-    def build_cost_reward_equations(self, ExpRew, X, Y):
-        # Expected cost/reward equations from each world state
-        print("# Expected cost/reward equations from each world state")
-        cost_equations = []
-        for s in range(self.size):
-            if s == self.goal:
-                cost_equations.append(ExpRew[s] == 0)
-                continue
-            equation = 1
-            for act in range(len(self.actions)):
-                # After the goal state, the index is decremented (offset from states)
-                idx = s - 1 if s > self.goal else s
-                strategy = (1 - Y[idx]) * X[-1][act] + Y[idx] * X[idx][act]
-                next_state = self.navigate(s, act)
-                equation += strategy * ExpRew[next_state]
-            cost_equations.append(ExpRew[s] == equation)
-        self.console.print(cost_equations)
-        return cost_equations
-
-    def build_threshold_constraint(self, ExpRew, threshold: str):
-        # Agent dropped in the maze under uniform distribution
-        # Check if the minimal expected cost is below some threshold
-        print(f"\n# Agent dropped uniformly in the maze"
-              f"\n# Objective: check if the minimal expected cost is below some threshold '{threshold}'")
-
-        # Generate the sum of expected reward variables for non-target states (uniform distribution)
-        sumExpRew = sum([ExpRew[s] for s in range(self.size) if s != self.goal])
-        sign_idx = threshold.find('<')
-        if sign_idx == -1:
-            return ValueError("No sign in threshold")
-        sign = (lambda x, y: x <= y) if threshold[sign_idx + 1] == '=' else (lambda x, y: x < y)
-        numerator, denominator = map(int, re.findall(r"\d+", threshold))
-
-        self.evaluator = sumExpRew * Q(1, self.size - 1, self.ctx)
-
-        threshold_constraint = sign(sumExpRew * Q(1, self.size - 1, self.ctx), Q(numerator, denominator, self.ctx))
-        self.console.print(threshold_constraint)
-        return threshold_constraint
-
-    def extend_strategy_constraints(self, X: List[List[z3.ArithRef]], determinism: bool):
-        # Randomized strategies (proper probability distributions)
-        print('\n# Randomized strategies (proper probability distributions)')
-        constraints = []
-        for strategy in X:
-            for rate in strategy:
-                constraints.append(rate >= 0)
-                constraints.append(rate <= 1)
-            sum_prob = sum(strategy)
-            constraints.append(sum_prob == 1)
-
-        if determinism:
-            print('\n# Deterministic strategies activated (one-hot encoding or degenerate categorical distribution)\n')
-            for strategy in X:
-                for rate in strategy:
-                    constraints.append(Or(rate == 0, rate == 1))
-
-        self.console.print(constraints)
-        return constraints
-
 
 if __name__ == "__main__":
     import sys
@@ -148,26 +88,7 @@ if __name__ == "__main__":
         tpMC = MazeTMPC(budget, goal, width, depth, threshold)
 
         tpMC.declare_variables()
-
-        solver = tpMC.solver
-
-        ExpRew = tpMC.expected_rewards
-        X = tpMC.strategy_rates
-        Y = tpMC.observation_fun
-
-        pomdp_constraints = tpMC.build_fully_observable_constraints(ExpRew)
-        cost_constraints = tpMC.build_cost_reward_equations(ExpRew, X, Y)
-        threshold_constraint = tpMC.build_threshold_constraint(ExpRew, threshold)
-        strategy_constraints = tpMC.extend_strategy_constraints(X, determinism=det == 1)
-        observation_constraints = tpMC.build_observation_constraints(Y)
-        budget_constraint = tpMC.build_budget_constraint(Y, budget)
-
-        solver.add(pomdp_constraints)
-        solver.add(cost_constraints)
-        solver.add(threshold_constraint)
-        solver.add(strategy_constraints)
-        solver.add(observation_constraints)
-        solver.add(budget_constraint)
+        tpMC.collect_constraints(threshold, determinism=det == 1)
 
         tpMC.set_solver_options("results.txt", "reward.txt", 90000)
 

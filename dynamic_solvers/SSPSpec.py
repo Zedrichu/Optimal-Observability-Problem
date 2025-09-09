@@ -4,9 +4,10 @@ from abc import ABC, abstractmethod
 from typing import List
 
 from rich.console import Console
-from z3 import Context, Solver, z3, Real, sat, unsat, set_option, Or
+from z3 import Context, Solver, z3, Real, sat, unsat, set_option, Or, Q
 
 from dynamic_solvers.BenchmarkResult import BenchmarkResult
+from dynamic_solvers.utils import parse_threshold
 
 
 class SSPSpec(ABC):
@@ -45,7 +46,7 @@ class SSPSpec(ABC):
         self.solver = Solver(ctx=self.ctx)
 
     def declare_variables(self):
-        # TODO! Use pre-compute dictionary for sensor mapping (especially with multiple goals)
+        # TODO! Use pre-computed dictionary for sensor mapping (especially with multiple goals)
         # O(1) lookup - minimal overhead, big readability gain
         # self.state_to_sensor = {state: idx for idx, state in enumerate(self.nongoal_states)}
 
@@ -79,6 +80,61 @@ class SSPSpec(ABC):
         self.console.print(sensor_to_action)
         return sensor_to_action
 
+    def build_cost_reward_equations(self) -> List[z3.BoolRef]:
+        # Expected cost/reward equations from each world state
+        print("# Expected cost/reward equations from each world state")
+        equations = []
+        for s in range(self.size):
+            if s == self.goal:
+                equations.append(self.ExpRew[s] == 0)
+                continue
+            equation = 1
+            for act in range(len(self.actions)):
+                # Decrement the state index after processing the goal state
+                idx = s - 1 if s > self.goal else s
+
+                strategy = (1 - self.Y[idx]) * self.X[-1][act] + self.Y[idx] * self.X[idx][act]
+                next_state = self.navigate(s, act)
+                equation += strategy * self.ExpRew[next_state]
+            equations.append(self.ExpRew[s] == equation)
+
+        self.console.print(equations)
+        return equations
+
+    def build_threshold_constraint(self, threshold: str) -> bool:
+        # Agent dropped in the world under uniform distribution
+        # Check if the minimal expected cost is below some threshold
+        print(f"\n# Agent dropped uniformly in the world"
+              f"\n# Objective: check if the minimal expected cost is below some threshold '{threshold}'")
+
+        # Generate the sum of expected reward variables for non-target states (uniform distribution)
+        sumExpRew = sum([self.ExpRew[s] for s in range(self.size) if s != self.goal])
+        numerator, denominator, sign = parse_threshold(threshold)
+
+        self.exp_rew_evaluator = sumExpRew * Q(1, self.size - 1, self.ctx)
+        constraint = sign(sumExpRew * Q(1, self.size - 1, self.ctx), Q(numerator, denominator, self.ctx))
+
+        self.console.print(constraint)
+        return constraint
+
+    def build_strategy_constraints(self, determinism: bool) -> List[z3.BoolRef]:
+        # Randomized strategies (proper probability distributions)
+        print('\n# Randomized strategies (proper probability distributions)')
+        constraints = []
+        for strategy in self.X:
+            for rate in strategy:
+                constraints.append(rate >= 0)
+                constraints.append(rate <= 1)
+            constraints.append(sum(strategy) == 1)
+
+        if determinism:
+            print('\n# Deterministic strategies activated (one-hot encoding or degenerate categorical distribution)\n')
+            for strategy in self.X:
+                for rate in strategy:
+                    constraints.append(Or(rate == 0, rate == 1))
+
+        self.console.print(constraints)
+        return constraints
 
     def build_observation_constraints(self) -> List[z3.BoolRef]:
         # Observation function constraints - every state should be mapped to some observable class
@@ -95,6 +151,20 @@ class SSPSpec(ABC):
         constraint = sum(self.Y) <= self.budget # ?? original mentions == budget
         self.console.print(constraint)
         return constraint
+
+    def collect_constraints(self, threshold: str, determinism: bool):
+        bound_constraints = self.build_fully_observable_constraints()
+        self.solver.add(bound_constraints)
+        cost_constraints = self.build_cost_reward_equations()
+        self.solver.add(cost_constraints)
+        threshold_constraint = self.build_threshold_constraint(threshold)
+        self.solver.add(threshold_constraint)
+        strategy_constraints = self.build_strategy_constraints(determinism)
+        self.solver.add(strategy_constraints)
+        observation_constraints = self.build_observation_constraints()
+        self.solver.add(observation_constraints)
+        budget_constraint = self.build_budget_constraint()
+        self.solver.add(budget_constraint)
 
     def set_solver_options(self, result_path: str, reward_path: str, timeout: int):
         set_option(max_args=1000000, max_lines=100000000)
@@ -117,7 +187,7 @@ class SSPSpec(ABC):
             model = self.solver.model()
             print(' ✅  Solution found!')
             self.file_results.write(str(model))
-            self.file_rewards.write(str(model.eval(self.evaluator)))
+            self.file_rewards.write(str(model.eval(self.exp_rew_evaluator)))
         elif result == unsat:
             print(' ❌  No solution!')
             self.file_rewards.write('N/A')
