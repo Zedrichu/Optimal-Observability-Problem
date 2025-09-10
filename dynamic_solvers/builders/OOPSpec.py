@@ -9,7 +9,8 @@ from dynamic_solvers.utils import parse_threshold
 
 
 class OOPSpec(World, ABC):
-    def __init__(self, budget: int, goal: int, ctx: Context):
+    def __init__(self, ctx: Context, budget: int, goal: int):
+        self.ctx = ctx
         self.budget = budget
         self.goal = goal
 
@@ -19,7 +20,6 @@ class OOPSpec(World, ABC):
 
         self.exp_rew_evaluator = None
 
-        self.ctx = ctx
         self.console = Console()
 
     @abstractmethod
