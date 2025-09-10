@@ -1,20 +1,15 @@
-import gc
-import time
 from abc import ABC, abstractmethod
 from typing import List
 
 from rich.console import Console
-from z3 import (Context, Solver,
-                z3, set_option, sat, unsat,
-                Real, Q, Or)
+from z3 import (Context, z3, Real, Q, Or)
 
-from dynamic_solvers.BenchmarkResult import BenchmarkResult
 from dynamic_solvers.builders.worlds import World
 from dynamic_solvers.utils import parse_threshold
 
 
 class OOPSpec(World, ABC):
-    def __init__(self, budget: int, goal: int):
+    def __init__(self, budget: int, goal: int, ctx: Context):
         self.budget = budget
         self.goal = goal
 
@@ -24,12 +19,12 @@ class OOPSpec(World, ABC):
 
         self.exp_rew_evaluator = None
 
-        self.ctx = None
-        self.solver = None
-
-        self.file_rewards = None
-        self.file_results = None
+        self.ctx = ctx
         self.console = Console()
+
+    @abstractmethod
+    def declare_variables(self):
+        raise NotImplementedError()
 
     @abstractmethod
     def declare_observation_function(self, observable_states: List[z3.ArithRef]) -> List[z3.ArithRef]:
@@ -38,12 +33,6 @@ class OOPSpec(World, ABC):
     @abstractmethod
     def declare_strategy_mapping(self, *args) -> List[List[z3.ArithRef]]:
         raise NotImplementedError()
-
-    def reset(self):
-        """Reset for fresh solving context"""
-        gc.collect()  # Clean memory before starting
-        self.ctx = Context()
-        self.solver = Solver(ctx=self.ctx)
 
     def declare_expected_rewards(self) -> List[z3.ArithRef]:
         # Expected cost/reward of reaching the goal from each corresponding state.
@@ -133,46 +122,3 @@ class OOPSpec(World, ABC):
     @abstractmethod
     def collect_constraints(self, threshold: str, determinism: bool) -> List[z3.BoolRef]:
         raise NotImplementedError()
-
-    def set_solver_options(self, result_path: str, reward_path: str, timeout: int):
-        set_option(max_args=1000000, max_lines=100000000)
-        self.solver.set("timeout", timeout)
-        self.file_results = open(result_path, "w")
-        self.file_rewards = open(reward_path, "w")
-        return
-
-    def solve_benchmark(self) -> BenchmarkResult:
-        # Solving phase timing for benchmarks
-        solve_start = time.perf_counter()
-        result = self.solver.check()
-        solve_time = time.perf_counter() - solve_start
-
-        print()
-        if result == sat:
-            model = self.solver.model()
-            print(' ✅  Solution found!')
-            self.file_results.write(str(model))
-            self.file_rewards.write(str(model.eval(self.exp_rew_evaluator)))
-        elif result == unsat:
-            print(' ❌  No solution!')
-            self.file_rewards.write('N/A')
-        else:
-            print(' ❔  Unknown!')
-
-        return BenchmarkResult(
-            solve_time=solve_time,
-            result=result,
-            model=model
-        )
-
-    def cleanup(self):
-        if self.file_results:
-            self.file_results.close()
-        if self.file_rewards:
-            self.file_rewards.close()
-
-        # Clean up Z3 objects
-        del self.solver
-        del self.ctx
-        gc.collect()
-        pass
