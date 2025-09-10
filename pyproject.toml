@@ -4,9 +4,8 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.12"
 dependencies = [
-    "more-itertools>=10.7.0",
+    "more-itertools>=10.8.0",
     "psutil>=7.0.0",
     "rich>=14.1.0",
-    "six>=1.17.0",
     "z3-solver==4.15.3",
 ]
