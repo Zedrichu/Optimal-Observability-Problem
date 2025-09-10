@@ -1,10 +1,10 @@
-from dynamic_solvers.POPSpec import POPSpec
-from dynamic_solvers.builders.worlds import Line
+from dynamic_solvers.builders.pop.POPSpec import POPSpec
+from dynamic_solvers.builders.worlds import Maze
 
 
-class LineTPMC(Line, POPSpec):
-    def __init__(self, budget: int, goal: int, length: int):
-        Line.__init__(self, length)
+class MazeTPMC(Maze, POPSpec):
+    def __init__(self, budget: int, goal: int, width: int, depth: int):
+        Maze.__init__(self, width, depth)
         POPSpec.__init__(self, budget, goal)
 
         self.reset()
@@ -14,13 +14,14 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) >= 6:
-        size = int(sys.argv[1])
-        goal = int(sys.argv[2])
-        budget = int(sys.argv[3])
-        threshold = sys.argv[4]
-        det = int(sys.argv[5])
+        width = int(sys.argv[1])
+        depth = int(sys.argv[2])
+        goal = int(sys.argv[3])
+        budget = int(sys.argv[4])
+        threshold = sys.argv[5]
+        det = int(sys.argv[6])
 
-        tpMC = LineTPMC(budget, goal, size)
+        tpMC = MazeTPMC(budget, goal, width, depth)
 
         tpMC.declare_variables()
         tpMC.collect_constraints(threshold, determinism=det == 1)

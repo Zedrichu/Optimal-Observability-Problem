@@ -1,10 +1,10 @@
-from dynamic_solvers.SSPSpec import SSPSpec
-from dynamic_solvers.builders.worlds import Grid
+from dynamic_solvers.builders.ssp.SSPSpec import SSPSpec
+from dynamic_solvers.builders.worlds import Maze
 
 
-class GridTPMC(Grid, SSPSpec):
-    def __init__(self, budget: int, goal: int, width: int, height: int, threshold: str):
-        Grid.__init__(self, width, height)
+class MazeTMPC(Maze, SSPSpec):
+    def __init__(self, budget: int, goal: int, width: int, depth: int, threshold: str):
+        Maze.__init__(self, width, depth)
         SSPSpec.__init__(self, budget, goal)
         self.threshold = threshold
 
@@ -14,15 +14,15 @@ class GridTPMC(Grid, SSPSpec):
 if __name__ == "__main__":
     import sys
 
-    if len(sys.argv) >= 6:
-        size_x = int(sys.argv[1])
-        size_y = int(sys.argv[2])
+    if len(sys.argv) >= 7:
+        width = int(sys.argv[1])
+        depth = int(sys.argv[2])
         goal = int(sys.argv[3])
         budget = int(sys.argv[4])
         threshold = sys.argv[5]
         det = int(sys.argv[6])
 
-        tpMC = GridTPMC(budget, goal, size_x, size_y, threshold)
+        tpMC = MazeTMPC(budget, goal, width, depth, threshold)
 
         tpMC.declare_variables()
         tpMC.collect_constraints(threshold, determinism=det == 1)

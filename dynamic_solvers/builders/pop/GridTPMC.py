@@ -1,10 +1,10 @@
-from dynamic_solvers.POPSpec import POPSpec
-from dynamic_solvers.builders.worlds import Maze
+from dynamic_solvers.builders.pop.POPSpec import POPSpec
+from dynamic_solvers.builders.worlds import Grid
 
 
-class MazeTPMC(Maze, POPSpec):
-    def __init__(self, budget: int, goal: int, width: int, depth: int):
-        Maze.__init__(self, width, depth)
+class GridTPMC(Grid, POPSpec):
+    def __init__(self, budget: int, goal: int, width: int, height: int):
+        Grid.__init__(self, width, height)
         POPSpec.__init__(self, budget, goal)
 
         self.reset()
@@ -14,14 +14,13 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) >= 6:
-        width = int(sys.argv[1])
-        depth = int(sys.argv[2])
-        goal = int(sys.argv[3])
-        budget = int(sys.argv[4])
-        threshold = sys.argv[5]
-        det = int(sys.argv[6])
+        size = int(sys.argv[1])
+        goal = int(sys.argv[2])
+        budget = int(sys.argv[3])
+        threshold = sys.argv[4]
+        det = int(sys.argv[5])
 
-        tpMC = MazeTPMC(budget, goal, width, depth)
+        tpMC = GridTPMC(budget, goal, size, size)
 
         tpMC.declare_variables()
         tpMC.collect_constraints(threshold, determinism=det == 1)

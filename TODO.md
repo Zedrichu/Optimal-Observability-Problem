@@ -1,16 +1,5 @@
 # TODO
 
-## .gitignore
-- [ ] .idea/
-- [ ] line_*_z3.py
-- [ ] grid_*_z3.py
-- [ ] maze_*_z3.py
-- [ ] results.txt
-- [ ] reward.txt
-- [ ] \_\_pycache\_\_/
-
-
-
 ## Architecture Design for Solving and Benchmarking
 
 `main` (`Benchmark` class?)
