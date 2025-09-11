@@ -175,7 +175,7 @@ def solve_problem(args: argparse.Namespace) -> None:
         print(f"🚀 Starting {args.variant.upper()} {args.world} problem...")
         print(f"   Budget: {args.budget}, Goal: {args.goal}, Threshold: {args.threshold}")
         if args.world == 'line':
-            print(f"   Size: {args.size}")
+            print(f"   Length: {args.length}")
         else:
             print(f"   Dimensions: {args.width}x{args.height}")
         print(f"   Strategy: {'Deterministic' if args.deterministic else 'Randomized'}")
