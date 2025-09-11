@@ -38,6 +38,7 @@ class TPMCSolver:
         solve_time = solve_end - solve_start
 
         print()
+        model = None
         if result == sat:
             model = self.solver.model()
             print(' ✅  Solution found!')

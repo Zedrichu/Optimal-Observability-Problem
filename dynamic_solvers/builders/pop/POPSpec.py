@@ -51,7 +51,7 @@ class POPSpec(OOPSpec, ABC):
         self.console.print(constraints)
         return constraints
 
-    def collect_constraints(self, threshold: str, determinism: bool):
+    def collect_constraints(self, threshold: str, determinism: bool) -> List[z3.BoolRef]:
         self.console.print("\n  🛠️  Building constraints...")
 
         constraint_builders = [
@@ -64,4 +64,4 @@ class POPSpec(OOPSpec, ABC):
 
         # Flatten constraints for solver loading
         all_constraints = list(chain.from_iterable(constraint_builders))
-        self.solver.add(all_constraints)
+        return all_constraints
