@@ -110,7 +110,7 @@ class Maze(World):
                 return self.width
             elif state == (self.width - 1) // 2:
                 return self.width + 1
-            elif self.width <= state < self.size - 3:
+            elif self.width - 1 <= state < self.size - 3:
                 return state + 3
         return state
 

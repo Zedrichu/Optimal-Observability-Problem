@@ -100,7 +100,7 @@ def create_maze_constrained(budget, target, height, width, threshold, det):
 					return width
 				elif state == (width - 1) // 2:
 					return width + 1
-				elif width <= state <= numbers[-1] - 3:
+				elif width - 1 <= state <= numbers[-1] - 3:
 					return state + 3
 			return state
 
