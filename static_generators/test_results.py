@@ -23,7 +23,7 @@ def check_line(size):
 	correct_solution_1 = {}
 
 	correct_solution_2 = {}
-	
+
 	found_solution = {}
 
 	for i in range(0, size):
@@ -45,7 +45,7 @@ def check_line(size):
 
 	# Read the result produced by Z3
 
-	file = open('results.txt', 'r')
+	file = open('../results.txt', 'r')
 	lines = file.readlines()
 
 	# Save the values in found solution
@@ -66,7 +66,7 @@ def check_line(size):
 def check_grid(size):
 
 
-	# For the grid we have 4 solutions: 
+	# For the grid we have 4 solutions:
 	# We symbolise the position in the grid with (i, j), where i indicates the row
 	# and j the column
 
@@ -93,7 +93,7 @@ def check_grid(size):
 	correct_solution_3 = {}
 
 	correct_solution_4 = {}
-	
+
 	found_solution = {}
 
 	for i in range(0, size):
@@ -134,7 +134,7 @@ def check_grid(size):
 
 	# Read the result produced by Z3
 
-	file = open('results.txt', 'r')
+	file = open('../results.txt', 'r')
 	lines = file.readlines()
 
 	# Save the values in found solution
@@ -154,7 +154,7 @@ def check_grid(size):
 
 def check_maze(size):
 
-	# For the maze we have 16 solutions: 
+	# For the maze we have 16 solutions:
 	# We symbolise the position in the grid with (i, j), where i indicates the row
 	# and j the column
 
@@ -208,7 +208,7 @@ def check_maze(size):
 
 	# Read the result produced by Z3
 
-	file = open('results.txt', 'r')
+	file = open('../results.txt', 'r')
 	lines = file.readlines()
 
 	# Save the values in found solution
@@ -233,7 +233,7 @@ def check_maze(size):
 
 		if i == numbers[-2]:
 			continue
-		
+
 		if found_solution['ys' + str(i) + str(1)] == str(1):
 			o1.append('ys' + str(i))
 

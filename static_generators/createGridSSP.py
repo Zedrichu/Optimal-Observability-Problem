@@ -159,7 +159,7 @@ def create_grid_pre(budget, target, sizex, sizey, threshold, det, pre):
 
     file.write('file_reward = open(\'reward.txt\', \'w\')\n')
 
-    file.write('result = solver.check()'
+    file.write('result = solver.check()\n'
                'if result == sat:\n\t'
                'm = solver.model()\n\t'
                'print(\'Solution found\')\n\t'

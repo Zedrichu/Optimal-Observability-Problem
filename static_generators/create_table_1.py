@@ -12,14 +12,14 @@ with open('table_1.csv', mode='w') as table_file:
 	table_writer.writerow(['POP - Randomised strategies'])
 
 	table_writer.writerow(['Model', 'Threshold', 'Budget', 'Time (s)', 'Reward'])
-    
+
 	os.system('python3 createLine.py 249 124 2 \'<= Q(250,2)\' 0')
 
 	start = time.time()
 	os.system('timeout ' + str(timeout) + 's python3 line_249_ran_z3.py')
 	end = time.time()
 	total = end - start
-	
+
 	if total > timeout:
 		total = 't.o.'
 		rew = 'N/A'
@@ -41,7 +41,7 @@ with open('table_1.csv', mode='w') as table_file:
 	os.system('timeout ' + str(timeout) + 's python3 line_249_ran_z3.py')
 	end = time.time()
 	total = end - start
-	
+
 	if total > timeout:
 		total = 't.o.'
 
@@ -50,7 +50,7 @@ with open('table_1.csv', mode='w') as table_file:
 	else:
 		file = open('reward.txt', 'r')
 		file.seek(0)
-		lines = file.readlines() 
+		lines = file.readlines()
 		if len(lines) > 0:
 			rew = lines[0]
 		else:
@@ -67,14 +67,14 @@ with open('table_1.csv', mode='w') as table_file:
 	os.system('timeout ' + str(timeout) + 's python3 line_249_ran_z3.py')
 	end = time.time()
 	total = end - start
-	
+
 	if total > timeout:
 		total = 't.o.'
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
 		file.seek(0)
-		lines = file.readlines() 
+		lines = file.readlines()
 		if len(lines) > 0:
 			rew = lines[0]
 		else:
@@ -90,14 +90,14 @@ with open('table_1.csv', mode='w') as table_file:
 	os.system('timeout ' + str(timeout) + 's python3 grid_20x20_ran_z3.py')
 	end = time.time()
 	total = end - start
-	
+
 	if total > timeout:
 		total = 't.o.'
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
 		file.seek(0)
-		lines = file.readlines() 
+		lines = file.readlines()
 		if len(lines) > 0:
 			rew = lines[0]
 		else:
@@ -112,7 +112,7 @@ with open('table_1.csv', mode='w') as table_file:
 	os.system('timeout ' + str(timeout) + 's python3 grid_20x20_ran_z3.py')
 	end = time.time()
 	total = end - start
-	
+
 	if total > timeout:
 		total = 't.o.'
 
@@ -121,7 +121,7 @@ with open('table_1.csv', mode='w') as table_file:
 	else:
 		file = open('reward.txt', 'r')
 		file.seek(0)
-		lines = file.readlines() 
+		lines = file.readlines()
 		if len(lines) > 0:
 			rew = lines[0]
 		else:
@@ -138,14 +138,14 @@ with open('table_1.csv', mode='w') as table_file:
 	os.system('timeout ' + str(timeout) + 's python3 grid_20x20_ran_z3.py')
 	end = time.time()
 	total = end - start
-	
+
 	if total > timeout:
 		total = 't.o.'
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
 		file.seek(0)
-		lines = file.readlines() 
+		lines = file.readlines()
 		if len(lines) > 0:
 			rew = lines[0]
 		else:
@@ -161,14 +161,14 @@ with open('table_1.csv', mode='w') as table_file:
 	os.system('timeout ' + str(timeout) + 's python3 maze_4x7_ran_z3.py')
 	end = time.time()
 	total = end - start
-	
+
 	if total > timeout:
 		total = 't.o.'
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
 		file.seek(0)
-		lines = file.readlines() 
+		lines = file.readlines()
 		if len(lines) > 0:
 			rew = lines[0]
 		else:
@@ -183,7 +183,7 @@ with open('table_1.csv', mode='w') as table_file:
 	os.system('timeout ' + str(timeout) + 's python3 maze_4x7_ran_z3.py')
 	end = time.time()
 	total = end - start
-	
+
 	if total > timeout:
 		total = 't.o.'
 
@@ -192,7 +192,7 @@ with open('table_1.csv', mode='w') as table_file:
 	else:
 		file = open('reward.txt', 'r')
 		file.seek(0)
-		lines = file.readlines() 
+		lines = file.readlines()
 		if len(lines) > 0:
 			rew = lines[0]
 		else:
@@ -209,14 +209,14 @@ with open('table_1.csv', mode='w') as table_file:
 	os.system('timeout ' + str(timeout) + 's python3 maze_4x7_ran_z3.py')
 	end = time.time()
 	total = end - start
-	
+
 	if total > timeout:
 		total = 't.o.'
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
 		file.seek(0)
-		lines = file.readlines() 
+		lines = file.readlines()
 		if len(lines) > 0:
 			rew = lines[0]
 		else:
@@ -239,14 +239,14 @@ with open('table_1.csv', mode='w') as table_file:
 	os.system('timeout ' + str(timeout) + 's python3 ssp_line_61_ran_z3.py')
 	end = time.time()
 	total = end - start
-	
+
 	if total > timeout:
 		total = 't.o.'
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
 		file.seek(0)
-		lines = file.readlines() 
+		lines = file.readlines()
 		if len(lines) > 0:
 			rew = lines[0]
 		else:
@@ -264,7 +264,7 @@ with open('table_1.csv', mode='w') as table_file:
 	os.system('timeout ' + str(timeout) + 's python3 ssp_line_61_ran_z3.py')
 	end = time.time()
 	total = end - start
-	
+
 	if total > timeout:
 		total = 't.o.'
 	if total == 't.o.':
@@ -272,7 +272,7 @@ with open('table_1.csv', mode='w') as table_file:
 	else:
 		file = open('reward.txt', 'r')
 		file.seek(0)
-		lines = file.readlines() 
+		lines = file.readlines()
 		if len(lines) > 0:
 			rew = lines[0]
 		else:
@@ -292,14 +292,14 @@ with open('table_1.csv', mode='w') as table_file:
 	os.system('timeout ' + str(timeout) + 's python3 ssp_line_61_ran_z3.py')
 	end = time.time()
 	total = end - start
-	
+
 	if total > timeout:
 		total = 't.o.'
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
 		file.seek(0)
-		lines = file.readlines() 
+		lines = file.readlines()
 		if len(lines) > 0:
 			rew = lines[0]
 		else:
@@ -318,14 +318,14 @@ with open('table_1.csv', mode='w') as table_file:
 	os.system('timeout ' + str(timeout) + 's python3 ssp_grid_6x6_ran_z3.py')
 	end = time.time()
 	total = end - start
-	
+
 	if total > timeout:
 		total = 't.o.'
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
 		file.seek(0)
-		lines = file.readlines() 
+		lines = file.readlines()
 		if len(lines) > 0:
 			rew = lines[0]
 		else:
@@ -344,7 +344,7 @@ with open('table_1.csv', mode='w') as table_file:
 	os.system('timeout ' + str(timeout) + 's python3 ssp_grid_6x6_ran_z3.py')
 	end = time.time()
 	total = end - start
-	
+
 	if total > timeout:
 		total = 't.o.'
 	if total == 't.o.':
@@ -352,7 +352,7 @@ with open('table_1.csv', mode='w') as table_file:
 	else:
 		file = open('reward.txt', 'r')
 		file.seek(0)
-		lines = file.readlines() 
+		lines = file.readlines()
 		if len(lines) > 0:
 			rew = lines[0]
 		else:
@@ -373,14 +373,14 @@ with open('table_1.csv', mode='w') as table_file:
 	os.system('timeout ' + str(timeout) + 's python3 ssp_grid_6x6_ran_z3.py')
 	end = time.time()
 	total = end - start
-	
+
 	if total > timeout:
 		total = 't.o.'
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
 		file.seek(0)
-		lines = file.readlines() 
+		lines = file.readlines()
 		if len(lines) > 0:
 			rew = lines[0]
 		else:
@@ -398,20 +398,20 @@ with open('table_1.csv', mode='w') as table_file:
 	os.system('timeout ' + str(timeout) + 's python3 ssp_maze_8x15_ran_z3.py')
 	end = time.time()
 	total = end - start
-	
+
 	if total > timeout:
 		total = 't.o.'
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
 		file.seek(0)
-		lines = file.readlines() 
+		lines = file.readlines()
 		if len(lines) > 0:
 			rew = lines[0]
 		else:
 			rew = 'N/A'
 		file.close()
-	
+
 
 	table_writer.writerow(['M(15)', '<= 868/35', '21', str(total), str(rew)])
 
@@ -424,7 +424,7 @@ with open('table_1.csv', mode='w') as table_file:
 	os.system('timeout ' + str(timeout) + 's python3 ssp_maze_8x15_ran_z3.py')
 	end = time.time()
 	total = end - start
-	
+
 	if total > timeout:
 		total = 't.o.'
 
@@ -433,7 +433,7 @@ with open('table_1.csv', mode='w') as table_file:
 	else:
 		file = open('reward.txt', 'r')
 		file.seek(0)
-		lines = file.readlines() 
+		lines = file.readlines()
 		if len(lines) > 0:
 			rew = lines[0]
 		else:
@@ -441,7 +441,7 @@ with open('table_1.csv', mode='w') as table_file:
 		file.close()
 		if eval(rew) == eval('434/35'):
 			rew = '434/35'
-	
+
 
 	table_writer.writerow(['M(15)', '<= 434/35', '21', str(total), str(rew)])
 
@@ -454,19 +454,19 @@ with open('table_1.csv', mode='w') as table_file:
 	os.system('timeout ' + str(timeout) + 's python3 ssp_maze_8x15_ran_z3.py')
 	end = time.time()
 	total = end - start
-	
+
 	if total > timeout:
 		total = 't.o.'
 		rew = 'N/A'
 	else:
 		file = open('reward.txt', 'r')
 		file.seek(0)
-		lines = file.readlines() 
+		lines = file.readlines()
 		if len(lines) > 0:
 			rew = lines[0]
 		else:
 			rew = 'N/A'
 		file.close()
-	
+
 
 	table_writer.writerow(['M(15)', '< 434/35', '21', str(total), str(rew)])

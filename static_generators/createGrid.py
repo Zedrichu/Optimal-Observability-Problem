@@ -136,7 +136,7 @@ def create_grid_constrained(budget: int, target: int, size: int, threshold: int,
 	file.write('file_reward = open(\'reward.txt\', \'w\')\n')
 
 
-	file.write('result = solver.check()'
+	file.write('result = solver.check()\n'
 			   'if result == sat:\n\t'
 			   'm = solver.model()\n\t'
 			   'print(\'Solution found\')\n\t'
