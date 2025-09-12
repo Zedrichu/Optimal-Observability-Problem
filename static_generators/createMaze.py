@@ -172,18 +172,17 @@ def create_maze_constrained(budget, target, height, width, threshold, det):
 
 	file.write('file_reward = open(\'reward.txt\', \'w\')\n')
 
-
-	file.write('if solver.check() == sat:\n\t')
-	file.write('m = solver.model()\n\t')
-	file.write('print(\'Solution found\')\n\t')
-	file.write('file_results.write(str(m))\n\t')
-	file.write('file_reward.write(str(m.eval(' + str(e) + ')))\n')
-	file.write('elif solver.check() == unsat:\n\t')
-	file.write('print(\'No solution!!!\')\n\t')
-	file.write('file_reward.write(\'N/A\')\n')
-	file.write('else:\n\t')
-	file.write('print(\'Unknown\')')
-
+	file.write('result = solver.check()'
+			   'if result == sat:\n\t'
+			   'm = solver.model()\n\t'
+			   'print(\'Solution found\')\n\t'
+			   'file_results.write(str(m))\n\t'
+			   'file_reward.write(str(m.eval(' + str(e) + ')))\n'
+			   'elif result == unsat:\n\t'
+			   'print(\'No solution!!!\')\n\t'
+			   'file_reward.write(\'N/A\')\n'
+			   'else:\n\t'
+			   'print(\'Unknown\')')
 
 sizex = int(sys.argv[1])
 sizey = int(sys.argv[2])
