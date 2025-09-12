@@ -1,5 +1,5 @@
 """
-Main script for solving instances of Optimal Observability Problem (OOP) given positional strategies.
+Main script for solving instances of Optimal Observability Problem (OOP) with Positional (/Deterministic) Strategies.
 
 Supports different problem variants (SSP, POP) and world types (Line, Grid, Maze) translated to location tpMC's.
 Problem instances are configured with parameters for budget, goal state, dimensions, threshold and solver options.
