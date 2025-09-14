@@ -55,23 +55,36 @@ class TPMCFactory:
     @staticmethod
     def _create_pop_solver(puzzle_type: PuzzleType, **kwargs) -> OOPSpec:
         if puzzle_type == PuzzleType.LINE:
-            return LineTPMCPOP(Context(),
-                               budget=kwargs['budget'],
+            return LineTPMCPOP(budget=kwargs['budget'],
                                goal=kwargs['goal'],
                                length=kwargs['length'],)
         elif puzzle_type == PuzzleType.GRID:
-            return GridTPMCPOP(**kwargs)
+            return GridTPMCPOP(budget=kwargs['budget'],
+                               goal=kwargs['goal'],
+                               width=kwargs['width'],
+                               height=kwargs['height'],)
         elif puzzle_type == PuzzleType.MAZE:
-            return MazeTPMCPOP(**kwargs)
+            return MazeTPMCPOP(budget=kwargs['budget'],
+                               goal=kwargs['goal'],
+                               width=kwargs['width'],
+                               depth=kwargs['height'],)
 
     @staticmethod
     def _create_ssp_solver(puzzle_type: PuzzleType, **kwargs) -> OOPSpec:
         if puzzle_type == PuzzleType.LINE:
-            return LineTPMCSSP(Context(),
-                               budget=kwargs['budget'],
+            return LineTPMCSSP(budget=kwargs['budget'],
                                goal=kwargs['goal'],
-                               length=kwargs['length'],)
+                               length=kwargs['length'],
+                               threshold=kwargs['threshold'])
         elif puzzle_type == PuzzleType.GRID:
-            return GridTPMCSSP(**kwargs)
+            return GridTPMCSSP(budget=kwargs['budget'],
+                               goal=kwargs['goal'],
+                               width=kwargs['width'],
+                               height=kwargs['height'],
+                               threshold=kwargs['threshold'])
         elif puzzle_type == PuzzleType.MAZE:
-            return MazeTPMCSSP(**kwargs)
+            return MazeTPMCSSP(budget=kwargs['budget'],
+                               goal=kwargs['goal'],
+                               width=kwargs['width'],
+                               depth=kwargs['height'],
+                               threshold=kwargs['threshold'])

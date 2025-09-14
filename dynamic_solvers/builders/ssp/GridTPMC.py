@@ -1,13 +1,14 @@
 from z3 import Context
+from typing import Optional
 
 from dynamic_solvers.builders.ssp.SSPSpec import SSPSpec
 from dynamic_solvers.builders.worlds import Grid
 
 
 class GridTPMC(Grid, SSPSpec):
-    def __init__(self, ctx: Context,  budget: int, goal: int, width: int, height: int, threshold: str):
+    def __init__(self, budget: int, goal: int, width: int, height: int, threshold: str, ctx: Optional[Context] = None):
         Grid.__init__(self, width, height)
-        SSPSpec.__init__(self, ctx, budget, goal)
+        SSPSpec.__init__(self, budget, goal, ctx)
         self.threshold = threshold
 
 
@@ -22,7 +23,7 @@ if __name__ == "__main__":
         threshold = sys.argv[5]
         det = int(sys.argv[6])
 
-        tpMC = GridTPMC(Context(), budget, goal, size_x, size_y, threshold)
+        tpMC = GridTPMC(budget, goal, size_x, size_y, threshold)
 
         tpMC.declare_variables()
         tpMC.collect_constraints(threshold, determinism=det == 1)

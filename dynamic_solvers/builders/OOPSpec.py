@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Optional
 
 from rich.console import Console
 from z3 import (Context, z3, Real, Q, Or)
@@ -9,8 +9,8 @@ from dynamic_solvers.utils import parse_threshold
 
 
 class OOPSpec(World, ABC):
-    def __init__(self, ctx: Context, budget: int, goal: int):
-        self.ctx = ctx
+    def __init__(self, budget: int, goal: int, ctx: Optional[Context] = None):
+        self.ctx = ctx or Context()  # Use provided context or create fresh one
         self.budget = budget
         self.goal = goal
 
