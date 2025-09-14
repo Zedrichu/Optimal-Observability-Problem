@@ -158,8 +158,11 @@ Thumbs.db
 # Project specific files
 
 # Generated solving output
-results.txt
-reward.txt
+**/results.txt
+**/reward.txt
+**/predefined.txt
+**/table_1.csv
+**/table_2.csv
 
 # Pre-generated Z3 files of problem instances
 line_*_z3.py

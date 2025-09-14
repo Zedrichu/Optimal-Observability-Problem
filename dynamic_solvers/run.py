@@ -8,7 +8,6 @@ Problem instances are configured with parameters for budget, goal state, dimensi
 import argparse
 import sys
 import os
-from typing import Union
 
 from dynamic_solvers.TPMCSolver import TPMCSolver
 from dynamic_solvers.builders.TPMCFactory import TPMCFactory, variant_from_string, puzzle_from_string
@@ -191,16 +190,14 @@ def solve_problem(args: argparse.Namespace) -> None:
                                        width=args.width,
                                        height=args.height,
                                        goal=args.goal,
-                                       budget=args.budget)
-    solver = TPMCSolver()
+                                       budget=args.budget,
+                                       threshold=args.threshold,)
+    solver = TPMCSolver(args.verbose)
     solver.reset(tpmc_instance.ctx)
     # Configure solver options
     solver.set_options(args.results, args.rewards, args.timeout)
 
     try:
-
-        if args.verbose:
-            print("⚡ Solving...")
 
         # Solve and get results
         result = solver.solve(tpmc_instance, args.threshold, args.deterministic)
@@ -208,10 +205,10 @@ def solve_problem(args: argparse.Namespace) -> None:
         # Report results
         print(f"🏁 Solve time: {result.solve_time:.4f}s")
         print(f"   Status: {result.result}")
-        print(f"📁 Results written to: {args.results}")
-        print(f"🎯 Rewards written to: {args.rewards}")
 
         if args.verbose:
+            print(f"📁 Results written to: {args.results}")
+            print(f"🎯 Rewards written to: {args.rewards}")
             print(f"   Result: {result.result}")
             if result.model:
                 print("   Model found and saved")
@@ -242,9 +239,6 @@ def main():
         sys.exit(1)
     except KeyboardInterrupt:
         print("\n⚠️  Interrupted by user")
-        sys.exit(1)
-    except Exception as e:
-        print(f"❌ Unexpected error: {repr(e)}")
         sys.exit(1)
 
 

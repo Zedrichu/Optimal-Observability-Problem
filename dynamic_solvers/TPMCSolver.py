@@ -8,8 +8,9 @@ from dynamic_solvers.builders.OOPSpec import OOPSpec
 
 
 class TPMCSolver:
-    def __init__(self):
+    def __init__(self, verbose: bool):
         self.solver = None
+        self.verbose = verbose
 
         self.file_rewards = None
         self.file_results = None
@@ -31,6 +32,9 @@ class TPMCSolver:
         tpmc_constraints = tpmc.collect_constraints(threshold, determinism)
         self.solver.add(tpmc_constraints)
 
+        if self.verbose:
+            print("⚡ Solving...")
+
         # Solving phase timing for benchmarks
         solve_start = time.perf_counter()
         result = self.solver.check()
@@ -39,11 +43,13 @@ class TPMCSolver:
 
         print()
         model = None
+        reward = None
         if result == sat:
-            model = self.solver.model()
             print(' ✅  Solution found!')
+            model = self.solver.model()
+            reward = model.eval(tpmc.exp_rew_evaluator)
             self.file_results.write(str(model))
-            self.file_rewards.write(str(model.eval(tpmc.exp_rew_evaluator)))
+            self.file_rewards.write(str(reward))
         elif result == unsat:
             print(' ❌  No solution!')
             self.file_rewards.write('N/A')
@@ -55,7 +61,8 @@ class TPMCSolver:
         return BenchmarkResult(
             solve_time=solve_time,
             result=result,
-            model=model if model else "N/A"
+            reward=reward,
+            model=model
         )
 
     def _cleanup(self):
