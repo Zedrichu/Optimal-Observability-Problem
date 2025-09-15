@@ -13,146 +13,146 @@ with open('table_1.csv', mode='w') as table_file:
 
 	table_writer.writerow(['Model', 'Threshold', 'Budget', 'Time (s)', 'Reward'])
 
-	# os.system('python3 createLinePOP.py 249 124 2 \'<= Q(250,2)\' 0')
-	#
-	# start = time.time()
-	# os.system('timeout ' + str(timeout) + 's python3 line_249_ran_z3.py')
-	# end = time.time()
-	# total = end - start
-	#
-	# if total > timeout:
-	# 	total = 't.o.'
-	# 	rew = 'N/A'
-	# else:
-	# 	file = open('reward.txt', 'r')
-	# 	file.seek(0)
-	# 	lines = file.readlines()
-	# 	if len(lines) > 0:
-	# 		rew = lines[0]
-	# 	else:
-	# 		rew = 'N/A'
-	# 	file.close()
-	#
-	# table_writer.writerow(['L(249)', '<= 250/2', '2', str(total), str(rew)])
-	#
-	# os.system('python3 createLinePOP.py 249 124 2 \'<= Q(125,2)\' 0')
-	#
-	# start = time.time()
-	# os.system('timeout ' + str(timeout) + 's python3 line_249_ran_z3.py')
-	# end = time.time()
-	# total = end - start
-	#
-	# if total > timeout:
-	# 	total = 't.o.'
-	#
-	# if total == 't.o.':
-	# 	rew = 'N/A'
-	# else:
-	# 	file = open('reward.txt', 'r')
-	# 	file.seek(0)
-	# 	lines = file.readlines()
-	# 	if len(lines) > 0:
-	# 		rew = lines[0]
-	# 	else:
-	# 		rew = 'N/A'
-	# 	file.close()
-	# 	if eval(rew) == eval('125/2'):
-	# 		rew = '125/2'
-	#
-	# table_writer.writerow(['L(249)', '<= 125/2', '2', str(total), str(rew)])
-	#
-	# os.system('python3 createLinePOP.py 249 124 2 \'< Q(125,2)\' 0')
-	#
-	# start = time.time()
-	# os.system('timeout ' + str(timeout) + 's python3 line_249_ran_z3.py')
-	# end = time.time()
-	# total = end - start
-	#
-	# if total > timeout:
-	# 	total = 't.o.'
-	# 	rew = 'N/A'
-	# else:
-	# 	file = open('reward.txt', 'r')
-	# 	file.seek(0)
-	# 	lines = file.readlines()
-	# 	if len(lines) > 0:
-	# 		rew = lines[0]
-	# 	else:
-	# 		rew = 'N/A'
-	# 	file.close()
-	#
-	# table_writer.writerow(['L(249)', '< 125/2', '2', str(total), str(rew)])
-	#
-	#
-	# os.system('python3 createGridPOP.py 20 399 2 \'<= Q(15200,399)\' 0')
-	#
-	# start = time.time()
-	# os.system('timeout ' + str(timeout) + 's python3 grid_20x20_ran_z3.py')
-	# end = time.time()
-	# total = end - start
-	#
-	# if total > timeout:
-	# 	total = 't.o.'
-	# 	rew = 'N/A'
-	# else:
-	# 	file = open('reward.txt', 'r')
-	# 	file.seek(0)
-	# 	lines = file.readlines()
-	# 	if len(lines) > 0:
-	# 		rew = lines[0]
-	# 	else:
-	# 		rew = 'N/A'
-	# 	file.close()
-	#
-	# table_writer.writerow(['G(20)', '<= 15200/399', '2', str(total), str(rew)])
-	#
-	# os.system('python3 createGridPOP.py 20 399 2 \'<= Q(7600,399)\' 0')
-	#
-	# start = time.time()
-	# os.system('timeout ' + str(timeout) + 's python3 grid_20x20_ran_z3.py')
-	# end = time.time()
-	# total = end - start
-	#
-	# if total > timeout:
-	# 	total = 't.o.'
-	#
-	# if total == 't.o.':
-	# 	rew = 'N/A'
-	# else:
-	# 	file = open('reward.txt', 'r')
-	# 	file.seek(0)
-	# 	lines = file.readlines()
-	# 	if len(lines) > 0:
-	# 		rew = lines[0]
-	# 	else:
-	# 		rew = 'N/A'
-	# 	file.close()
-	# 	if eval(rew) == eval('7600/399'):
-	# 			rew = '7600/399'
-	#
-	# table_writer.writerow(['G(20)', '<= 7600/399', '2', str(total), str(rew)])
-	#
-	# os.system('python3 createGridPOP.py 20 399 2 \'< Q(7600,399)\' 0')
-	#
-	# start = time.time()
-	# os.system('timeout ' + str(timeout) + 's python3 grid_20x20_ran_z3.py')
-	# end = time.time()
-	# total = end - start
-	#
-	# if total > timeout:
-	# 	total = 't.o.'
-	# 	rew = 'N/A'
-	# else:
-	# 	file = open('reward.txt', 'r')
-	# 	file.seek(0)
-	# 	lines = file.readlines()
-	# 	if len(lines) > 0:
-	# 		rew = lines[0]
-	# 	else:
-	# 		rew = 'N/A'
-	# 	file.close()
-	#
-	# table_writer.writerow(['G(20)', '< 7600/399', '2', str(total), str(rew)])
+	os.system('python3 createLinePOP.py 249 124 2 \'<= Q(250,2)\' 0')
+
+	start = time.time()
+	os.system('timeout ' + str(timeout) + 's python3 line_249_ran_z3.py')
+	end = time.time()
+	total = end - start
+
+	if total > timeout:
+		total = 't.o.'
+		rew = 'N/A'
+	else:
+		file = open('reward.txt', 'r')
+		file.seek(0)
+		lines = file.readlines()
+		if len(lines) > 0:
+			rew = lines[0]
+		else:
+			rew = 'N/A'
+		file.close()
+
+	table_writer.writerow(['L(249)', '<= 250/2', '2', str(total), str(rew)])
+
+	os.system('python3 createLinePOP.py 249 124 2 \'<= Q(125,2)\' 0')
+
+	start = time.time()
+	os.system('timeout ' + str(timeout) + 's python3 line_249_ran_z3.py')
+	end = time.time()
+	total = end - start
+
+	if total > timeout:
+		total = 't.o.'
+
+	if total == 't.o.':
+		rew = 'N/A'
+	else:
+		file = open('reward.txt', 'r')
+		file.seek(0)
+		lines = file.readlines()
+		if len(lines) > 0:
+			rew = lines[0]
+		else:
+			rew = 'N/A'
+		file.close()
+		if eval(rew) == eval('125/2'):
+			rew = '125/2'
+
+	table_writer.writerow(['L(249)', '<= 125/2', '2', str(total), str(rew)])
+
+	os.system('python3 createLinePOP.py 249 124 2 \'< Q(125,2)\' 0')
+
+	start = time.time()
+	os.system('timeout ' + str(timeout) + 's python3 line_249_ran_z3.py')
+	end = time.time()
+	total = end - start
+
+	if total > timeout:
+		total = 't.o.'
+		rew = 'N/A'
+	else:
+		file = open('reward.txt', 'r')
+		file.seek(0)
+		lines = file.readlines()
+		if len(lines) > 0:
+			rew = lines[0]
+		else:
+			rew = 'N/A'
+		file.close()
+
+	table_writer.writerow(['L(249)', '< 125/2', '2', str(total), str(rew)])
+
+
+	os.system('python3 createGridPOP.py 20 399 2 \'<= Q(15200,399)\' 0')
+
+	start = time.time()
+	os.system('timeout ' + str(timeout) + 's python3 grid_20x20_ran_z3.py')
+	end = time.time()
+	total = end - start
+
+	if total > timeout:
+		total = 't.o.'
+		rew = 'N/A'
+	else:
+		file = open('reward.txt', 'r')
+		file.seek(0)
+		lines = file.readlines()
+		if len(lines) > 0:
+			rew = lines[0]
+		else:
+			rew = 'N/A'
+		file.close()
+
+	table_writer.writerow(['G(20)', '<= 15200/399', '2', str(total), str(rew)])
+
+	os.system('python3 createGridPOP.py 20 399 2 \'<= Q(7600,399)\' 0')
+
+	start = time.time()
+	os.system('timeout ' + str(timeout) + 's python3 grid_20x20_ran_z3.py')
+	end = time.time()
+	total = end - start
+
+	if total > timeout:
+		total = 't.o.'
+
+	if total == 't.o.':
+		rew = 'N/A'
+	else:
+		file = open('reward.txt', 'r')
+		file.seek(0)
+		lines = file.readlines()
+		if len(lines) > 0:
+			rew = lines[0]
+		else:
+			rew = 'N/A'
+		file.close()
+		if eval(rew) == eval('7600/399'):
+				rew = '7600/399'
+
+	table_writer.writerow(['G(20)', '<= 7600/399', '2', str(total), str(rew)])
+
+	os.system('python3 createGridPOP.py 20 399 2 \'< Q(7600,399)\' 0')
+
+	start = time.time()
+	os.system('timeout ' + str(timeout) + 's python3 grid_20x20_ran_z3.py')
+	end = time.time()
+	total = end - start
+
+	if total > timeout:
+		total = 't.o.'
+		rew = 'N/A'
+	else:
+		file = open('reward.txt', 'r')
+		file.seek(0)
+		lines = file.readlines()
+		if len(lines) > 0:
+			rew = lines[0]
+		else:
+			rew = 'N/A'
+		file.close()
+
+	table_writer.writerow(['G(20)', '< 7600/399', '2', str(total), str(rew)])
 
 
 	os.system('python3 createMazePOP.py 4 7 14 4 \'<= Q(168,15)\' 0')
