@@ -22,14 +22,14 @@ class SSPSpec(OOPSpec, ABC):
     def declare_observation_function(self, sensor_states: List[int]) -> List[z3.ArithRef]:
         # Choice of observations on each non-goal state (state sensors)
         # e.g. `ys0 == 1` means that in state 0 the sensor is on, `ys0 == 0` - state sensor is off
-        print("\n# Choice of observation on each non-goal state (state sensors that are on/off)")
+        self.console.print("\n# Choice of observation on each non-goal state (state sensors that are on/off)")
         state_to_observation = [Real(f'ys{s}', self.ctx) for s in sensor_states]
         self.console.print(state_to_observation)
         return state_to_observation
 
     def declare_strategy_mapping(self, sensor_states: List[int]) -> List[List[z3.ArithRef]]:
         # Action rates of randomized strategies per state (when the sensor is on)
-        print("\n# Action rates of randomized strategies per state (when sensor is on)")
+        self.console.print("\n# Action rates of randomized strategies per state (when sensor is on)")
         sensor_to_action = [[Real(f'xo{s}{act}', self.ctx) for act in self.actions] for s in sensor_states]
 
         # Default strategy variables per action (when no sensor is observed - unknown state)
@@ -46,7 +46,7 @@ class SSPSpec(OOPSpec, ABC):
     def build_observation_constraints(self) -> List[z3.BoolRef]:
         # Observation function constraints - every state should be mapped to some observable class
         # For SSP, 2 observation classes exist: activated sensor or unknown
-        print(f"\n# Observation function constraints - every state should be mapped to some observable class"
+        self.console.print(f"\n# Observation function constraints - every state should be mapped to some observable class"
               f"\n# For SSP, 2 observation classes exist: activated sensor or unknown")
         constraints = [Or(sensor == 0, sensor == 1, self.ctx) for sensor in self.Y]
         self.console.print(constraints)
@@ -54,8 +54,8 @@ class SSPSpec(OOPSpec, ABC):
 
     def build_budget_constraint(self):
         # Budget constraint - total sensors used <= budget
-        print("# Budget constraint - total no. of sensors activated <= budget")
-        constraint = sum(self.Y) <= self.budget # ?? original mentions == budget
+        self.console.print("# Budget constraint - total no. of sensors activated <= budget")
+        constraint = sum(self.Y) == self.budget # TODO!: Check whether == or <= works better ? original mentions == budget
         self.console.print(constraint)
         return constraint
 

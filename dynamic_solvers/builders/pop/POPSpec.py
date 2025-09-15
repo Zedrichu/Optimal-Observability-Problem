@@ -18,20 +18,20 @@ class POPSpec(OOPSpec, ABC):
 
     def declare_observation_function(self, observable_states: List[int]) -> List[List[z3.ArithRef]]:
         # Choice of observations on the states (e.g. ys0o1 = 1 means that in state 0, observable 1 is observed)
-        print("\n# Choice of observations (e.g. ys0o1 = 1 means that in state 0, observable 1 is observed)")
+        self.console.print("\n# Choice of observations (e.g. ys0o1 = 1 means that in state 0, observable 1 is observed)")
         state_to_observation = [[Real(f'ys{s}o{o+1}', self.ctx)
                                     for o in range(self.budget)]
                                     for s in observable_states]
-        print(state_to_observation)
+        self.console.print(state_to_observation)
         return state_to_observation
 
     def declare_strategy_mapping(self) -> List[List[z3.ArithRef]]:
         # Rates of randomized strategies
-        print("\n# Rates of randomized strategies")
+        self.console.print("\n# Rates of randomized strategies")
         observation_to_action = [[Real(f'xo{o+1}{act}', self.ctx)
                                     for act in self.actions]
                                     for o in range(self.budget)]
-        print(observation_to_action)
+        self.console.print(observation_to_action)
         return observation_to_action
 
     def build_action_term(self, action_idx: int, state_idx: int):
@@ -40,12 +40,12 @@ class POPSpec(OOPSpec, ABC):
 
     def build_observation_constraints(self) -> List[z3.BoolRef]:
         # Observation function constraints - every state should be mapped to some observable class
-        print("\n# Observation function constraints - every state should be mapped to some observable class")
+        self.console.print("\n# Observation function constraints - every state should be mapped to some observable class")
         constraints = []
         for state_obs in self.Y:
             constraints.extend([Or(obs == 0, obs == 1, self.ctx) for obs in state_obs])
 
-        print('# Every state should be mapped to exactly one equivalence class')
+        self.console.print('# Every state should be mapped to exactly one equivalence class')
         constraints.extend([sum(state_obs) == 1 for state_obs in self.Y])
 
         self.console.print(constraints)

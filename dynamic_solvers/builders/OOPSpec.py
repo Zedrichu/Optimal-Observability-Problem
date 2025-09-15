@@ -20,7 +20,7 @@ class OOPSpec(World, ABC):
 
         self.exp_rew_evaluator = None
 
-        self.console = Console()
+        self.console = Console(quiet=False, record=True)
 
     @abstractmethod
     def declare_variables(self):
@@ -36,7 +36,7 @@ class OOPSpec(World, ABC):
 
     def declare_expected_rewards(self) -> List[z3.ArithRef]:
         # Expected cost/reward of reaching the goal from each corresponding state.
-        print("\n# Expected cost/reward of reaching the goal from each corresponding state.")
+        self.console.print("\n# Expected cost/reward of reaching the goal from each corresponding state.")
         expected_rewards = [Real(f'pi{s}', self.ctx) for s in range(self.size)]
         self.console.print(expected_rewards)
         return expected_rewards
@@ -45,7 +45,7 @@ class OOPSpec(World, ABC):
         """
         Build basic POMDP constraints - a POMDP instance cannot perform better than the fully observable variant.
         """
-        print('\n# A POMDP instance cannot perform better than the fully observable variant')
+        self.console.print('\n# A POMDP instance cannot perform better than the fully observable variant')
         constraints = [self.ExpRew[s] >= self.dist(s, self.goal) for s in range(self.size)]
 
         self.console.print(constraints)
@@ -53,7 +53,7 @@ class OOPSpec(World, ABC):
 
     def build_bellman_equations(self) -> List[z3.BoolRef]:
         # Bellman equations for expected rewards in each world's state
-        print("\n# Bellman equations for expected rewards in each world's state")
+        self.console.print("\n# Bellman equations for expected rewards in each world's state")
 
         equations = []
         for s in range(self.size):
@@ -82,7 +82,7 @@ class OOPSpec(World, ABC):
     def build_threshold_constraint(self, threshold: str) -> bool:
         # Agent dropped in the world under uniform distribution
         # Check if the minimal expected cost is below some threshold
-        print(f"\n# Agent dropped uniformly in the world"
+        self.console.print(f"\n# Agent dropped uniformly in the world"
               f"\n# Objective: check if the minimal expected cost is below some threshold `{threshold}`")
 
         # Generate the sum of expected reward variables for non-target states (uniform distribution)
@@ -97,7 +97,7 @@ class OOPSpec(World, ABC):
 
     def build_strategy_constraints(self, determinism: bool) -> List[z3.BoolRef]:
         # Randomized strategies (proper probability distributions)
-        print('\n# Randomized strategies (proper probability distributions)')
+        self.console.print('\n# Randomized strategies (proper probability distributions)')
         constraints = []
         for strategy in self.X:
             for rate in strategy:
@@ -105,9 +105,9 @@ class OOPSpec(World, ABC):
                 constraints.append(rate <= 1)
             constraints.append(sum(strategy) == 1)
 
-        # TODO: Check for determinism first and apply binary constraints only (no need for range)
+        # TODO!: Check for determinism first and apply binary constraints only (no need for range)
         if determinism:
-            print('# Deterministic strategies activated (one-hot encoding or degenerate categorical distribution)\n')
+            self.console.print('# Deterministic strategies activated (one-hot encoding or degenerate categorical distribution)\n')
             for strategy in self.X:
                 for rate in strategy:
                     constraints.append(Or(rate == 0, rate == 1, self.ctx))
