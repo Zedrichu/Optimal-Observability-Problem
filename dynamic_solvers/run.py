@@ -197,25 +197,30 @@ def solve_problem(args: argparse.Namespace) -> None:
     # Configure solver options
     solver.set_options(args.results, args.rewards, args.timeout)
 
-    try:
+    # try:
 
-        # Solve and get results
-        result = solver.solve(tpmc_instance, args.threshold, args.deterministic)
+    # Solve and get results
+    result = solver.solve(tpmc_instance, args.threshold, args.deterministic)
 
-        # Report results
-        print(f"🏁 Solve time: {result.solve_time:.4f}s")
-        print(f"   Status: {result.result}")
+    # Report results
+    print(f"🏁 Solve time: {result.solve_time:.4f}s")
+    print(f"   Status: {result.result}")
 
-        if args.verbose:
-            print(f"📁 Results written to: {args.results}")
-            print(f"🎯 Rewards written to: {args.rewards}")
-            print(f"   Result: {result.result}")
-            if result.model:
-                print("   Model found and saved")
+    txt = tpmc_instance.console.export_text(clear=True)
+    with open('test.txt', 'w') as f:
+        f.write(txt)
+        f.close()
 
-    except Exception as e:
-        print(f"❌ Error during solving: {e}")
-        sys.exit(1)
+    if args.verbose:
+        print(f"📁 Results written to: {args.results}")
+        print(f"🎯 Rewards written to: {args.rewards}")
+        print(f"   Result: {result.result}")
+        if result.model:
+            print("   Model found and saved")
+
+    # except Exception as e:
+    #     print(f"❌ Error during solving: {e}")
+    #     sys.exit(1)
 
 
 def main():

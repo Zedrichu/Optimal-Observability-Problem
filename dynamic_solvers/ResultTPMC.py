@@ -4,8 +4,8 @@ from typing import Optional
 from dataclasses import dataclass
 
 @dataclass
-class BenchmarkResult:
-    """Results from solving a POMDP instance in OOP (optimal observability problem)"""
+class ResultTPMC:
+    """Results from solving a location tpMC for POMDP instances in OOP"""
     solve_time: float
     # setup_time: float
     # memory_used: int  # bytes

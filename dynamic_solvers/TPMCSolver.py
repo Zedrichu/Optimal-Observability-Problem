@@ -27,7 +27,7 @@ class TPMCSolver:
         self.solver.set("timeout", timeout)
         return
 
-    def solve(self, tpmc: OOPSpec, threshold: str, determinism: bool) -> BenchmarkResult:
+    def solve(self, tpmc: OOPSpec, threshold: str, determinism: bool) -> ResultTPMC:
         tpmc.declare_variables()
         tpmc_constraints = tpmc.collect_constraints(threshold, determinism)
         self.solver.add(tpmc_constraints)
@@ -58,7 +58,7 @@ class TPMCSolver:
 
         self._cleanup()
 
-        return BenchmarkResult(
+        return ResultTPMC(
             solve_time=solve_time,
             result=result,
             reward=reward,
