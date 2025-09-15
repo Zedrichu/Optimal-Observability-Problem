@@ -2,7 +2,7 @@ from abc import ABC
 from itertools import chain
 from typing import List
 
-from z3 import z3, Real, Or
+from z3 import z3, Real, Or, Sum
 
 from dynamic_solvers.builders.OOPSpec import OOPSpec
 
@@ -35,7 +35,7 @@ class POPSpec(OOPSpec, ABC):
         return observation_to_action
 
     def build_action_term(self, action_idx: int, state_idx: int):
-        return sum([self.Y[state_idx][o] * self.X[o][action_idx]
+        return Sum([self.Y[state_idx][o] * self.X[o][action_idx]
                     for o in range(self.budget)])
 
     def build_observation_constraints(self) -> List[z3.BoolRef]:
@@ -46,7 +46,7 @@ class POPSpec(OOPSpec, ABC):
             constraints.extend([Or(obs == 0, obs == 1, self.ctx) for obs in state_obs])
 
         self.console.print('# Every state should be mapped to exactly one equivalence class')
-        constraints.extend([sum(state_obs) == 1 for state_obs in self.Y])
+        constraints.extend([Sum(state_obs) == 1 for state_obs in self.Y])
 
         self.console.print(constraints)
         return constraints

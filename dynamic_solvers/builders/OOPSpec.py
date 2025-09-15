@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 
 from rich.console import Console
-from z3 import (Context, z3, Real, Q, Or)
+from z3 import (Context, z3, Real, Q, Or, Sum)
 
 from dynamic_solvers.builders.worlds import World
 from dynamic_solvers.utils import parse_threshold
@@ -62,15 +62,15 @@ class OOPSpec(World, ABC):
                 continue
 
             # Build action terms for each direction using a transition function
-            equation = 1
+            terms = []
             for a in range(len(self.actions)):
                 # Decrement the state index after processing the goal state
                 idx = s - 1 if s > self.goal else s
 
                 action_term = self.build_action_term(a, idx)
                 next_state = self.navigate(s, a)
-                equation += action_term * self.ExpRew[next_state]
-            equations.append(self.ExpRew[s] == equation)
+                terms.append(action_term * (1 + self.ExpRew[next_state]))
+            equations.append(self.ExpRew[s] == Sum(terms))
 
         self.console.print(equations)
         return equations
@@ -86,7 +86,7 @@ class OOPSpec(World, ABC):
               f"\n# Objective: check if the minimal expected cost is below some threshold `{threshold}`")
 
         # Generate the sum of expected reward variables for non-target states (uniform distribution)
-        sumExpRew = sum(self.ExpRew[s] for s in range(self.size) if s != self.goal)
+        sumExpRew = Sum([self.ExpRew[s] for s in range(self.size) if s != self.goal])
         numerator, denominator, sign = parse_threshold(threshold)
 
         self.exp_rew_evaluator = sumExpRew * Q(1, self.size - 1, self.ctx)
@@ -101,9 +101,11 @@ class OOPSpec(World, ABC):
         constraints = []
         for strategy in self.X:
             for rate in strategy:
-                constraints.append(rate >= 0)
                 constraints.append(rate <= 1)
-            constraints.append(sum(strategy) == 1)
+                constraints.append(rate >= 0)
+        # # TODO!: Test if the sum constraint per strategy can be put together, rather than batching all at the end
+        # for strategy in self.X:
+            constraints.append(Sum(strategy) == 1)
 
         # TODO!: Check for determinism first and apply binary constraints only (no need for range)
         if determinism:

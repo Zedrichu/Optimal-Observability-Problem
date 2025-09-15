@@ -3,11 +3,13 @@ import time
 
 from z3 import set_option, Solver, unsat, sat, Context
 
-from dynamic_solvers.BenchmarkResult import BenchmarkResult
+from dynamic_solvers.ResultTPMC import ResultTPMC
 from dynamic_solvers.builders.OOPSpec import OOPSpec
 
 
 class TPMCSolver:
+    solver: Solver | None
+
     def __init__(self, verbose: bool):
         self.solver = None
         self.verbose = verbose

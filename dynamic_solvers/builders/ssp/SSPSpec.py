@@ -2,7 +2,7 @@ from abc import ABC
 from itertools import chain
 from typing import List
 
-from z3 import z3, Real, Or
+from z3 import z3, Real, Or, Sum
 
 from dynamic_solvers.builders.OOPSpec import OOPSpec
 
@@ -55,7 +55,7 @@ class SSPSpec(OOPSpec, ABC):
     def build_budget_constraint(self):
         # Budget constraint - total sensors used <= budget
         self.console.print("# Budget constraint - total no. of sensors activated <= budget")
-        constraint = sum(self.Y) == self.budget # TODO!: Check whether == or <= works better ? original mentions == budget
+        constraint = Sum(self.Y) == self.budget # TODO!: Check whether == or <= works better ? original mentions == budget
         self.console.print(constraint)
         return constraint
 
