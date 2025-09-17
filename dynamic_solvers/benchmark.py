@@ -88,7 +88,7 @@ class BenchmarkRunner:
         """Run a single benchmark using dynamic_solvers classes."""
         model_desc = self._create_model_description(config)
 
-        instance_text = f"{config.variant.upper()} instance {model_desc} w/ B:{config.budget}; τ:{config.threshold}"
+        instance_text = f"{config.variant.upper()} instance {model_desc} w/ B: {config.budget}; τ: '{config.threshold}'"
         halo = Halo(text=f"Running ... {instance_text}", spinner="dots12", color="cyan")
         if self.verbose:
             halo.start()
@@ -149,8 +149,8 @@ class BenchmarkRunner:
                 sys.stdout.flush()
 
                 halo.succeed(f"Solved: {instance_text} "
-                             f"|> {time_print} "
-                             f"| {result_status} "
+                             f"| Time: {time_print} "
+                             f"| Satisfiability: {result_status} "
                              f"| Reward: {result.reward if result.reward is not None else "N/A"}\n")
             return benchmark_result
 
