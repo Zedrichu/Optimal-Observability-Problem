@@ -6,10 +6,9 @@ from dynamic_solvers.builders.worlds import Grid
 
 
 class GridTPMC(Grid, SSPSpec):
-    def __init__(self, budget: int, goal: int, width: int, height: int, threshold: str, ctx: Optional[Context] = None):
+    def __init__(self, budget: int, goal: int, width: int, height: int, ctx: Optional[Context] = None, verbose: bool = False):
         Grid.__init__(self, width, height)
-        SSPSpec.__init__(self, budget, goal, ctx)
-        self.threshold = threshold
+        SSPSpec.__init__(self, budget, goal, ctx, verbose)
 
 
 if __name__ == "__main__":

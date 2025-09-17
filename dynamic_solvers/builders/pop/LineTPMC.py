@@ -6,9 +6,9 @@ from dynamic_solvers.builders.worlds import Line
 
 
 class LineTPMC(Line, POPSpec):
-    def __init__(self, budget: int, goal: int, length: int, ctx: Optional[Context] = None):
+    def __init__(self, budget: int, goal: int, length: int, ctx: Optional[Context] = None, verbose: bool = False):
         Line.__init__(self, length)
-        POPSpec.__init__(self, budget, goal, ctx)
+        POPSpec.__init__(self, budget, goal, ctx, verbose)
 
 
 if __name__ == "__main__":

@@ -6,9 +6,9 @@ from dynamic_solvers.builders.worlds import Maze
 
 
 class MazeTPMC(Maze, POPSpec):
-    def __init__(self, budget: int, goal: int, width: int, depth: int, ctx: Optional[Context] = None):
+    def __init__(self, budget: int, goal: int, width: int, depth: int, ctx: Optional[Context] = None, verbose: bool = False):
         Maze.__init__(self, width, depth)
-        POPSpec.__init__(self, budget, goal, ctx)
+        POPSpec.__init__(self, budget, goal, ctx, verbose)
 
 
 if __name__ == "__main__":

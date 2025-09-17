@@ -6,10 +6,9 @@ from dynamic_solvers.builders.worlds import Line
 
 
 class LineTPMC(Line, SSPSpec):
-    def __init__(self, budget: int, goal: int, length: int, threshold: str, ctx: Optional[Context] = None):
+    def __init__(self, budget: int, goal: int, length: int, ctx: Optional[Context] = None, verbose: bool = False):
         Line.__init__(self, length)
-        SSPSpec.__init__(self, budget, goal, ctx)
-        self.threshold = threshold
+        SSPSpec.__init__(self, budget, goal, ctx, verbose)
 
 
 if __name__ == "__main__":

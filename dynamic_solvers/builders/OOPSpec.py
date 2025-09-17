@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
+from io import StringIO
 
 from rich.console import Console
 from z3 import (Context, z3, Real, Q, Or, Sum)
@@ -9,10 +10,11 @@ from dynamic_solvers.utils import parse_threshold
 
 
 class OOPSpec(World, ABC):
-    def __init__(self, budget: int, goal: int, ctx: Optional[Context] = None):
+    def __init__(self, budget: int, goal: int, ctx: Optional[Context] = None, verbose: bool = False):
         self.ctx = ctx or Context()  # Use provided context or create fresh one
         self.budget = budget
         self.goal = goal
+        self.verbose = verbose
 
         self.ExpRew = None  # Expected reward variables
         self.Y = None       # Observation function variables
@@ -20,7 +22,7 @@ class OOPSpec(World, ABC):
 
         self.exp_rew_evaluator = None
 
-        self.console = Console(quiet=False, record=True)
+        self.console = Console(quiet=not verbose, record=True)
 
     @abstractmethod
     def declare_variables(self):
@@ -38,6 +40,7 @@ class OOPSpec(World, ABC):
         # Expected cost/reward of reaching the goal from each corresponding state.
         self.console.print("\n# Expected cost/reward of reaching the goal from each corresponding state.")
         expected_rewards = [Real(f'pi{s}', self.ctx) for s in range(self.size)]
+        # self.console.print(f"[ pi<x>, x ∈ ℕ, 0 <= x < {self.goal} ]")
         self.console.print(expected_rewards)
         return expected_rewards
 
