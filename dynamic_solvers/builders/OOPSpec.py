@@ -90,10 +90,15 @@ class OOPSpec(World, ABC):
 
         # Generate the sum of expected reward variables for non-target states (uniform distribution)
         sumExpRew = Sum([self.ExpRew[s] for s in range(self.size) if s != self.goal])
-        numerator, denominator, sign = parse_threshold(threshold)
+        terms, sign = parse_threshold(threshold)
 
         self.exp_rew_evaluator = sumExpRew * Q(1, self.size - 1, self.ctx)
-        constraint = sign(sumExpRew * Q(1, self.size - 1, self.ctx), Q(numerator, denominator, self.ctx))
+
+        if len(terms) == 1:
+            constraint = sign(sumExpRew * Q(1, self.size - 1, self.ctx), terms[0])
+        else:
+            constraint = sign(sumExpRew * Q(1, self.size - 1, self.ctx), Q(terms[0], terms[1], self.ctx))
+
 
         self.console.print(constraint)
         return constraint
