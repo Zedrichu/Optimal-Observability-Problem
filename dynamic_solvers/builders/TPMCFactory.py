@@ -75,7 +75,7 @@ class TPMCFactory:
     def _create_ssp_solver(puzzle_type: PuzzleType, **kwargs) -> OOPSpec:
         # Factory extracts only the parameters each constructor needs
         common_params = TPMCFactory._extract_common_params(kwargs)
-        ssp_params = {**common_params, 'threshold': kwargs['threshold']}
+        ssp_params = {**common_params}
 
         if puzzle_type == PuzzleType.LINE:
             params = {**ssp_params, 'length': kwargs['length']}

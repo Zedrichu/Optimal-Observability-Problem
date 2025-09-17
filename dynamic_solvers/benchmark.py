@@ -139,14 +139,15 @@ class BenchmarkRunner:
                 'error': None
             }
 
-            # Clear out the spinner text if neeeded
-            # sys.stdout.write('\033[1A')  # Move up
-            sys.stdout.write('\033[2K')  # Clear line
-            sys.stdout.write('\r')  # Move to beginning
-            sys.stdout.flush()
 
             time_print = f"{benchmark_result['time']:.4f}s" if benchmark_result['time'] > 0 else "timeout"
             if self.verbose:
+                # Clear out the spinner text if neeeded
+                # sys.stdout.write('\033[1A')  # Move up
+                sys.stdout.write('\033[2K')  # Clear line
+                sys.stdout.write('\r')  # Move to beginning
+                sys.stdout.flush()
+
                 halo.succeed(f"Solved: {instance_text} "
                              f"|> {time_print} "
                              f"| {result_status} "

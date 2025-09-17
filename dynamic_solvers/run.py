@@ -190,7 +190,6 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
                                        height=args.height,
                                        goal=args.goal,
                                        budget=args.budget,
-                                       threshold=args.threshold,
                                        verbose=args.verbose)
     solver = TPMCSolver(verbose=not benchmark)
     solver.reset(tpmc_instance.ctx)
