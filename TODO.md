@@ -49,8 +49,8 @@ python3 -m dynamic_solvers.benchmark_runner dynamic_solvers/Pos-OOP-config.csv -
 ```
 
 ## Cleanup work on API solvers & benchmarker:
- - [ ] Aim for same performance/results as the file writing (match the constraints identically)
- - [ ] Extend threshold parser to handle integers as well
+ - [X] Aim for same performance/results as the file writing (match the constraints identically)
+ - [X] Extend threshold parser to handle integers as well
  - [ ] 
 
 
