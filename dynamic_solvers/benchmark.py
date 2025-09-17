@@ -178,7 +178,7 @@ class BenchmarkRunner:
                 'model': model_desc,
                 'threshold': config.threshold,
                 'budget': config.budget,
-                'time': result.solve_time,
+                'time': result.solve_time if result.solve_time < config.timeout/1000.0 else -1.0,
                 'reward': result.reward,
                 'status': result_status,
                 'error': None
@@ -226,7 +226,7 @@ class BenchmarkRunner:
                     result['model'],
                     result['threshold'],
                     result['budget'],
-                    f"{result['time']:.6f}" if result['time'] and result['time'] > 0 else "N/A",
+                    f"{result['time']:.6f}" if result['time'] and result['time'] > 0 else "t.o.",
                     result['reward'],
                     result['status'],
                     result['error'] or ""
