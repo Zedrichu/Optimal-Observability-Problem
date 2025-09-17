@@ -8,6 +8,9 @@ import sys
 import argparse
 import os
 import tempfile
+from contextlib import nullcontext
+
+from alive_progress import alive_bar
 from typing import List, Dict, Any
 from dataclasses import dataclass
 
@@ -37,9 +40,10 @@ class BenchmarkConfig(argparse.Namespace):
 class BenchmarkRunner:
     """Benchmarking unit using existing dynamic_solvers infrastructure."""
 
-    def __init__(self, output_csv: str = "benchmark_results.csv"):
+    def __init__(self, output_csv: str = "benchmark_results.csv", verbose: bool = False):
         self.output_csv = output_csv
         self.results: List[Dict[str, Any]] = []
+        self.verbose = verbose
         self.temp_dir = tempfile.mkdtemp()
 
     def load_configurations_from_csv(self, csv_file: str) -> List[BenchmarkConfig]:
@@ -80,44 +84,21 @@ class BenchmarkRunner:
             return f"M({config.width}x{config.height})"
         return f"{config.world.upper()}(?)"
 
-    def _build_command_args(self, config: BenchmarkConfig, results_file: str, rewards_file: str) -> List[str]:
-        """Build command line arguments for the run.py script."""
-        args = [
-            sys.executable, self.run_script,
-            config.variant, config.world,
-            "--budget", str(config.budget),
-            "--goal", str(config.goal),
-            "--threshold", config.threshold,
-            "--results", results_file,
-            "--rewards", rewards_file,
-            "--timeout", str(config.timeout)
-        ]
-
-        # Add dimension arguments based on world type
-        if config.world == 'line' and config.length is not None:
-            args.extend(["--length", str(config.length)])
-        elif config.world in ['grid', 'maze']:
-            if config.width is not None:
-                args.extend(["--width", str(config.width)])
-            if config.height is not None:
-                args.extend(["--height", str(config.height)])
-
-        # Add deterministic flag if needed
-        if config.deterministic:
-            args.append("--deterministic")
-
-        return args
-
-    @Halo(text=f"Solving instance", spinner="dots", color="green")
     def run_single_benchmark(self, config: BenchmarkConfig) -> Dict[str, Any]:
         """Run a single benchmark using dynamic_solvers classes."""
         model_desc = self._create_model_description(config)
-        print(f"🚀 Running: {model_desc} - Budget: {config.budget}, Threshold: {config.threshold}")
+
+        instance_text = f"{config.variant.upper()} instance {model_desc} w/ B:{config.budget}; τ:{config.threshold}"
+        halo = Halo(text=f"Running ... {instance_text}", spinner="dots12", color="cyan")
+        if self.verbose:
+            halo.start()
+            # halo.info(instance_text)
 
         # Create temporary output files
         results_file = os.path.join(self.temp_dir, f"results_{len(self.results)}.txt")
         rewards_file = os.path.join(self.temp_dir, f"rewards_{len(self.results)}.txt")
 
+        # halo.start()
         try:
             # Convert strings to enums using existing functions
             variant = variant_from_string(config.variant)
@@ -136,32 +117,6 @@ class BenchmarkRunner:
             solver = TPMCSolver(verbose=False)
             solver.reset(tpmc_instance.ctx)
             solver.set_options(results_file, rewards_file, config.timeout)
-
-            # # Build command
-            # cmd_args = self._build_command_args(config, results_file, rewards_file)
-            #
-            # try:
-            #     # Execute subprocess with timeout
-            #     start_time = time.perf_counter()
-            #
-            #     result = subprocess.run(
-            #         cmd_args,
-            #         timeout=config.timeout / 1000.0,  # Convert ms to seconds
-            #         capture_output=True,
-            #         text=True,
-            #         cwd=os.path.dirname(__file__)
-            #     )
-            #
-            #     end_time = time.perf_counter()
-            #     solve_time = end_time - start_time
-            #
-            #     # Parse output to determine status
-            #     if result.returncode == 0:
-            #         # Success - parse output for timing info
-            #         stdout_lines = result.stdout.strip().split('\n')
-            #         actual_solve_time = self._extract_solve_time_from_output(stdout_lines)
-            #         if actual_solve_time is not None:
-            #             solve_time = actual_solve_time
 
             # Run solver execution on the current tpMC instance
             result: ResultTPMC = solver.solve(tpmc_instance, config.threshold, config.deterministic)
@@ -184,12 +139,24 @@ class BenchmarkRunner:
                 'error': None
             }
 
-            print(f"✅ Completed in {result.solve_time:.4f}s - Status: {result_status}, Reward: {result.reward}")
+            # Clear out the spinner text if neeeded
+            # sys.stdout.write('\033[1A')  # Move up
+            sys.stdout.write('\033[2K')  # Clear line
+            sys.stdout.write('\r')  # Move to beginning
+            sys.stdout.flush()
+
+            time_print = f"{benchmark_result['time']:.4f}s" if benchmark_result['time'] > 0 else "timeout"
+            if self.verbose:
+                halo.succeed(f"Solved: {instance_text} "
+                             f"|> {time_print} "
+                             f"| {result_status} "
+                             f"| Reward: {result.reward if result.reward else "N/A"}\n")
             return benchmark_result
 
         except Exception as e:
             error_msg = str(e)
-            print(f"❌ Error: {error_msg}")
+            if self.verbose:
+                halo.fail(f" Error: {error_msg}")
 
             return {
                 'model': model_desc,
@@ -203,12 +170,24 @@ class BenchmarkRunner:
 
     def run_benchmarks(self, configs: List[BenchmarkConfig]) -> None:
         """Run all benchmark configurations."""
-        print(f"🎯 Starting benchmark run with {len(configs)} configurations")
+        print(f"🎯 Started benchmark run with {len(configs)} configurations\n")
 
-        for i, config in enumerate(configs, 1):
-            print(f"\n📊 Progress: {i}/{len(configs)}")
-            result = self.run_single_benchmark(config)
-            self.results.append(result)
+        progress_context = (
+            nullcontext() if self.verbose
+            else alive_bar(total= len(configs),
+                           title= 'Benchmarking...',
+                           length = 20,
+                           bar='smooth',
+                           spinner='dots',
+                           stats=False)
+        )
+
+        with progress_context as bar:
+            for i, config in enumerate(configs, 1):
+                result = self.run_single_benchmark(config)
+                self.results.append(result)
+                if bar is not None:
+                    bar()
 
         print(f"\n🏁 Benchmark run completed! Results will be saved to: {self.output_csv}")
 
@@ -227,7 +206,7 @@ class BenchmarkRunner:
                     result['threshold'],
                     result['budget'],
                     f"{result['time']:.6f}" if result['time'] and result['time'] > 0 else "t.o.",
-                    result['reward'],
+                    result['reward'] if result['reward'] else "N/A",
                     result['status'],
                     result['error'] or ""
                 ])
@@ -250,6 +229,7 @@ def main():
 
     parser.add_argument('config_csv', nargs='?', help='CSV file with benchmark configurations')
     parser.add_argument('--output', '-o', default='benchmark_results.csv', help='Output CSV file')
+    parser.add_argument('--verbose', '-v', action='store_true', help='Verbose output')
 
     args = parser.parse_args()
 
@@ -264,7 +244,7 @@ def main():
             sys.exit(1)
 
         # Run benchmarks
-        runner = BenchmarkRunner(args.output)
+        runner = BenchmarkRunner(args.output, args.verbose)
 
         try:
             configs = runner.load_configurations_from_csv(args.config_csv)
