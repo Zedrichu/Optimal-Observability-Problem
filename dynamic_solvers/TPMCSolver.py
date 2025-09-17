@@ -35,7 +35,8 @@ class TPMCSolver:
         self.solver.add(tpmc_constraints)
 
         if self.verbose:
-            print("⚡ Solving...")
+            print(" ⚡  Solving...")
+            print()
 
         # Solving phase timing for benchmarks
         solve_start = time.perf_counter()
@@ -43,20 +44,22 @@ class TPMCSolver:
         solve_end = time.perf_counter()
         solve_time = solve_end - solve_start
 
-        print()
         model = None
         reward = None
         if result == sat:
-            print(' ✅  Solution found!')
+            if self.verbose:
+                print(' ✅  Solution found!')
             model = self.solver.model()
             reward = model.eval(tpmc.exp_rew_evaluator)
             self.file_results.write(str(model))
             self.file_rewards.write(str(reward))
         elif result == unsat:
-            print(' ❌  No solution!')
+            if self.verbose:
+                print(' ❌  No solution!')
             self.file_rewards.write('N/A')
         else:
-            print(' ❔  Unknown!')
+            if self.verbose:
+                print(' ❔  Unknown!')
 
         self._cleanup()
 

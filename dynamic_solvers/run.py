@@ -167,17 +167,15 @@ def validate_arguments(args: argparse.Namespace) -> None:
         raise ValueError("Threshold must contain an upper bound comparison operator (<=, <)")
 
 
-def solve_problem(args: argparse.Namespace) -> None:
+def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
     """Main solving logic."""
 
-    if args.verbose:
-        print(f"🚀 Starting {args.variant.upper()} {args.world} problem...")
-        print(f"   Budget: {args.budget}, Goal: {args.goal}, Threshold: {args.threshold}")
-        if args.world == 'line':
-            print(f"   Length: {args.length}")
-        else:
-            print(f"   Dimensions: {args.width}x{args.height}")
-        print(f"   Strategy: {'Deterministic' if args.deterministic else 'Randomized'}")
+    if not benchmark:
+        print(f" 🚀 Starting {args.variant.upper()} {args.world.capitalize()} problem...")
+        dim_print = f"Length: {args.length}" if args.world == 'line' \
+                                                 else f"Dimensions: {args.width}x{args.height}"
+        print(f"    Budget: {args.budget}, Goal: {args.goal}, {dim_print}")
+        print(f"    Strategy: {'Deterministic' if args.deterministic else 'Randomized'}, Threshold: {args.threshold}")
         print()
 
     # Convert strings to enums, after which all comparisons are integer-based
@@ -185,14 +183,16 @@ def solve_problem(args: argparse.Namespace) -> None:
     world = puzzle_from_string(args.world)
 
     # Create a problem instance in location tpMC representation
+    # Factory handles parameter selection - client runner just passes everything
     tpmc_instance = TPMCFactory.create(variant, world,
                                        length=args.length,
                                        width=args.width,
                                        height=args.height,
                                        goal=args.goal,
                                        budget=args.budget,
-                                       threshold=args.threshold,)
-    solver = TPMCSolver(args.verbose)
+                                       threshold=args.threshold,
+                                       verbose=args.verbose)
+    solver = TPMCSolver(verbose=not benchmark)
     solver.reset(tpmc_instance.ctx)
     # Configure solver options
     solver.set_options(args.results, args.rewards, args.timeout)
@@ -202,9 +202,12 @@ def solve_problem(args: argparse.Namespace) -> None:
     # Solve and get results
     result = solver.solve(tpmc_instance, args.threshold, args.deterministic)
 
-    # Report results
-    print(f"🏁 Solve time: {result.solve_time:.4f}s")
-    print(f"   Status: {result.result}")
+    if not benchmark:
+        # Report results
+        print(f" 🏁 Solve time: {result.solve_time:.4f}s")
+        print(f"    Status: {result.result}")
+        reward_str = f" ⭐  Reward: {result.reward}" if result.reward is not None else ""
+        print(reward_str)
 
     txt = tpmc_instance.console.export_text(clear=True)
     with open('test.txt', 'w') as f:
@@ -212,11 +215,10 @@ def solve_problem(args: argparse.Namespace) -> None:
         f.close()
 
     if args.verbose:
-        print(f"📁 Results written to: {args.results}")
-        print(f"🎯 Rewards written to: {args.rewards}")
-        print(f"   Result: {result.result}")
+        print(f" 📁 Result model found and saved to: {args.results}; "
+              f" Rewards written to: {args.rewards}")
         if result.model:
-            print("   Model found and saved")
+            print("    Model found and saved")
 
     # except Exception as e:
     #     print(f"❌ Error during solving: {e}")
