@@ -151,13 +151,12 @@ class BenchmarkRunner:
                 halo.succeed(f"Solved: {instance_text} "
                              f"|> {time_print} "
                              f"| {result_status} "
-                             f"| Reward: {result.reward if result.reward else "N/A"}\n")
+                             f"| Reward: {result.reward if result.reward is not None else "N/A"}\n")
             return benchmark_result
 
         except Exception as e:
             error_msg = str(e)
-            if self.verbose:
-                halo.fail(f" Error: {error_msg}")
+            halo.fail(f" Error: {error_msg}")
 
             return {
                 'model': model_desc,
@@ -207,7 +206,7 @@ class BenchmarkRunner:
                     result['threshold'],
                     result['budget'],
                     f"{result['time']:.6f}" if result['time'] and result['time'] > 0 else "t.o.",
-                    result['reward'] if result['reward'] else "N/A",
+                    result['reward'] if result['reward'] is not None else "N/A",
                     result['status'],
                     result['error'] or ""
                 ])
