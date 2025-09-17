@@ -22,6 +22,14 @@ from dynamic_solvers.ResultTPMC import ResultTPMC
 
 TIMEOUT = 90000
 
+def is_docker_environment():
+    """Check if running in Docker container."""
+    return (
+        os.path.exists('/.dockerenv') or
+        os.environ.get('DOCKER_CONTAINER') == 'true' or
+        not sys.stdout.isatty()
+    )
+
 @dataclass
 class BenchmarkConfig(argparse.Namespace):
     """Configuration for a single benchmark instance."""
@@ -172,8 +180,11 @@ class BenchmarkRunner:
         """Run all benchmark configurations."""
         print(f"🎯 Started benchmark run with {len(configs)} configurations\n")
 
+        # Disable alive_bar in Docker environments or when verbose
+        use_progress_bar = not self.verbose and not is_docker_environment()
+
         progress_context = (
-            nullcontext() if self.verbose
+            nullcontext() if not use_progress_bar
             else alive_bar(total= len(configs),
                            title= 'Benchmarking...',
                            length = 20,
@@ -184,6 +195,11 @@ class BenchmarkRunner:
 
         with progress_context as bar:
             for i, config in enumerate(configs, 1):
+                if not use_progress_bar:
+                    model_desc = self._create_model_description(config)
+                    instance_text = f"{config.variant.upper()} instance {model_desc} w/ B:{config.budget}; τ:{config.threshold}"
+                    print(f"[{i}/{len(configs)}] Running {instance_text}...")
+
                 result = self.run_single_benchmark(config)
                 self.results.append(result)
                 if bar is not None:
