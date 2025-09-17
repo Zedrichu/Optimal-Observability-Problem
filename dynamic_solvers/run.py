@@ -209,7 +209,7 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
         print(reward_str)
 
     txt = tpmc_instance.console.export_text(clear=True)
-    with open('test.txt', 'w') as f:
+    with open('log_record.txt', 'w') as f:
         f.write(txt)
         f.close()
 

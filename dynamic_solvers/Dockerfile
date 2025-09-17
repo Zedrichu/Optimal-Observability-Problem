@@ -1,12 +1,24 @@
-FROM python:3.13.7-bookworm
+FROM python:3.13.7-slim
+
+WORKDIR /oop
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-WORKDIR /oop
-COPY uv.lock pyproject.toml ./
-COPY dynamic_solvers/ ./dynamic_solvers/
+ENV UV_LINK_MODE=copy
 
-RUN uv sync
+COPY uv.lock pyproject.toml ./
+
+RUN --mount=type=cache,target=/Users/$USER/.cache/uv \
+    uv venv --relocatable && \
+    uv sync --frozen && \
+    uv cache clean
 
 # Add venv bin to PATH so python/pip always point to it
+ENV VIRTUAL_ENV=/app/.venv
 ENV PATH="/oop/.venv/bin:$PATH"
+
+COPY dynamic_solvers ./dynamic_solvers
+COPY dynamic_solvers/configs /configs
+
+ENTRYPOINT ["/bin/bash", "-c"]
+CMD ["python3 -m dynamic_solvers.benchmark \"$CONFIG_CSV\" --output \"$OUTPUT_CSV\" $VERBOSE"]
