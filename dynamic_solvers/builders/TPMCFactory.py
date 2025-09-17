@@ -47,6 +47,10 @@ def puzzle_from_string(s: str) -> PuzzleType:
 class TPMCFactory:
     @staticmethod
     def create(oop_variant: OOPVariant, puzzle_type: PuzzleType, **kwargs) -> OOPSpec:
+        """
+        Factory method that handles parameter selection and object creation.
+        Client only needs to pass all available parameters; factory filters what's needed.
+        """
         if oop_variant == OOPVariant.POP:
             return TPMCFactory._create_pop_solver(puzzle_type, **kwargs)
         elif oop_variant == OOPVariant.SSP:
@@ -54,37 +58,40 @@ class TPMCFactory:
 
     @staticmethod
     def _create_pop_solver(puzzle_type: PuzzleType, **kwargs) -> OOPSpec:
+        # Factory extracts only the parameters each constructor needs
+        common_params = TPMCFactory._extract_common_params(kwargs)
+
         if puzzle_type == PuzzleType.LINE:
-            return LineTPMCPOP(budget=kwargs['budget'],
-                               goal=kwargs['goal'],
-                               length=kwargs['length'],)
+            params = {**common_params, 'length': kwargs['length']}
+            return LineTPMCPOP(**params)
         elif puzzle_type == PuzzleType.GRID:
-            return GridTPMCPOP(budget=kwargs['budget'],
-                               goal=kwargs['goal'],
-                               width=kwargs['width'],
-                               height=kwargs['height'],)
+            params = {**common_params, 'width': kwargs['width'], 'height': kwargs['height']}
+            return GridTPMCPOP(**params)
         elif puzzle_type == PuzzleType.MAZE:
-            return MazeTPMCPOP(budget=kwargs['budget'],
-                               goal=kwargs['goal'],
-                               width=kwargs['width'],
-                               depth=kwargs['height'],)
+            params = {**common_params, 'width': kwargs['width'], 'depth': kwargs['height']}
+            return MazeTPMCPOP(**params)
 
     @staticmethod
     def _create_ssp_solver(puzzle_type: PuzzleType, **kwargs) -> OOPSpec:
+        # Factory extracts only the parameters each constructor needs
+        common_params = TPMCFactory._extract_common_params(kwargs)
+        ssp_params = {**common_params, 'threshold': kwargs['threshold']}
+
         if puzzle_type == PuzzleType.LINE:
-            return LineTPMCSSP(budget=kwargs['budget'],
-                               goal=kwargs['goal'],
-                               length=kwargs['length'],
-                               threshold=kwargs['threshold'])
+            params = {**ssp_params, 'length': kwargs['length']}
+            return LineTPMCSSP(**params)
         elif puzzle_type == PuzzleType.GRID:
-            return GridTPMCSSP(budget=kwargs['budget'],
-                               goal=kwargs['goal'],
-                               width=kwargs['width'],
-                               height=kwargs['height'],
-                               threshold=kwargs['threshold'])
+            params = {**ssp_params, 'width': kwargs['width'], 'height': kwargs['height']}
+            return GridTPMCSSP(**params)
         elif puzzle_type == PuzzleType.MAZE:
-            return MazeTPMCSSP(budget=kwargs['budget'],
-                               goal=kwargs['goal'],
-                               width=kwargs['width'],
-                               depth=kwargs['height'],
-                               threshold=kwargs['threshold'])
+            params = {**ssp_params, 'width': kwargs['width'], 'depth': kwargs['height']}
+            return MazeTPMCSSP(**params)
+
+    @staticmethod
+    def _extract_common_params(kwargs) -> dict:
+        """Extract parameters common to all constructors."""
+        common = {}
+        for key in ['budget', 'goal', 'ctx', 'verbose']:
+            if key in kwargs:
+                common[key] = kwargs[key]
+        return common

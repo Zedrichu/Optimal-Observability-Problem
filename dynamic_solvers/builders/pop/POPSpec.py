@@ -9,7 +9,7 @@ from dynamic_solvers.builders.OOPSpec import OOPSpec
 
 class POPSpec(OOPSpec, ABC):
     def declare_variables(self):
-        self.console.print("\n  ⚙️  Declaring variables...")
+        self.console.print("\n  ⚙️  Declaring variables...", justify="center")
         observable_states = [s for s in range(self.size) if s != self.goal]
 
         self.ExpRew = self.declare_expected_rewards()
@@ -52,7 +52,7 @@ class POPSpec(OOPSpec, ABC):
         return constraints
 
     def collect_constraints(self, threshold: str, determinism: bool) -> List[z3.BoolRef]:
-        self.console.print("\n  🛠️  Building constraints...")
+        self.console.print("\n  🛠️  Building constraints...", justify="center")
 
         constraint_builders = [
             self.build_fully_observable_constraints(),

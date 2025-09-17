@@ -12,7 +12,7 @@ class SSPSpec(OOPSpec, ABC):
         # TODO! Use pre-computed dictionary for sensor mapping (especially with multiple goals)
         # O(1) lookup - minimal overhead, big readability gain
         # self.state_to_sensor = {state: idx for idx, state in enumerate(self.nongoal_states)}
-        self.console.print("\n  ⚙️  Declaring variables...")
+        self.console.print("\n  ⚙️  Declaring variables...", justify="center")
 
         nongoal_states = [s for s in range(self.size) if s != self.goal]
         self.ExpRew = self.declare_expected_rewards()
@@ -60,7 +60,7 @@ class SSPSpec(OOPSpec, ABC):
         return constraint
 
     def collect_constraints(self, threshold: str, determinism: bool) -> List[z3.BoolRef]:
-        self.console.print("\n  🛠️  Building constraints...")
+        self.console.print("\n  🛠️  Building constraints...", justify="center")
 
         constraint_builders = [
             self.build_fully_observable_constraints(),
