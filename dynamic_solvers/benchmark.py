@@ -97,7 +97,7 @@ class BenchmarkRunner:
         model_desc = self._create_model_description(config)
 
         instance_text = f"{config.variant.upper()} instance {model_desc} w/ B: {config.budget}; τ: '{config.threshold}'"
-        halo = Halo(text=f"Running ... {instance_text}", spinner="dots12", color="cyan")
+        halo = Halo(text=f"Running ... {instance_text}", spinner="dots12", color="magenta")
         if self.verbose:
             halo.start()
             # halo.info(instance_text)
@@ -195,11 +195,6 @@ class BenchmarkRunner:
 
         with progress_context as bar:
             for i, config in enumerate(configs, 1):
-                if not use_progress_bar:
-                    model_desc = self._create_model_description(config)
-                    instance_text = f"{config.variant.upper()} instance {model_desc} w/ B:{config.budget}; τ:{config.threshold}"
-                    print(f"[{i}/{len(configs)}] Running {instance_text}...")
-
                 result = self.run_single_benchmark(config)
                 self.results.append(result)
                 if bar is not None:
