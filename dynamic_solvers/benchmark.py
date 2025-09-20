@@ -127,7 +127,7 @@ class BenchmarkRunner:
             solver.set_options(results_file, rewards_file, config.timeout)
 
             # Run solver execution on the current tpMC instance
-            result: ResultTPMC = solver.solve(tpmc_instance, config.threshold, config.deterministic)
+            result: ResultTPMC = solver.solve(tpmc_instance, config.threshold, config.deterministic, config.timeout)
 
             # Determine result status
             if result.result.r == 1:  # sat
@@ -138,6 +138,7 @@ class BenchmarkRunner:
                 result_status = "UNKNOWN"
 
             benchmark_result = {
+                'variant': config.variant,
                 'model': model_desc,
                 'threshold': config.threshold,
                 'budget': config.budget,
@@ -147,26 +148,38 @@ class BenchmarkRunner:
                 'error': None
             }
 
+            if benchmark_result['time'] > 0:
+                time_print = f"{benchmark_result['time']:.4f}s"
+                timeout = False
+            else:
+                time_print = "TIMEOUT"
+                timeout = True
 
-            time_print = f"{benchmark_result['time']:.4f}s" if benchmark_result['time'] > 0 else "timeout"
             if self.verbose:
-                # Clear out the spinner text if neeeded
+                # Clear out the spinner text if needed
                 # sys.stdout.write('\033[1A')  # Move up
                 sys.stdout.write('\033[2K')  # Clear line
-                sys.stdout.write('\r')  # Move to beginning
+                sys.stdout.write('\r')  # Move to the beginning
                 sys.stdout.flush()
 
-                halo.succeed(f"Solved: {instance_text} "
-                             f"| Time: {time_print} "
-                             f"| Satisfiability: {result_status} "
-                             f"| Reward: {result.reward if result.reward is not None else "N/A"}\n")
+                halo_message = (f"{"Timed-out" if timeout else " Solved"}: {instance_text} "
+                                f"| Time: {time_print} "
+                                f"| Satisfiability: {result_status} "
+                                f"| Reward: {result.reward if result.reward is not None else "N/A"}\n")
+
+                if timeout:
+                    halo.stop_and_persist("⌛", halo_message)
+                else:
+                    halo.succeed(halo_message)
+
             return benchmark_result
 
         except Exception as e:
             error_msg = str(e)
-            halo.fail(f" Error: {error_msg}")
+            halo.fail(f" Error on {instance_text}: {error_msg}")
 
             return {
+                'variant': config.variant,
                 'model': model_desc,
                 'threshold': config.threshold,
                 'budget': config.budget,
@@ -208,11 +221,12 @@ class BenchmarkRunner:
             writer = csv.writer(file)
 
             # Write headers
-            writer.writerow(['Model', 'Threshold', 'Budget', 'Time (s)', 'Reward', 'Status', 'Description', 'Error'])
+            writer.writerow(['Model', 'Threshold', 'Budget', 'Time (s)', 'Reward', 'Status', 'Error'])
 
             # Write results
             for result in self.results:
                 writer.writerow([
+                    result['variant'].upper(),
                     result['model'],
                     result['threshold'],
                     result['budget'],

@@ -1,7 +1,8 @@
 import gc
 import time
 
-from z3 import set_option, Solver, unsat, sat, Context
+from z3 import (set_option, Solver, Context,
+                unsat, sat, unknown)
 
 from dynamic_solvers.ResultTPMC import ResultTPMC
 from dynamic_solvers.builders.OOPSpec import OOPSpec
@@ -22,14 +23,28 @@ class TPMCSolver:
         gc.collect()
         self.solver = Solver(ctx=ctx)
 
-    def set_options(self, result_path: str, reward_path: str, timeout: int):
+    def set_options(self, result_path: str, reward_path: str, timeout_ms: int):
         set_option(max_args=1000000, max_lines=100000000)
         self.file_results = open(result_path, "w")
         self.file_rewards = open(reward_path, "w")
-        self.solver.set("timeout", timeout)
+        self.solver.set("timeout", timeout_ms)
         return
 
-    def solve(self, tpmc: OOPSpec, threshold: str, determinism: bool) -> ResultTPMC:
+    def wrap_timeout_check(self, timeout_ms: int):
+        import threading
+        result = []
+
+        thread = threading.Thread(target=lambda : result.append(self.solver.check()))
+        thread.daemon = True
+        thread.start()
+        thread.join(timeout_ms / 1000.0)
+
+        if thread.is_alive():
+            return unknown
+
+        return result[0] if len(result) > 0 else unknown
+
+    def solve(self, tpmc: OOPSpec, threshold: str, determinism: bool, timeout_ms: int) -> ResultTPMC:
         tpmc.declare_variables()
         tpmc_constraints = tpmc.collect_constraints(threshold, determinism)
         self.solver.add(tpmc_constraints)
@@ -40,7 +55,7 @@ class TPMCSolver:
 
         # Solving phase timing for benchmarks
         solve_start = time.perf_counter()
-        result = self.solver.check()
+        result = self.wrap_timeout_check(timeout_ms)
         solve_end = time.perf_counter()
         solve_time = solve_end - solve_start
 

@@ -196,10 +196,8 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
     # Configure solver options
     solver.set_options(args.results, args.rewards, args.timeout)
 
-    # try:
-
     # Solve and get results
-    result = solver.solve(tpmc_instance, args.threshold, args.deterministic)
+    result = solver.solve(tpmc_instance, args.threshold, args.deterministic, args.timeout)
 
     if not benchmark:
         # Report results
@@ -218,10 +216,6 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
               f" Rewards written to: {args.rewards}")
         if result.model:
             print("    Model found and saved")
-
-    # except Exception as e:
-    #     print(f"❌ Error during solving: {e}")
-    #     sys.exit(1)
 
 
 def main():
