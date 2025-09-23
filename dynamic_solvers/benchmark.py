@@ -52,7 +52,7 @@ class BenchmarkRunner:
         self.output_csv = output_csv
         self.results: List[Dict[str, Any]] = []
         self.verbose = verbose
-        self.temp_dir = tempfile.mkdtemp()
+        self.temp_dir = tempfile.mkdtemp(dir='/tmp')
 
     def load_configurations_from_csv(self, csv_file: str) -> List[BenchmarkConfig]:
         """Load benchmark configurations from CSV."""

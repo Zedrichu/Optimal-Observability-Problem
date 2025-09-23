@@ -35,7 +35,7 @@ class TPMCSolver:
         result = []
 
         thread = threading.Thread(target=lambda : result.append(self.solver.check()))
-        thread.daemon = True
+        thread.daemon = False
         thread.start()
         thread.join(timeout_ms / 1000.0)
 

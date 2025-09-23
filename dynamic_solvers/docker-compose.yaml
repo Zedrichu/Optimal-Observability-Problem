@@ -1,15 +1,18 @@
 name: oop
 services:
   benchmarker:
+    init: true
+#    image: localhost/benchmark-z3-15.0
     build:
       dockerfile: dynamic_solvers/Dockerfile
       context: ..
     container_name: oop
     environment:
       - CONFIG_CSV=/configs/Pos-OOP-config.csv
-      - OUTPUT_CSV=/out/results.csv
-      - VERBOSE=
+      - OUTPUT_CSV=/out/results-PosOOP.csv
+      - VERBOSE=-v
     env_file: .env
     volumes:
       - ./configs:/configs
       - ./out:/out
+    restart: no
