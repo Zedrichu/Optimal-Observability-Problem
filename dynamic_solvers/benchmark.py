@@ -87,14 +87,12 @@ class BenchmarkRunner:
         all_configs = []
 
         for csv_file in csv_files:
-            if self.verbose:
-                print(f"📂 Loading configurations from: {csv_file}")
 
             configs = self.load_configurations_from_csv(csv_file)
             all_configs.extend(configs)
 
             if self.verbose:
-                print(f"   Loaded {len(configs)} configurations from {csv_file}")
+                print(f"📂 Loaded {len(configs)} configurations from {csv_file}")
 
         return all_configs
 

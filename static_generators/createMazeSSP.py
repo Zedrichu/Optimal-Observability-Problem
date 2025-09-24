@@ -75,7 +75,7 @@ def create_maze_pre(budget, target, height, width, threshold, det, pre):
 				bounds_constraints.append(f'pi{i}>={bound_value}')
 				th += bound_value
 
-	file.write(', '.join(bounds_constraints) + ', \n')
+	file.write(', '.join(bounds_constraints) + ',\n')
 
 	# For optimal reward: print(th)
 
@@ -119,7 +119,7 @@ def create_maze_pre(budget, target, height, width, threshold, det, pre):
 			next_state = get_next_state(s, act)
 			action_terms.append(f'{strategy_term} * (1 + pi{next_state})')
 
-		equation = f'pi{s} == ' + ' + '.join(action_terms)
+		equation = f'pi{s}== ' + ' + '.join(action_terms)
 		cost_equations.append(equation)
 
 	file.write(',\n'.join(cost_equations) + ',\n')
