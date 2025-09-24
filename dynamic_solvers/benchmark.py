@@ -78,9 +78,25 @@ class BenchmarkRunner:
                     configs.append(config)
 
                 except (ValueError, KeyError) as e:
-                    print(f"⚠️  Warning: Skipping invalid row {row_num}: {e}")
+                    print(f"⚠️  Warning: Skipping invalid row {row_num} in {csv_file}: {e}")
 
         return configs
+
+    def load_all_csv_configurations(self, csv_files: List[str]) -> List[BenchmarkConfig]:
+        """Load benchmark configurations from multiple CSV files consecutively."""
+        all_configs = []
+
+        for csv_file in csv_files:
+            if self.verbose:
+                print(f"📂 Loading configurations from: {csv_file}")
+
+            configs = self.load_configurations_from_csv(csv_file)
+            all_configs.extend(configs)
+
+            if self.verbose:
+                print(f"   Loaded {len(configs)} configurations from {csv_file}")
+
+        return all_configs
 
     def _create_model_description(self, config: BenchmarkConfig) -> str:
         """Create model description like L(9), G(24), M(39)."""
@@ -241,10 +257,10 @@ def main():
     """Main entry point for the benchmark runner."""
     parser = argparse.ArgumentParser(
         description="Benchmark runner for OOP problem instances",
-        epilog="Example: python3 benchmark.py config.csv --output results.csv"
+        epilog="Examples:\n  python3 benchmark.py config.csv --output results.csv\n  python3 benchmark.py config1.csv config2.csv --output results.csv"
     )
 
-    parser.add_argument('config_csv', nargs='?', help='CSV file with benchmark configurations')
+    parser.add_argument('config_csv', nargs='+', help='One or more CSV files with benchmark configurations')
     parser.add_argument('--output', '-o', default='benchmark_results.csv', help='Output CSV file')
     parser.add_argument('--verbose', '-v', action='store_true', help='Verbose output')
 
@@ -256,15 +272,17 @@ def main():
             parser.print_help()
             sys.exit(1)
 
-        if not os.path.exists(args.config_csv):
-            print(f"❌ Configuration file not found: {args.config_csv}")
-            sys.exit(1)
+        # Check that all config files exist
+        for config_file in args.config_csv:
+            if not os.path.exists(config_file):
+                print(f"❌ Configuration file not found: {config_file}")
+                sys.exit(1)
 
         # Run benchmarks
         runner = BenchmarkRunner(args.output, args.verbose)
 
         try:
-            configs = runner.load_configurations_from_csv(args.config_csv)
+            configs = runner.load_all_csv_configurations(args.config_csv)
 
             if not configs:
                 print("❌ No valid configurations found")

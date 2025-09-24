@@ -94,11 +94,8 @@ class OOPSpec(World, ABC):
 
         self.exp_rew_evaluator = sumExpRew * Q(1, self.size - 1, self.ctx)
 
-        if len(terms) == 1:
-            constraint = sign(sumExpRew * Q(1, self.size - 1, self.ctx), terms[0])
-        else:
-            constraint = sign(sumExpRew * Q(1, self.size - 1, self.ctx), Q(terms[0], terms[1], self.ctx))
-
+        thr = Q(terms[0], terms[1], self.ctx) if len(terms) > 1 else terms[0]
+        constraint = sign(sumExpRew * Q(1, self.size - 1, self.ctx), thr)
 
         self.console.print(constraint)
         return constraint
