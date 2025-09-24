@@ -15,4 +15,3 @@ services:
     volumes:
       - ./configs:/configs
       - ./out:/out
-    restart: no

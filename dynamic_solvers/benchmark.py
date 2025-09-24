@@ -4,6 +4,7 @@ Leverages existing dynamic_solvers classes for robust execution.
 """
 
 import csv
+import gc
 import sys
 import argparse
 import os
@@ -52,7 +53,6 @@ class BenchmarkRunner:
         self.output_csv = output_csv
         self.results: List[Dict[str, Any]] = []
         self.verbose = verbose
-        self.temp_dir = tempfile.mkdtemp(dir='/tmp')
 
     def load_configurations_from_csv(self, csv_file: str) -> List[BenchmarkConfig]:
         """Load benchmark configurations from CSV."""
@@ -102,11 +102,6 @@ class BenchmarkRunner:
             halo.start()
             # halo.info(instance_text)
 
-        # Create temporary output files
-        results_file = os.path.join(self.temp_dir, f"results_{len(self.results)}.txt")
-        rewards_file = os.path.join(self.temp_dir, f"rewards_{len(self.results)}.txt")
-
-        # halo.start()
         try:
             # Convert strings to enums using existing functions
             variant = variant_from_string(config.variant)
@@ -124,7 +119,7 @@ class BenchmarkRunner:
             # Create a solver and configure
             solver = TPMCSolver(verbose=False)
             solver.reset(tpmc_instance.ctx)
-            solver.set_options(results_file, rewards_file, config.timeout)
+            solver.set_options(config.timeout)
 
             # Run solver execution on the current tpMC instance
             result: ResultTPMC = solver.solve(tpmc_instance, config.threshold, config.deterministic, config.timeout)
@@ -212,6 +207,7 @@ class BenchmarkRunner:
                 self.results.append(result)
                 if bar is not None:
                     bar()
+                self.cleanup()
 
         print(f"\n🏁 Benchmark run completed! Results will be saved to: {self.output_csv}")
 
@@ -237,12 +233,8 @@ class BenchmarkRunner:
                 ])
 
     def cleanup(self) -> None:
-        """Clean up temporary files."""
-        import shutil
-        try:
-            shutil.rmtree(self.temp_dir)
-        except Exception:
-            pass
+        """Call garbage collection."""
+        gc.collect()
 
 
 def main():

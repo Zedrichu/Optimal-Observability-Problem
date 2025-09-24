@@ -15,18 +15,13 @@ class TPMCSolver:
         self.solver = None
         self.verbose = verbose
 
-        self.file_rewards = None
-        self.file_results = None
-
     def reset(self, ctx: Context):
         """Reset for fresh solving context"""
         gc.collect()
         self.solver = Solver(ctx=ctx)
 
-    def set_options(self, result_path: str, reward_path: str, timeout_ms: int):
+    def set_options(self, timeout_ms: int):
         set_option(max_args=1000000, max_lines=100000000)
-        self.file_results = open(result_path, "w")
-        self.file_rewards = open(reward_path, "w")
         self.solver.set("timeout", timeout_ms)
         return
 
@@ -66,12 +61,9 @@ class TPMCSolver:
                 print(' ✅  Solution found!')
             model = self.solver.model()
             reward = model.eval(tpmc.exp_rew_evaluator)
-            self.file_results.write(str(model))
-            self.file_rewards.write(str(reward))
         elif result == unsat:
             if self.verbose:
                 print(' ❌  No solution!')
-            self.file_rewards.write('N/A')
         else:
             if self.verbose:
                 print(' ❔  Unknown!')
@@ -86,11 +78,6 @@ class TPMCSolver:
         )
 
     def _cleanup(self):
-        if self.file_results:
-            self.file_results.close()
-        if self.file_rewards:
-            self.file_rewards.close()
-
         # Clean up Z3 objects
         del self.solver
         gc.collect()

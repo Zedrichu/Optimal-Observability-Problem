@@ -9,6 +9,8 @@ import argparse
 import sys
 import os
 
+from z3 import sat
+
 from dynamic_solvers.TPMCSolver import TPMCSolver
 from dynamic_solvers.builders.TPMCFactory import TPMCFactory, variant_from_string, puzzle_from_string
 
@@ -194,7 +196,7 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
     solver = TPMCSolver(verbose=not benchmark)
     solver.reset(tpmc_instance.ctx)
     # Configure solver options
-    solver.set_options(args.results, args.rewards, args.timeout)
+    solver.set_options(args.timeout)
 
     # Solve and get results
     result = solver.solve(tpmc_instance, args.threshold, args.deterministic, args.timeout)
@@ -206,10 +208,18 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
         reward_str = f" ⭐  Reward: {result.reward}" if result.reward is not None else ""
         print(reward_str)
 
-    txt = tpmc_instance.console.export_text(clear=True)
-    with open('log_record.txt', 'w') as f:
-        f.write(txt)
-        f.close()
+        file_res = open(args.results, 'w')
+        file_res.write(f"{result.model}\n")
+        file_res.close()
+
+        file_rew = open(args.rewards, 'w')
+        file_rew.write(f"{result.reward if result.result == sat else "N/A"}\n")
+        file_rew.close()
+
+        txt = tpmc_instance.console.export_text(clear=True)
+        with open('log_record.txt', 'w') as f:
+            f.write(txt)
+            f.close()
 
     if args.verbose:
         print(f" 📁 Result model found and saved to: {args.results}; "
