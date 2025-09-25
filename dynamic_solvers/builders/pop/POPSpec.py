@@ -54,11 +54,13 @@ class POPSpec(OOPSpec, ABC):
     def collect_constraints(self, threshold: str, determinism: bool) -> List[z3.BoolRef]:
         self.console.print("\n  🛠️  Building constraints...", justify="center")
 
+        t = Real('t', self.ctx)
         constraint_builders = [
             self.build_fully_observable_constraints(),
             self.build_bellman_equations(),
             [self.build_threshold_constraint(threshold)],
             self.build_strategy_constraints(determinism),
+            # [t <= 1, t >= 0],
             self.build_observation_constraints(),
         ]
 

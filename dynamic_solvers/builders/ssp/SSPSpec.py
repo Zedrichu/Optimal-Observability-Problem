@@ -1,6 +1,6 @@
 from abc import ABC
 from itertools import chain
-from typing import List
+from typing import List, override
 
 from z3 import z3, Real, Or, Sum
 
@@ -39,6 +39,14 @@ class SSPSpec(OOPSpec, ABC):
         self.console.print(sensor_to_action)
         return sensor_to_action
 
+    @override
+    def initialize_terms(self):
+        return []
+
+    @override
+    def build_destination_term(self, next_state: int) -> List[z3.BoolRef]:
+        return 1 + self.ExpRew[next_state]
+
     def build_action_term(self, action_idx: int, state_idx: int):
         return ((1 - self.Y[state_idx]) * self.X[-1][action_idx] +
                 self.Y[state_idx] * self.X[state_idx][action_idx])
@@ -62,11 +70,13 @@ class SSPSpec(OOPSpec, ABC):
     def collect_constraints(self, threshold: str, determinism: bool) -> List[z3.BoolRef]:
         self.console.print("\n  🛠️  Building constraints...", justify="center")
 
+        t = Real('t', self.ctx)
         constraint_builders = [
             self.build_fully_observable_constraints(),
             self.build_bellman_equations(),
             [self.build_threshold_constraint(threshold)],
             self.build_strategy_constraints(determinism),
+            # [t <= 1, t >= 0],
             self.build_observation_constraints(),
             [self.build_budget_constraint()],
         ]

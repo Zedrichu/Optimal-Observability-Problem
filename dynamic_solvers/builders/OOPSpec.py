@@ -65,18 +65,25 @@ class OOPSpec(World, ABC):
                 continue
 
             # Build action terms for each direction using a transition function
-            terms = []
+            terms = self.initialize_terms()
             for a in range(len(self.actions)):
                 # Decrement the state index after processing the goal state
                 idx = s - 1 if s > self.goal else s
 
                 action_term = self.build_action_term(a, idx)
                 next_state = self.navigate(s, a)
-                terms.append(action_term * (1 + self.ExpRew[next_state]))
+                destination_term = self.build_destination_term(next_state)
+                terms.append(action_term * destination_term)
             equations.append(self.ExpRew[s] == Sum(terms))
 
         self.console.print(equations)
         return equations
+
+    def initialize_terms(self):
+        return [1]
+
+    def build_destination_term(self, next_state: int) -> List[z3.BoolRef]:
+        return self.ExpRew[next_state]
 
     @abstractmethod
     def build_action_term(self, action_idx: int, state_idx: int) -> z3.ArithRef:
