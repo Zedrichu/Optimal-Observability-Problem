@@ -233,7 +233,7 @@ class BenchmarkRunner:
             writer = csv.writer(file)
 
             # Write headers
-            writer.writerow(['Model', 'Threshold', 'Budget', 'Time (s)', 'Reward', 'Status', 'Error'])
+            writer.writerow(['Variant', 'Model', 'Threshold', 'Budget', 'Time (s)', 'Reward', 'Status', 'Error'])
 
             # Write results
             for result in self.results:
