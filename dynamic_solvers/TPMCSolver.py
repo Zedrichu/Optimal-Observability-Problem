@@ -1,5 +1,6 @@
 import gc
 import time
+from typing import List
 
 from z3 import (set_option, Solver, Context,
                 unsat, sat, unknown)
@@ -39,9 +40,9 @@ class TPMCSolver:
 
         return result[0] if len(result) > 0 else unknown
 
-    def solve(self, tpmc: OOPSpec, threshold: str, determinism: bool, timeout_ms: int) -> ResultTPMC:
+    def solve(self, tpmc: OOPSpec, threshold: str, determinism: bool, timeout_ms: int, order_constraints: List[int] | None) -> ResultTPMC:
         tpmc.declare_variables()
-        tpmc_constraints = tpmc.collect_constraints(threshold, determinism)
+        tpmc_constraints = tpmc.collect_constraints(threshold, determinism, order_constraints)
         self.solver.add(tpmc_constraints)
 
         if self.verbose:

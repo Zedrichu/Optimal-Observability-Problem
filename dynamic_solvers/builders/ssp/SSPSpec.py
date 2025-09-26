@@ -59,7 +59,7 @@ class SSPSpec(OOPSpec, ABC):
         self.console.print(constraint)
         return constraint
 
-    def collect_constraints(self, threshold: str, determinism: bool) -> List[z3.BoolRef]:
+    def collect_constraints(self, threshold: str, determinism: bool, order_constraints: List[int] | None) -> List[z3.BoolRef]:
         self.console.print("\n  🛠️  Building constraints...", justify="center")
 
         constraint_builders = [
@@ -70,6 +70,16 @@ class SSPSpec(OOPSpec, ABC):
             self.build_observation_constraints(),
             [self.build_budget_constraint()],
         ]
+
+        if order_constraints:
+            if len(order_constraints) == len(constraint_builders):
+                temp = [constraint_builders[i] for i in order_constraints]
+                constraint_builders = temp
+                # print("🔀 Order_of constraints:", order_constraints)
+                # print("🔀 Reordered constraints:", list(map(lambda c: c[:1], constraint_builders)))
+
+            else:
+                print("⚠️ Warning: Order constraints length mismatch, ignoring order constraints.")
 
         # Flatten constraints for solver loading
         all_constraints = list(chain.from_iterable(constraint_builders))

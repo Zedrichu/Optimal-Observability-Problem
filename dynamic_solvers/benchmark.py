@@ -108,7 +108,7 @@ class BenchmarkRunner:
             return f"M({config.width}x{config.height})"
         return f"{config.world.upper()}(?)"
 
-    def run_single_benchmark(self, config: BenchmarkConfig) -> Dict[str, Any]:
+    def run_single_benchmark(self, config: BenchmarkConfig, order_constraints: List[int] | None) -> Dict[str, Any]:
         """Run a single benchmark using dynamic_solvers classes."""
         model_desc = self._create_model_description(config)
 
@@ -138,7 +138,7 @@ class BenchmarkRunner:
             solver.set_options(config.timeout)
 
             # Run solver execution on the current tpMC instance
-            result: ResultTPMC = solver.solve(tpmc_instance, config.threshold, config.deterministic, config.timeout)
+            result: ResultTPMC = solver.solve(tpmc_instance, config.threshold, config.deterministic, config.timeout, order_constraints)
 
             # Determine result status
             if result.result.r == 1:  # sat
@@ -200,7 +200,7 @@ class BenchmarkRunner:
                 'error': error_msg
             }
 
-    def run_benchmarks(self, configs: List[BenchmarkConfig]) -> None:
+    def run_benchmarks(self, configs: List[BenchmarkConfig], order_constraints: List[int] | None) -> None:
         """Run all benchmark configurations."""
         print(f"🎯 Started benchmark run with {len(configs)} configurations\n")
 
@@ -219,7 +219,7 @@ class BenchmarkRunner:
 
         with progress_context as bar:
             for i, config in enumerate(configs, 1):
-                result = self.run_single_benchmark(config)
+                result = self.run_single_benchmark(config, order_constraints)
                 self.results.append(result)
                 if bar is not None:
                     bar()
@@ -263,7 +263,7 @@ def main():
     parser.add_argument('config_csv', nargs='+', help='One or more CSV files with benchmark configurations')
     parser.add_argument('--output', '-o', default='benchmark_results.csv', help='Output CSV file')
     parser.add_argument('--verbose', '-v', action='store_true', help='Verbose output')
-
+    parser.add_argument('--reorder-constraints-variant', choices=['none', 'pop', 'ssp'], default='none', help='Problem variant for which the constraints are reordered')
     args = parser.parse_args()
 
     try:
@@ -288,8 +288,23 @@ def main():
                 print("❌ No valid configurations found")
                 sys.exit(1)
 
-            runner.run_benchmarks(configs)
-            runner.save_results_to_csv()
+            if args.reorder_constraints_variant == 'none':
+                runner.run_benchmarks(configs, None)
+                runner.save_results_to_csv()
+            else:
+                from itertools import permutations
+
+                number_constraints = 5 if args.reorder_constraints_variant == 'pop' else 6
+                order_constraints = list(permutations(range(number_constraints)))
+                print(f"⚙️  Running benchmarks for {len(order_constraints)} constraint reorderings")
+
+                for order_constraint in order_constraints:
+                    print("🔀 Applying new order of constraints:", [f"({i} -> {order_constraint[i]})" for i in range(len(order_constraint))])
+                    runner.output_csv = args.output.replace('.csv', f'_order-{"".join(map(str, order_constraint))}.csv')
+                    runner.results = []
+                    runner.run_benchmarks(configs, list(order_constraint))
+                    runner.save_results_to_csv()
+
 
         finally:
             runner.cleanup()

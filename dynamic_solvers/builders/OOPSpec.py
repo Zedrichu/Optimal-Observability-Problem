@@ -127,5 +127,5 @@ class OOPSpec(World, ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def collect_constraints(self, threshold: str, determinism: bool) -> List[z3.BoolRef]:
+    def collect_constraints(self, threshold: str, determinism: bool, order_constraints: List[int] | None) -> List[z3.BoolRef]:
         raise NotImplementedError()
