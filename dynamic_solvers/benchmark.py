@@ -300,7 +300,12 @@ def main():
 
                 for order_constraint in order_constraints:
                     print("🔀 Applying new order of constraints:", [f"({i} -> {order_constraint[i]})" for i in range(len(order_constraint))])
-                    runner.output_csv = args.output.replace('.csv', f'_order-{"".join(map(str, order_constraint))}.csv')
+                    output_csv = args.output.replace('.csv', f'_order-{"".join(map(str, order_constraint))}.csv')
+                    # Skip existing results
+                    if os.path.exists(output_csv):
+                        print(f"⏭️ Skipping existing results file: {output_csv}")
+                        continue
+                    runner.output_csv = output_csv
                     runner.results = []
                     runner.run_benchmarks(configs, list(order_constraint))
                     runner.save_results_to_csv()
