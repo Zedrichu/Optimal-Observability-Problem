@@ -6,9 +6,10 @@ from dynamic_solvers.builders.worlds import Maze
 
 
 class MazeTPMC(Maze, POPSpec):
-    def __init__(self, budget: int, goal: int, width: int, depth: int, ctx: Optional[Context] = None, verbose: bool = False):
+    def __init__(self, budget: int, goal: int, width: int, depth: int, determinism: bool,
+                 ctx: Optional[Context] = None, verbose: bool = False):
         Maze.__init__(self, width, depth)
-        POPSpec.__init__(self, budget, goal, ctx, verbose)
+        POPSpec.__init__(self, budget, goal, determinism, ctx, verbose)
 
 
 if __name__ == "__main__":
@@ -22,7 +23,7 @@ if __name__ == "__main__":
         threshold = sys.argv[5]
         det = int(sys.argv[6])
 
-        tpMC = MazeTPMC(budget, goal, width, depth)
+        tpMC = MazeTPMC(budget, goal, width, depth, determinism=det == 1)
 
         tpMC.declare_variables()
-        tpMC.collect_constraints(threshold, determinism=det == 1)
+        tpMC.collect_constraints(threshold)

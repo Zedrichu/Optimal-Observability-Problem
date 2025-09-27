@@ -136,7 +136,7 @@ class BenchmarkRunner:
             solver.set_options(config.timeout)
 
             # Run solver execution on the current tpMC instance
-            result: ResultTPMC = solver.solve(tpmc_instance, config.threshold, config.deterministic, config.timeout)
+            result: ResultTPMC = solver.solve(tpmc_instance, config.threshold, config.timeout)
 
             # Determine result status
             if result.result.r == 1:  # sat

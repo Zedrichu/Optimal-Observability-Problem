@@ -199,7 +199,7 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
     solver.set_options(args.timeout)
 
     # Solve and get results
-    result = solver.solve(tpmc_instance, args.threshold, args.deterministic, args.timeout)
+    result = solver.solve(tpmc_instance, args.threshold, args.timeout)
 
     if not benchmark:
         # Report results

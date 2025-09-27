@@ -44,7 +44,7 @@ class SSPSpec(OOPSpec, ABC):
         return []
 
     @override
-    def build_destination_term(self, next_state: int) -> List[z3.BoolRef]:
+    def build_destination_rew(self, next_state: int) -> List[z3.BoolRef]:
         return 1 + self.ExpRew[next_state]
 
     def build_action_term(self, action_idx: int, state_idx: int):
@@ -67,7 +67,7 @@ class SSPSpec(OOPSpec, ABC):
         self.console.print(constraint)
         return constraint
 
-    def collect_constraints(self, threshold: str, determinism: bool) -> List[z3.BoolRef]:
+    def collect_constraints(self, threshold: str) -> List[z3.BoolRef]:
         self.console.print("\n  🛠️  Building constraints...", justify="center")
 
         t = Real('t', self.ctx)
@@ -75,7 +75,7 @@ class SSPSpec(OOPSpec, ABC):
             self.build_fully_observable_constraints(),
             self.build_bellman_equations(),
             [self.build_threshold_constraint(threshold)],
-            self.build_strategy_constraints(determinism),
+            self.build_strategy_constraints(),
             # [t <= 1, t >= 0],
             self.build_observation_constraints(),
             [self.build_budget_constraint()],

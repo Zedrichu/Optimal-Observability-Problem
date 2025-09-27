@@ -39,9 +39,9 @@ class TPMCSolver:
 
         return result[0] if len(result) > 0 else unknown
 
-    def solve(self, tpmc: OOPSpec, threshold: str, determinism: bool, timeout_ms: int) -> ResultTPMC:
+    def solve(self, tpmc: OOPSpec, threshold: str, timeout_ms: int) -> ResultTPMC:
         tpmc.declare_variables()
-        tpmc_constraints = tpmc.collect_constraints(threshold, determinism)
+        tpmc_constraints = tpmc.collect_constraints(threshold)
         self.solver.add(tpmc_constraints)
 
         if self.verbose:

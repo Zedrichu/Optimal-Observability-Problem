@@ -6,9 +6,9 @@ from dynamic_solvers.builders.worlds import Grid
 
 
 class GridTPMC(Grid, SSPSpec):
-    def __init__(self, budget: int, goal: int, width: int, height: int, ctx: Optional[Context] = None, verbose: bool = False):
+    def __init__(self, budget: int, goal: int, width: int, height: int, determinism: bool = False, ctx: Optional[Context] = None, verbose: bool = False):
         Grid.__init__(self, width, height)
-        SSPSpec.__init__(self, budget, goal, ctx, verbose)
+        SSPSpec.__init__(self, budget, goal, determinism, ctx, verbose)
 
 
 if __name__ == "__main__":
@@ -22,7 +22,7 @@ if __name__ == "__main__":
         threshold = sys.argv[5]
         det = int(sys.argv[6])
 
-        tpMC = GridTPMC(budget, goal, size_x, size_y, threshold)
+        tpMC = GridTPMC(budget, goal, size_x, size_y, determinism=det == 1)
 
         tpMC.declare_variables()
-        tpMC.collect_constraints(threshold, determinism=det == 1)
+        tpMC.collect_constraints(threshold)
