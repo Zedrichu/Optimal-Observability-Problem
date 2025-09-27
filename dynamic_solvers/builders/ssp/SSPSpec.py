@@ -41,11 +41,12 @@ class SSPSpec(OOPSpec, ABC):
 
     @override
     def initialize_terms(self):
-        return []
+        """For SSP instances with deterministic strategies use common Bellman equations."""
+        return [1] if self.determinism else []
 
     @override
     def build_destination_rew(self, next_state: int) -> List[z3.BoolRef]:
-        return 1 + self.ExpRew[next_state]
+        return self.ExpRew[next_state] if self.determinism else 1 + self.ExpRew[next_state]
 
     def build_action_term(self, action_idx: int, state_idx: int):
         return ((1 - self.Y[state_idx]) * self.X[-1][action_idx] +

@@ -82,9 +82,11 @@ class OOPSpec(World, ABC):
         return equations
 
     def initialize_terms(self):
+        """Adapted format of Bellman equations used by default."""
         return []
 
     def build_destination_rew(self, next_state: int) -> List[z3.BoolRef]:
+        """Adapted format of Bellman equations used by default."""
         return 1 + self.ExpRew[next_state]
 
     @abstractmethod
