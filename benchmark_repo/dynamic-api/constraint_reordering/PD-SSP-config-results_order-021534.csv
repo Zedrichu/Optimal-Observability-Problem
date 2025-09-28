@@ -1,0 +1,13 @@
+Variant,Model,Threshold,Budget,Time (s),Reward,Status,Error
+SSP,L(7),"<= Q(4, 1)",3,0.008917,2,SAT,
+SSP,L(7),"<= Q(2, 1)",3,0.008441,2,SAT,
+SSP,L(7),"<  Q(2, 1)",3,0.013213,N/A,UNSAT,
+SSP,L(193),"<= Q(97, 1)",96,t.o.,N/A,UNKNOWN,
+SSP,L(193),"<= Q(97, 2)",96,17.800360,97/2,SAT,
+SSP,L(193),"<  Q(97, 2)",96,15.056596,N/A,UNSAT,
+SSP,G(15x15),"<= Q(3150, 112)",14,17.596118,225/16,SAT,
+SSP,G(15x15),"<= Q(3150, 224)",14,t.o.,N/A,UNKNOWN,
+SSP,G(15x15),"<  Q(3150, 224)",14,15.115404,N/A,UNSAT,
+SSP,M(49x25),"<= Q(9912, 120)",72,t.o.,N/A,UNKNOWN,
+SSP,M(49x25),"<= Q(4956, 120)",72,t.o.,N/A,UNKNOWN,
+SSP,M(49x25),"<  Q(4956, 120)",72,15.054888,N/A,UNSAT,
