@@ -128,7 +128,8 @@ class BenchmarkRunner:
                                                    height = config.height,
                                                      goal = config.goal,
                                                    budget = config.budget,
-                                                threshold = config.threshold )
+                                                threshold = config.threshold,
+                                                determinism = config.deterministic)
 
             # Create a solver and configure
             solver = TPMCSolver(verbose=False)
