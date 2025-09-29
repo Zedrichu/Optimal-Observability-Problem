@@ -118,11 +118,10 @@ class OOPSpec(World, ABC):
         self.console.print('\n# Randomized strategies (proper probability distributions)')
         constraints = []
         for strategy in self.X:
+            # Constrain the probability rates under proper distribution as groups
             for rate in strategy:
                 constraints.append(rate <= 1)
                 constraints.append(rate >= 0)
-        # # TODO!: Test if the sum constraint per strategy can be put together, rather than batching all at the end
-        # for strategy in self.X:
             constraints.append(Sum(strategy) == 1)
 
         # TODO!: Check for determinism first and apply binary constraints only (no need for range)
