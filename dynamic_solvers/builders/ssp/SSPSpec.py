@@ -1,6 +1,6 @@
 from abc import ABC
 from itertools import chain
-from typing import List, override
+from typing import List
 
 from z3 import z3, Real, Or, Sum
 
@@ -38,15 +38,6 @@ class SSPSpec(OOPSpec, ABC):
 
         self.console.print(sensor_to_action)
         return sensor_to_action
-
-    @override
-    def initialize_terms(self):
-        """For SSP instances with deterministic strategies use common Bellman equations."""
-        return [1] if self.determinism else []
-
-    @override
-    def build_destination_rew(self, next_state: int) -> List[z3.BoolRef]:
-        return self.ExpRew[next_state] if self.determinism else 1 + self.ExpRew[next_state]
 
     def build_action_term(self, action_idx: int, state_idx: int):
         return ((1 - self.Y[state_idx]) * self.X[-1][action_idx] +

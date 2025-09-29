@@ -1,6 +1,6 @@
 from abc import ABC
 from itertools import chain
-from typing import List
+from typing import List, override
 
 from z3 import z3, Real, Or, Sum
 
@@ -37,6 +37,16 @@ class POPSpec(OOPSpec, ABC):
     def build_action_term(self, action_idx: int, state_idx: int):
         return Sum([self.Y[state_idx][o] * self.X[o][action_idx]
                     for o in range(self.budget)])
+
+    @override
+    def initialize_terms(self):
+        """For POP instances, override Bellman equations to the common format."""
+        return [1]
+
+    @override
+    def build_destination_rew(self, next_state: int) -> z3.ArithRef:
+        """For POP instances, override Bellman equations to the common format."""
+        return self.ExpRew[next_state]
 
     def build_observation_constraints(self) -> List[z3.BoolRef]:
         # Observation function constraints - every state should be mapped to some observable class
