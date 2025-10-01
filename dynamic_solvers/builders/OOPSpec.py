@@ -115,21 +115,21 @@ class OOPSpec(World, ABC):
 
     def build_strategy_constraints(self) -> List[z3.BoolRef]:
         # Randomized strategies (proper probability distributions)
-        self.console.print('\n# Randomized strategies (proper probability distributions)')
+        if self.determinism:
+            self.console.print('# Deterministic strategies activated (one-hot encoding or degenerate categorical distribution)\n')
+        else:
+            self.console.print('\n# Randomized strategies (proper probability distributions)')
         constraints = []
+        # TODO!: Check for determinism first and apply binary constraints only (no need for range)
         for strategy in self.X:
             # Constrain the probability rates under proper distribution as groups
             for rate in strategy:
-                constraints.append(rate <= 1)
-                constraints.append(rate >= 0)
-            constraints.append(Sum(strategy) == 1)
-
-        # TODO!: Check for determinism first and apply binary constraints only (no need for range)
-        if self.determinism:
-            self.console.print('# Deterministic strategies activated (one-hot encoding or degenerate categorical distribution)\n')
-            for strategy in self.X:
-                for rate in strategy:
+                if self.determinism:
                     constraints.append(Or(rate == 0, rate == 1, self.ctx))
+                else:
+                    constraints.append(rate <= 1)
+                    constraints.append(rate >= 0)
+            constraints.append(Sum(strategy) == 1)
 
         self.console.print(constraints)
         return constraints
