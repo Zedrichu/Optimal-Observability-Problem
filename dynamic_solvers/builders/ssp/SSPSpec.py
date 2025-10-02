@@ -46,13 +46,13 @@ class SSPSpec(OOPSpec, ABC):
     @override
     def initialize_terms(self):
         """For SSP instances w/o determinism use adapted Bellman equation format."""
-        [] if not self.determinism else [1]
+        return [] if not self.determinism else [1]
 
     @override
     def build_destination_rew(self, next_state: int) -> z3.ArithRef:
         """For SSP instances w/o determinism adapt Bellman equations.
         Add reward of single transition (1) to the next state's expected reward towards the goal."""
-        1 + self.ExpRew[next_state] if not self.determinism else self.ExpRew[next_state]
+        return 1 + self.ExpRew[next_state] if not self.determinism else self.ExpRew[next_state]
 
     def build_observation_constraints(self) -> List[z3.BoolRef]:
         # Observation function constraints - every state should be mapped to some observable class
