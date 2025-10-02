@@ -30,7 +30,7 @@ class TPMCSolver:
         result = []
 
         thread = threading.Thread(target=lambda : result.append(self.solver.check()))
-        thread.daemon = True
+        thread.daemon = False
         thread.start()
         thread.join(timeout_ms / 1000.0)
 
@@ -52,8 +52,7 @@ class TPMCSolver:
         solve_start = time.process_time()
         result = self.wrap_timeout_check(timeout_ms)
         solve_end = time.process_time()
-        elapsed_time = solve_end - solve_start
-        solve_time = elapsed_time if (elapsed_time + 1 < timeout_ms / 1000.0) else (timeout_ms / 1000.0)
+        solve_time = solve_end - solve_start
 
         model = None
         reward = None
