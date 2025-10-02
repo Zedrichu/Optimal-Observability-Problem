@@ -1,0 +1,12 @@
+"variant","world","budget","goal","threshold","length","width","height","deterministic","timeout"
+ssp,line,30,30,"<= Q(31,2)",61,,,false,180000
+ssp,maze,21,34,"<  Q(434,35)",,15,8,false,180000
+
+pop,line,2,188,"<= Q(189, 1)",377,,,true,180000
+pop,grid,2,575,"<= Q(13248, 575)",,24,24,true,180000
+
+ssp,line,96,96,"<= Q(97, 2)",193,,,true,180000
+ssp,grid,14,224,"<  Q(3150, 224)",,15,15,true,180000
+
+pop,maze,4,14,"<= Q(84, 15)",,7,4,false,180000
+pop,maze,4,14,"<  Q(84, 15)",,7,4,false,180000

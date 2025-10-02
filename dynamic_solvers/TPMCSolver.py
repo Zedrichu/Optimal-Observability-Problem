@@ -30,7 +30,7 @@ class TPMCSolver:
         result = []
 
         thread = threading.Thread(target=lambda : result.append(self.solver.check()))
-        thread.daemon = False
+        thread.daemon = True
         thread.start()
         thread.join(timeout_ms / 1000.0)
 
@@ -49,10 +49,11 @@ class TPMCSolver:
             print()
 
         # Solving phase timing for benchmarks
-        solve_start = time.perf_counter()
+        solve_start = time.process_time()
         result = self.wrap_timeout_check(timeout_ms)
-        solve_end = time.perf_counter()
-        solve_time = solve_end - solve_start
+        solve_end = time.process_time()
+        elapsed_time = solve_end - solve_start
+        solve_time = elapsed_time if (elapsed_time + 1 < timeout_ms / 1000.0) else (timeout_ms / 1000.0)
 
         model = None
         reward = None
