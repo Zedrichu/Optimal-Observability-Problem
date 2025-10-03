@@ -115,22 +115,25 @@ class OOPSpec(World, ABC):
 
     def build_strategy_constraints(self) -> List[z3.BoolRef]:
         # Randomized strategies (proper probability distributions)
-        self.console.print('\n# Randomized strategies (proper probability distributions)')
-        constraints = []
-        for strategy in self.X:
-            for rate in strategy:
-                constraints.append(rate <= 1)
-                constraints.append(rate >= 0)
-        # # TODO!: Test if the sum constraint per strategy can be put together, rather than batching all at the end
-        # for strategy in self.X:
-            constraints.append(Sum(strategy) == 1)
-
-        # TODO!: Check for determinism first and apply binary constraints only (no need for range)
         if self.determinism:
             self.console.print('# Deterministic strategies activated (one-hot encoding or degenerate categorical distribution)\n')
-            for strategy in self.X:
-                for rate in strategy:
-                    constraints.append(Or(rate == 0, rate == 1, self.ctx))
+        else:
+            self.console.print('\n# Randomized strategies (proper probability distributions)')
+        constraints = []
+        # TODO!: Check for determinism first and apply binary constraints only (no need for range)
+        for strategy in self.X:
+            # Constrain the probability rates under proper distribution as observation groups
+            # if not self.determinism:
+            prob_range_constraints = [bound for rate in strategy
+                                            for bound in [rate <= 1, rate >= 0] ]
+            constraints.extend(prob_range_constraints)
+
+            # Strategies must be unitary (rates sum up to 1)
+            constraints.append(Sum(strategy) == 1)
+
+            if self.determinism: # One-hot encoding or degenerate categorical distribution
+                categorical_constraints = [ Or(rate == 0, rate == 1, self.ctx) for rate in strategy ]
+                constraints.extend(categorical_constraints)
 
         self.console.print(constraints)
         return constraints
