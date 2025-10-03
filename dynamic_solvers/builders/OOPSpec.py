@@ -82,18 +82,14 @@ class OOPSpec(World, ABC):
         return equations
 
     def initialize_terms(self):
-        """
-        Common format of Bellman equations used with deterministic strategies.
-        Otherwise, use the adapted shape of Bellman equations as previously done.
-        """
-        return [1] if self.determinism else []
+        """ Initial term in Bellman sum for current state - reward of staying in place.
+        Common format of Bellman equations used by default. [See base paper]"""
+        return [1]
 
     def build_destination_rew(self, next_state: int) -> z3.ArithRef:
-        """
-        Common format of Bellman equations used with deterministic strategies.
-        Otherwise, use the adapted shape of Bellman equations as previously done.
-        """
-        return self.ExpRew[next_state] if self.determinism else 1 + self.ExpRew[next_state]
+        """ Expected reward from the state the selected action leads to, to the goal.
+        Common format of Bellman equations used by default. [See base paper]"""
+        return self.ExpRew[next_state]
 
     @abstractmethod
     def build_action_term(self, action_idx: int, state_idx: int) -> z3.ArithRef:

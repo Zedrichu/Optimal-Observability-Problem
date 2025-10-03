@@ -1,6 +1,6 @@
 from abc import ABC
 from itertools import chain
-from typing import List
+from typing import List, override
 
 from z3 import z3, Real, Or, Sum
 
@@ -42,6 +42,17 @@ class SSPSpec(OOPSpec, ABC):
     def build_action_term(self, action_idx: int, state_idx: int):
         return ((1 - self.Y[state_idx]) * self.X[-1][action_idx] +
                 self.Y[state_idx] * self.X[state_idx][action_idx])
+
+    @override
+    def initialize_terms(self):
+        """For SSP instances w/o determinism use adapted Bellman equation format."""
+        [] if not self.determinism else [1]
+
+    @override
+    def build_destination_rew(self, next_state: int) -> z3.ArithRef:
+        """For SSP instances w/o determinism adapt Bellman equations.
+        Add reward of single transition (1) to the next state's expected reward towards the goal."""
+        1 + self.ExpRew[next_state] if not self.determinism else self.ExpRew[next_state]
 
     def build_observation_constraints(self) -> List[z3.BoolRef]:
         # Observation function constraints - every state should be mapped to some observable class

@@ -38,16 +38,6 @@ class POPSpec(OOPSpec, ABC):
         return Sum([self.Y[state_idx][o] * self.X[o][action_idx]
                     for o in range(self.budget)])
 
-    @override
-    def initialize_terms(self):
-        """For POP instances, override Bellman equations to the common format."""
-        return [1]
-
-    @override
-    def build_destination_rew(self, next_state: int) -> z3.ArithRef:
-        """For POP instances, override Bellman equations to the common format."""
-        return self.ExpRew[next_state]
-
     def build_observation_constraints(self) -> List[z3.BoolRef]:
         # Observation function constraints - every state should be mapped to some observable class
         self.console.print("\n# Observation function constraints - every state should be mapped to some observable class")
