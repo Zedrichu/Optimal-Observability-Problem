@@ -194,10 +194,9 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
                                        budget=args.budget,
                                        determinism=args.deterministic,
                                        verbose=args.verbose)
-    solver = TPMCSolver(verbose=not benchmark)
-    solver.reset(tpmc_instance.ctx)
-    # Configure solver options
-    solver.set_options(args.timeout)
+    solver = TPMCSolver(tpmc_instance.ctx, verbose=not benchmark)
+    # Configure solver timeout
+    solver.set_timeout(args.timeout)
 
     # Solve and get results
     result = solver.solve(tpmc_instance, args.threshold, args.timeout)
@@ -227,6 +226,8 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
               f" Rewards written to: {args.rewards}")
         if result.model:
             print("    Model found and saved")
+
+    solver.cleanup()
 
 
 def main():

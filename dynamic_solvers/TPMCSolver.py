@@ -11,17 +11,14 @@ from dynamic_solvers.builders.OOPSpec import OOPSpec
 class TPMCSolver:
     solver: Solver | None
 
-    def __init__(self, verbose: bool):
-        self.solver = None
+    def __init__(self, ctx: Context, verbose: bool):
         self.verbose = verbose
-
-    def reset(self, ctx: Context):
-        """Reset for fresh solving context"""
-        gc.collect()
         self.solver = Solver(ctx=ctx)
-
-    def set_options(self, timeout_ms: int):
+        # Set global Z3 options (call once per solver instance)
         set_option(max_args=1000000, max_lines=100000000)
+
+    def set_timeout(self, timeout_ms: int):
+        """Set solver-specific timeout."""
         self.solver.set("timeout", timeout_ms)
         return
 
@@ -29,12 +26,24 @@ class TPMCSolver:
         import threading
         result = []
 
-        thread = threading.Thread(target=lambda : result.append(self.solver.check()))
-        thread.daemon = False
+        def check_wrapper():
+            try:
+                result.append(self.solver.check())
+            except:
+                result.append(unknown)
+
+        thread = threading.Thread(target=check_wrapper, daemon=True)
         thread.start()
         thread.join(timeout_ms / 1000.0)
 
         if thread.is_alive():
+            # Signal Z3 to interrupt its computation
+            try:
+                self.solver.interrupt()
+                thread.join(timeout=2.0)  # Give Z3 time to cleanup gracefully
+            except:
+                del thread
+                pass  # If interrupt fails, daemon thread won't block process exit
             return unknown
 
         return result[0] if len(result) > 0 else unknown
@@ -68,7 +77,7 @@ class TPMCSolver:
             if self.verbose:
                 print(' ❔  Unknown!')
 
-        self._cleanup()
+        self.cleanup()
 
         return ResultTPMC(
             solve_time=solve_time,
@@ -77,7 +86,9 @@ class TPMCSolver:
             model=model
         )
 
-    def _cleanup(self):
-        # Clean up Z3 objects
-        del self.solver
+    def cleanup(self):
+        """Clean up Z3 objects."""
+        if self.solver is not None:
+            del self.solver
+            self.solver = None
         gc.collect()
