@@ -57,11 +57,11 @@ class TPMCSolver:
             print(" ⚡  Solving...")
             print()
 
-        # Solving phase timing for benchmarks
-        solve_start = time.process_time()
+        # Solving phase timing for benchmarks (CPU time)
+        cpu_start = time.process_time()
         result = self.wrap_timeout_check(timeout_ms)
-        solve_end = time.process_time()
-        solve_time = solve_end - solve_start
+        cpu_end = time.process_time()
+        solve_time = cpu_end - cpu_start
 
         model = None
         reward = None
