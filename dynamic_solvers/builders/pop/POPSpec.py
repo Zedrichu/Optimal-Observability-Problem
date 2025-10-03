@@ -1,6 +1,6 @@
 from abc import ABC
 from itertools import chain
-from typing import List
+from typing import List, override
 
 from z3 import z3, Real, Or, Sum
 
@@ -51,14 +51,16 @@ class POPSpec(OOPSpec, ABC):
         self.console.print(constraints)
         return constraints
 
-    def collect_constraints(self, threshold: str, determinism: bool) -> List[z3.BoolRef]:
+    def collect_constraints(self, threshold: str) -> List[z3.BoolRef]:
         self.console.print("\n  🛠️  Building constraints...", justify="center")
 
+        t = Real('t', self.ctx)
         constraint_builders = [
             self.build_fully_observable_constraints(),
             self.build_bellman_equations(),
             [self.build_threshold_constraint(threshold)],
-            self.build_strategy_constraints(determinism),
+            self.build_strategy_constraints(),
+            # [t <= 1, t >= 0],
             self.build_observation_constraints(),
         ]
 

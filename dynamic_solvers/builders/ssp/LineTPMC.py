@@ -6,9 +6,9 @@ from dynamic_solvers.builders.worlds import Line
 
 
 class LineTPMC(Line, SSPSpec):
-    def __init__(self, budget: int, goal: int, length: int, ctx: Optional[Context] = None, verbose: bool = False):
+    def __init__(self, budget: int, goal: int, length: int, determinism: bool = False, ctx: Optional[Context] = None, verbose: bool = False):
         Line.__init__(self, length)
-        SSPSpec.__init__(self, budget, goal, ctx, verbose)
+        SSPSpec.__init__(self, budget, goal, determinism, ctx, verbose)
 
 
 if __name__ == "__main__":
@@ -21,7 +21,7 @@ if __name__ == "__main__":
         threshold = sys.argv[4]
         det = int(sys.argv[5])
 
-        tpMC = LineTPMC(budget, goal, size, threshold)
+        tpMC = LineTPMC(budget, goal, size, determinism=det == 1)
 
         tpMC.declare_variables()
-        tpMC.collect_constraints(threshold, determinism=det == 1)
+        tpMC.collect_constraints(threshold)

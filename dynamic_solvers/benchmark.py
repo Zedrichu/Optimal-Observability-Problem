@@ -87,14 +87,12 @@ class BenchmarkRunner:
         all_configs = []
 
         for csv_file in csv_files:
-            if self.verbose:
-                print(f"📂 Loading configurations from: {csv_file}")
 
             configs = self.load_configurations_from_csv(csv_file)
             all_configs.extend(configs)
 
             if self.verbose:
-                print(f"   Loaded {len(configs)} configurations from {csv_file}")
+                print(f"📂 Loaded {len(configs)} configurations from {csv_file}")
 
         return all_configs
 
@@ -130,7 +128,8 @@ class BenchmarkRunner:
                                                    height = config.height,
                                                      goal = config.goal,
                                                    budget = config.budget,
-                                                threshold = config.threshold )
+                                                threshold = config.threshold,
+                                                determinism = config.deterministic)
 
             # Create a solver and configure
             solver = TPMCSolver(verbose=False)
@@ -138,7 +137,7 @@ class BenchmarkRunner:
             solver.set_options(config.timeout)
 
             # Run solver execution on the current tpMC instance
-            result: ResultTPMC = solver.solve(tpmc_instance, config.threshold, config.deterministic, config.timeout)
+            result: ResultTPMC = solver.solve(tpmc_instance, config.threshold, config.timeout)
 
             # Determine result status
             if result.result.r == 1:  # sat

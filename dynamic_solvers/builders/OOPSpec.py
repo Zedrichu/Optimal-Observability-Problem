@@ -10,10 +10,12 @@ from dynamic_solvers.utils import parse_threshold
 
 
 class OOPSpec(World, ABC):
-    def __init__(self, budget: int, goal: int, ctx: Optional[Context] = None, verbose: bool = False):
+    def __init__(self, budget: int, goal: int, determinism: bool,
+                 ctx: Optional[Context] = None, verbose: bool = False):
         self.ctx = ctx or Context()  # Use provided context or create fresh one
         self.budget = budget
         self.goal = goal
+        self.determinism = determinism
         self.verbose = verbose
 
         self.ExpRew = None  # Expected reward variables
@@ -65,18 +67,29 @@ class OOPSpec(World, ABC):
                 continue
 
             # Build action terms for each direction using a transition function
-            terms = []
+            terms = self.initialize_terms()
             for a in range(len(self.actions)):
                 # Decrement the state index after processing the goal state
                 idx = s - 1 if s > self.goal else s
 
                 action_term = self.build_action_term(a, idx)
                 next_state = self.navigate(s, a)
-                terms.append(action_term * (1 + self.ExpRew[next_state]))
+                destination_rew = self.build_destination_rew(next_state)
+                terms.append(action_term * destination_rew)
             equations.append(self.ExpRew[s] == Sum(terms))
 
         self.console.print(equations)
         return equations
+
+    def initialize_terms(self):
+        """ Initial term in Bellman sum for current state - reward of staying in place.
+        Common format of Bellman equations used by default. [See base paper]"""
+        return [1]
+
+    def build_destination_rew(self, next_state: int) -> z3.ArithRef:
+        """ Expected reward from the state the selected action leads to, to the goal.
+        Common format of Bellman equations used by default. [See base paper]"""
+        return self.ExpRew[next_state]
 
     @abstractmethod
     def build_action_term(self, action_idx: int, state_idx: int) -> z3.ArithRef:
@@ -100,7 +113,7 @@ class OOPSpec(World, ABC):
         self.console.print(constraint)
         return constraint
 
-    def build_strategy_constraints(self, determinism: bool) -> List[z3.BoolRef]:
+    def build_strategy_constraints(self) -> List[z3.BoolRef]:
         # Randomized strategies (proper probability distributions)
         self.console.print('\n# Randomized strategies (proper probability distributions)')
         constraints = []
@@ -113,7 +126,7 @@ class OOPSpec(World, ABC):
             constraints.append(Sum(strategy) == 1)
 
         # TODO!: Check for determinism first and apply binary constraints only (no need for range)
-        if determinism:
+        if self.determinism:
             self.console.print('# Deterministic strategies activated (one-hot encoding or degenerate categorical distribution)\n')
             for strategy in self.X:
                 for rate in strategy:
@@ -127,5 +140,5 @@ class OOPSpec(World, ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def collect_constraints(self, threshold: str, determinism: bool) -> List[z3.BoolRef]:
+    def collect_constraints(self, threshold: str) -> List[z3.BoolRef]:
         raise NotImplementedError()

@@ -1,6 +1,6 @@
 from abc import ABC
 from itertools import chain
-from typing import List
+from typing import List, override
 
 from z3 import z3, Real, Or, Sum
 
@@ -43,6 +43,17 @@ class SSPSpec(OOPSpec, ABC):
         return ((1 - self.Y[state_idx]) * self.X[-1][action_idx] +
                 self.Y[state_idx] * self.X[state_idx][action_idx])
 
+    @override
+    def initialize_terms(self):
+        """For SSP instances w/o determinism use adapted Bellman equation format."""
+        [] if not self.determinism else [1]
+
+    @override
+    def build_destination_rew(self, next_state: int) -> z3.ArithRef:
+        """For SSP instances w/o determinism adapt Bellman equations.
+        Add reward of single transition (1) to the next state's expected reward towards the goal."""
+        1 + self.ExpRew[next_state] if not self.determinism else self.ExpRew[next_state]
+
     def build_observation_constraints(self) -> List[z3.BoolRef]:
         # Observation function constraints - every state should be mapped to some observable class
         # For SSP, 2 observation classes exist: activated sensor or unknown
@@ -59,14 +70,16 @@ class SSPSpec(OOPSpec, ABC):
         self.console.print(constraint)
         return constraint
 
-    def collect_constraints(self, threshold: str, determinism: bool) -> List[z3.BoolRef]:
+    def collect_constraints(self, threshold: str) -> List[z3.BoolRef]:
         self.console.print("\n  🛠️  Building constraints...", justify="center")
 
+        t = Real('t', self.ctx)
         constraint_builders = [
             self.build_fully_observable_constraints(),
             self.build_bellman_equations(),
             [self.build_threshold_constraint(threshold)],
-            self.build_strategy_constraints(determinism),
+            self.build_strategy_constraints(),
+            # [t <= 1, t >= 0],
             self.build_observation_constraints(),
             [self.build_budget_constraint()],
         ]
