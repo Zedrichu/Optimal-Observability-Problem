@@ -2,6 +2,11 @@ import pandas as pd
 import numpy as np
 import glob
 
+def parse_time(time_str: str) -> float:
+    if time_str == 't.o.':
+        return 180.0
+    else:
+        return float(time_str)
 
 def compute_variance_results(file_pattern: str):
     files = glob.glob(file_pattern)
@@ -13,7 +18,7 @@ def compute_variance_results(file_pattern: str):
     num_instances = len(dfs[0])
     stats = []
     for idx in range(num_instances):
-        times = np.array([np.float64(df.iloc[idx]['Time (s)']) for df in dfs], dtype=np.float64)
+        times = np.array([np.float64(parse_time(df.iloc[idx]['Time (s)'])) for df in dfs], dtype=np.float64)
         stats.append({
             'Instance': f"{dfs[0].iloc[idx]['Variant']}-{dfs[0].iloc[idx]['Model']}",
             'Time_mean': np.nanmean(times),
