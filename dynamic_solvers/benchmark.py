@@ -288,15 +288,9 @@ def main():
                 print("❌ No valid configurations found")
                 sys.exit(1)
 
-            for i in range(10):
-                output_csv = args.output.replace('.csv', f'-{i+1}.csv')
-                if os.path.exists(output_csv):
-                    print("⚠️  Output file exists, trying next:", output_csv)
-                    continue
-                runner.output_csv = output_csv
-                runner.results = []
-                runner.run_benchmarks(configs)
-                runner.save_results_to_csv()
+            runner.output_csv = args.output
+            runner.run_benchmarks(configs)
+            runner.save_results_to_csv()
 
         finally:
             runner.cleanup()
