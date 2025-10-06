@@ -25,7 +25,7 @@ def output_variance_results(file_pattern: str):
         timeout_count = np.count_nonzero(timeout_mask)
         unknown_mask = (statuses == 'UNKNOWN')
         unknown_count = np.count_nonzero(unknown_mask)
-        # Filter out UNKNOWNs for stats
+        # We are only interested in 'solving' runtimes. Filter out UNKNOWNs due to timeouts or z3 issues.
         valid_times = times[~unknown_mask]
         variance = np.var(valid_times) if valid_times.size > 0 else np.nan
         mean = np.nanmean(valid_times) if valid_times.size > 0 else np.nan
