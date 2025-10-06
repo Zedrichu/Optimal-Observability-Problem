@@ -49,9 +49,9 @@ class TPMCSolver:
             print()
 
         # Solving phase timing for benchmarks
-        solve_start = time.perf_counter()
+        solve_start = time.process_time()
         result = self.wrap_timeout_check(timeout_ms)
-        solve_end = time.perf_counter()
+        solve_end = time.process_time()
         solve_time = solve_end - solve_start
 
         model = None

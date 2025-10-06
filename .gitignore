@@ -171,3 +171,9 @@ grid_*_z3.py
 maze_*_z3.py
 ssp_*_z3.py
 fixed_*_z3.py
+
+# Original config files
+**/PD-POP-config.csv
+**/PD-SSP-config.csv
+**/Pos-POP-config.csv
+**/Pos-SSP-config.csv

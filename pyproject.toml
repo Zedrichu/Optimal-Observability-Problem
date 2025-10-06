@@ -7,6 +7,8 @@ dependencies = [
     "alive-progress>=3.3.0",
     "halo>=0.0.31",
     "more-itertools>=10.8.0",
+    "numpy>=2.3.3",
+    "pandas>=2.3.3",
     "psutil>=7.0.0",
     "rich>=14.1.0",
     "z3-solver==4.13.0",
