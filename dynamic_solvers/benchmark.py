@@ -110,6 +110,81 @@ def create_model_description(config: BenchmarkConfig) -> str:
     return f"{config.world.upper()}(?)"
 
 
+def aggregate_trial_results(trial_results: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Aggregate results from multiple trials according to the specified rules:
+    - All trial timeouts -> instance timeout
+    - All trial unsat -> instance unsat with average runtime
+    - All trial unknown -> instance unknown with average runtime
+    - Any trial error -> instance error
+    - Any trial SAT -> drop timeouts, average SAT runtimes
+    """
+    if not trial_results:
+        raise ValueError("No trial results to aggregate")
+
+    # Use first result as template
+    aggregated = trial_results[0].copy()
+
+    # Collect statuses and times
+    statuses = [r['status'] for r in trial_results]
+    times = [r['time'] for r in trial_results]
+
+    # Count different outcomes
+    timeout_count = sum(1 for t in times if t is None or t < 0)
+    error_count = sum(1 for s in statuses if s == "ERROR")
+
+    # Find first error message if any
+    errors = [r.get('error') for r in trial_results if r.get('error') is not None]
+    error_message = errors[0] if errors else None
+
+    sat_results = [r for r in trial_results if r['status'] == 'SAT' and r['time'] > 0]
+    proper_unknowns = [r for r in trial_results if r['status'] == 'UNKNOWN' and r['time'] > 0]
+    unsat_results = [r for r in trial_results if r['status'] == 'UNSAT' and r['time'] > 0]
+
+    # Apply aggregation rules
+    if error_count > 0:
+        # Any errors -> report error
+        aggregated['status'] = 'ERROR'
+        aggregated['time'] = None
+        aggregated['error'] = f"One of trials failed with error: {error_message}"
+        aggregated['reward'] = None
+    elif timeout_count == len(trial_results):
+        # All timeouts -> timeout
+        aggregated['status'] = statuses[0]  # Keep original status
+        aggregated['time'] = -1.0
+    elif len(sat_results) > 0:
+        # At least one SAT -> average SAT runtimes (drop timeouts)
+        avg_time = sum(r['time'] for r in sat_results) / len(sat_results)
+        aggregated['time'] = avg_time
+        aggregated['status'] = 'SAT'
+        aggregated['reward'] = sat_results[0]['reward']  # Use first SAT reward
+    elif len(unsat_results) == len(trial_results):
+        # All UNSAT -> unsat
+        aggregated['status'] = 'UNSAT'
+        aggregated['time'] = sum(r['time'] for r in unsat_results) / len(unsat_results)
+    elif len(proper_unknowns) == len(trial_results):
+        # All proper UNKNOWN -> unknown
+        aggregated['status'] = 'UNKNOWN'
+        aggregated['time'] = sum(r['time'] for r in proper_unknowns) / len(proper_unknowns)
+    else:
+        # Mixed results (shouldn't happen for deterministic problems, but handle gracefully)
+        # Prefer SAT, then UNSAT, then timeout
+        if len(sat_results) > 0:
+            avg_time = sum(r['time'] for r in sat_results) / len(sat_results)
+            aggregated['time'] = avg_time
+            aggregated['status'] = 'SAT'
+        elif len(unsat_results) > 0:
+            aggregated['status'] = 'UNSAT'
+            aggregated['time'] = sum(r['time'] for r in unsat_results) / len(unsat_results)
+        elif len(proper_unknowns) > 0:
+            aggregated['status'] = 'UNKNOWN'
+            aggregated['time'] = sum(r['time'] for r in proper_unknowns) / len(proper_unknowns)
+        else:
+            aggregated['status'] = 'UNKNOWN'
+            aggregated['time'] = -1.0
+
+    return aggregated
+
+
 def is_docker_environment():
     """Check if running in Docker container."""
     return (
@@ -151,10 +226,11 @@ def load_configurations_from_csv_file(csv_file: str) -> List[BenchmarkConfig]:
 class BenchmarkRunner:
     """Benchmarking unit using existing dynamic_solvers infrastructure."""
 
-    def __init__(self, output_csv: str = "benchmark_results.csv", verbose: bool = False):
+    def __init__(self, output_csv: str = "benchmark_results.csv", verbose: bool = False, trials: int = 1):
         self.output_csv = output_csv
         self.results: List[Dict[str, Any]] = []
         self.verbose = verbose
+        self.trials = trials
 
     def load_configurations(self, csv_files: List[str]) -> List[BenchmarkConfig]:
         """Load benchmark configurations from multiple CSV files consecutively."""
@@ -170,14 +246,9 @@ class BenchmarkRunner:
 
         return all_configs
 
-    def execute_instance(self, config: BenchmarkConfig) -> Dict[str, Any]:
-        """Run a single problem instance in an isolated process, with appropriate printouts."""
+    def execute_isolated_trial(self, config: BenchmarkConfig) -> Dict[str, Any]:
+        """Run a single trial of a problem instance in an isolated process."""
         model_desc = create_model_description(config)
-        instance_text = f"{config.variant.upper()} instance {model_desc} w/ B: {config.budget}; τ: '{config.threshold}'"
-
-        halo = Halo(text=f"Running ... {instance_text}", spinner="dots12", color="magenta")
-        if self.verbose:
-            halo.start()
 
         # Create queue for result communication from processes
         result_queue = Queue()
@@ -202,6 +273,37 @@ class BenchmarkRunner:
                 'error': "Process terminated without result"
             }
 
+        return benchmark_result
+
+    def execute_instance(self, config: BenchmarkConfig) -> Dict[str, Any]:
+        """Run a problem instance with multiple trials and aggregate results."""
+        model_desc = create_model_description(config)
+        instance_text = f"{config.variant.upper()} instance {model_desc} w/ B: {config.budget}; τ: '{config.threshold}'"
+
+        halo = Halo(text=f"Running ... {instance_text}", spinner="dots12", color="magenta")
+        if self.verbose:
+            halo.start()
+
+        # Run multiple trials
+        trial_results = []
+        for trial in range(self.trials):
+            if self.verbose and self.trials > 1:
+                # Clear out spinner text before adjusting it
+                sys.stdout.write('\033[2K')  # Clear line
+                sys.stdout.write('\r')  # Move to the beginning
+                sys.stdout.flush()
+
+                halo.text = f"Running trial ({trial + 1}/{self.trials}) ... {instance_text}"
+
+            trial_result = self.execute_isolated_trial(config, trial)
+            trial_results.append(trial_result)
+
+        # Aggregate results if multiple trials
+        if self.trials > 1:
+            benchmark_result = aggregate_trial_results(trial_results)
+        else:
+            benchmark_result = trial_results[0]
+
         # Display result accordingly
         if benchmark_result['time'] is None and benchmark_result['status'] == "ERROR":
             if self.verbose:
@@ -221,8 +323,9 @@ class BenchmarkRunner:
             sys.stdout.write('\r')  # Move to the beginning
             sys.stdout.flush()
 
+            trial_info = f" (avg over {self.trials} trials)" if self.trials > 1 else ""
             halo_message = (f"{"Timed-out" if timeout else " Solved"}: {instance_text} "
-                            f"| Time: {time_print} "
+                            f"| Time: {time_print}{trial_info} "
                             f"| Satisfiability: {benchmark_result['status']} "
                             f"| Reward: {benchmark_result['reward'] if benchmark_result['reward'] is not None else "N/A"}\n")
 
@@ -296,6 +399,7 @@ def main():
     parser.add_argument('config_csv', nargs='+', help='One or more CSV files with benchmark configurations')
     parser.add_argument('--output', '-o', default='benchmark_results.csv', help='Output CSV file')
     parser.add_argument('--verbose', '-v', action='store_true', help='Verbose output')
+    parser.add_argument('--trials', '-t', type=int, default=1, help='Number of trials to run for each configuration (default: 1)')
 
     args = parser.parse_args()
 
@@ -312,7 +416,7 @@ def main():
                 sys.exit(1)
 
         # Run benchmarks
-        runner = BenchmarkRunner(args.output, args.verbose)
+        runner = BenchmarkRunner(args.output, args.verbose, args.trials)
 
         try:
             configs = runner.load_configurations(args.config_csv)
