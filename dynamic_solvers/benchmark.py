@@ -288,7 +288,6 @@ def main():
                 print("❌ No valid configurations found")
                 sys.exit(1)
 
-            runner.output_csv = args.output
             runner.run_benchmarks(configs)
             runner.save_results_to_csv()
 
