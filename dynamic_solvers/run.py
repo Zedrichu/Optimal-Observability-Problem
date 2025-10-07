@@ -8,7 +8,9 @@ Problem instances are configured with parameters for budget, goal state, dimensi
 import argparse
 import sys
 import os
+from collections import defaultdict
 
+import z3
 from z3 import sat
 
 from dynamic_solvers.TPMCSolver import TPMCSolver
@@ -133,6 +135,12 @@ Examples:
         help='Enable verbose output'
     )
 
+    output_group.add_argument(
+        '--fullres', '-fr',
+        action='store_true',
+        help='Enable verbose output for results'
+    )
+
     return parser
 
 
@@ -208,8 +216,18 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
         reward_str = f" ⭐  Reward: {result.reward}" if result.reward is not None else ""
         print(reward_str)
 
+        model_groups = group_model_vars(result.model)
+        sorted_prefixes = sorted(set(model_groups.keys()))
+
         file_res = open(args.results, 'w')
-        file_res.write(f"{result.model}\n")
+        for prefix in sorted_prefixes:
+            sorted_group = sorted(model_groups[prefix], key=lambda  x: x[0])
+            output = f"\n[{prefix}]\n" + '\n'.join([f"{name} = {value}" for name,value in sorted_group])
+            file_res.write(output)
+            if args.fullres and args.verbose:
+                tpmc_instance.console.print(output)
+            if args.fullres:
+                print(output)
         file_res.close()
 
         file_rew = open(args.rewards, 'w')
@@ -228,6 +246,19 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
             print("    Model found and saved")
 
     solver.cleanup()
+
+
+def group_model_vars(model: z3.ModelRef) -> defaultdict:
+    # Extract and group variables in a Z3 model efficiently
+    from collections import defaultdict
+    # Clean Grouping by Keys: on missing keys, create empty list, w/o boilerplate key checking
+    var_groups = defaultdict(list)
+    for var in model.decls():
+        # Extract prefix
+        name = var.name()
+        prefix = name[:2]
+        var_groups[prefix].append((name, model[var]))
+    return var_groups
 
 
 def main():
