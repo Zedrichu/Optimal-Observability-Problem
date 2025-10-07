@@ -271,6 +271,19 @@ def group_model_vars(model: z3.ModelRef) -> defaultdict:
     return var_groups
 
 
+def group_model_vars(model: z3.ModelRef) -> defaultdict:
+    # Extract and group variables in a Z3 model efficiently
+    from collections import defaultdict
+    # Clean Grouping by Keys: on missing keys, create empty list, w/o boilerplate key checking
+    var_groups = defaultdict(list)
+    for var in model.decls():
+        # Extract prefix
+        name = var.name()
+        prefix = name[:2]
+        var_groups[prefix].append((name, model[var]))
+    return var_groups
+
+
 def main():
     """Main entry point."""
     parser = create_arg_parser()
