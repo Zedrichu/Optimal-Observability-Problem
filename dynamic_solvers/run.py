@@ -231,12 +231,8 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
         model_groups = group_model_vars(result.model) if result.model is not None else {}
 
         if args.draw:
-            obs_fun = model_groups.get('ys')
-            # Call appropriate drawing method based on variant
-            if args.variant == 'ssp':
-                drawing = tpmc_instance.draw_ssp(dict(obs_fun), args.goal, use_color=True)
-            else:  # pop
-                drawing = tpmc_instance.draw_pop(dict(obs_fun), args.goal, args.budget, use_color=True)
+            obs_fun = dict(model_groups.get('ys'))
+            drawing = tpmc_instance.draw_model(obs_fun, args.goal, args.budget, use_color=True)
             with open('drawing.txt', 'w') as file:
                 file.write(drawing)
                 print(drawing)

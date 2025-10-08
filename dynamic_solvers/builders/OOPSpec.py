@@ -37,6 +37,10 @@ class OOPSpec(World, ABC):
         raise NotImplementedError()
 
     @abstractmethod
+    def draw_model(self, model: dict, goal_state: int, budget: int, use_color: bool = True) -> str:
+        raise NotImplementedError()
+
+    @abstractmethod
     def declare_strategy_mapping(self, *args) -> List[List[z3.ArithRef]]:
         raise NotImplementedError()
 
