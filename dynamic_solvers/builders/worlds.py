@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
-from sys import implementation
-from typing import List, override
+from typing import List
 import re
 
 
@@ -104,31 +103,31 @@ class World(ABC):
 
         # Build complete HTML document
         html = f"""<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>{title}</title>
-    <style>
-        body {{
-            background-color: #282a36;
-            color: #f8f8f2;
-            font-family: 'Courier New', Consolas, monospace;
-            padding: 20px;
-            margin: 0;
-        }}
-        pre {{
-            background-color: #1e1f29;
-            padding: 20px;
-            border-radius: 5px;
-            overflow-x: auto;
-            line-height: 1.4;
-        }}
-    </style>
-</head>
-<body>
-    <pre>{html_text}</pre>
-</body>
-</html>"""
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>{title}</title>
+                <style>
+                    body {{
+                        background-color: #282a36;
+                        color: #f8f8f2;
+                        font-family: 'Courier New', Consolas, monospace;
+                        padding: 20px;
+                        margin: 0;
+                    }}
+                    pre {{
+                        background-color: #1e1f29;
+                        padding: 20px;
+                        border-radius: 5px;
+                        overflow-x: auto;
+                        line-height: 1.4;
+                    }}
+                </style>
+            </head>
+            <body>
+                <pre>{html_text}</pre>
+            </body>
+            </html>"""
         return html
 
 
@@ -149,7 +148,7 @@ class Line(World):
     def dist(self, source: int, target: int) -> int:
         return abs(source - target)
 
-    def draw_ssp(self, model: dict, goal_state: int) -> str:
+    def draw_ssp(self, model: dict, goal_state: int, use_color: bool = True) -> str:
         """Draw line world with sensor placements marked."""
         lines = []
 
@@ -273,7 +272,7 @@ class Grid(World):
         column = source % self.width
         return abs(goal_column - column) + (abs(target - source) // self.width)
 
-    def draw_ssp(self, model: dict, goal_state: int) -> str:
+    def draw_ssp(self, model: dict, goal_state: int, use_color: bool = True) -> str:
         """Draw grid world with sensor placements marked."""
         lines = []
         lines.append(f"Grid World ({self.width}x{self.height}):")
@@ -414,7 +413,7 @@ class Maze(World):
             diff = int(goal_column != column)
             return abs(column - goal_column) + abs(row - goal_height + 2 * goal_height * diff)
 
-    def draw_ssp(self, model: dict, goal_state: int) -> str:
+    def draw_ssp(self, model: dict, goal_state: int, use_color: bool = True) -> str:
         """Draw maze world with sensor placements marked."""
         lines = []
         lines.append(f"Maze World (width={self.width}, depth={self.depth}):")

@@ -144,12 +144,6 @@ Examples:
     )
 
     output_group.add_argument(
-        '--fullres', '-fr',
-        action='store_true',
-        help='Enable verbose output for results'
-    )
-
-    output_group.add_argument(
         '--draw',
         action='store_true',
         help='Generate and display ANSI drawing of the world with sensor placements'
@@ -240,7 +234,7 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
             obs_fun = model_groups.get('ys')
             # Call appropriate drawing method based on variant
             if args.variant == 'ssp':
-                drawing = tpmc_instance.draw_ssp(dict(obs_fun), args.goa, use_color=True)
+                drawing = tpmc_instance.draw_ssp(dict(obs_fun), args.goal, use_color=True)
             else:  # pop
                 drawing = tpmc_instance.draw_pop(dict(obs_fun), args.goal, args.budget, use_color=True)
             with open('drawing.txt', 'w') as file:
@@ -255,9 +249,8 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
             sorted_group = sorted(model_groups[prefix], key=lambda  x: x[0])
             output = f"\n[{prefix}]\n" + '\n'.join([f"{name} = {value}" for name,value in sorted_group])
             file_res.write(output)
-            if args.fullres and args.verbose:
+            if args.verbose:
                 tpmc_instance.console.print(output)
-            if args.fullres:
                 print(output)
         file_res.close()
 
