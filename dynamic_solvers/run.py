@@ -149,6 +149,12 @@ Examples:
         help='Enable verbose output for results'
     )
 
+    output_group.add_argument(
+        '--draw',
+        action='store_true',
+        help='Generate and display ANSI drawing of the world with sensor placements'
+    )
+
     return parser
 
 
@@ -229,6 +235,19 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
         print(reward_str)
 
         model_groups = group_model_vars(result.model) if result.model is not None else {}
+
+        if args.draw:
+            obs_fun = model_groups.get('ys')
+            # Call appropriate drawing method based on variant
+            if args.variant == 'ssp':
+                drawing = tpmc_instance.draw_ssp(dict(obs_fun), args.goa, use_color=True)
+            else:  # pop
+                drawing = tpmc_instance.draw_pop(dict(obs_fun), args.goal, args.budget, use_color=True)
+            with open('drawing.txt', 'w') as file:
+                file.write(drawing)
+                print(drawing)
+                file.close()
+
         sorted_prefixes = sorted(set(model_groups.keys()))
 
         file_res = open(args.results, 'w')
@@ -261,19 +280,6 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
 
 def group_model_vars(model: z3.ModelRef) -> defaultdict:
     # Extract and group variables in a Z3 model efficiently
-    # Clean Grouping by Keys: on missing keys, create empty list, w/o boilerplate key checking
-    var_groups = defaultdict(list)
-    for var in model.decls():
-        # Extract prefix
-        name = var.name()
-        prefix = name[:2]
-        var_groups[prefix].append((name, model[var]))
-    return var_groups
-
-
-def group_model_vars(model: z3.ModelRef) -> defaultdict:
-    # Extract and group variables in a Z3 model efficiently
-    from collections import defaultdict
     # Clean Grouping by Keys: on missing keys, create empty list, w/o boilerplate key checking
     var_groups = defaultdict(list)
     for var in model.decls():
