@@ -91,7 +91,7 @@ class TPMCFactory:
     def _extract_common_params(kwargs) -> dict:
         """Extract parameters common to all constructors."""
         common = {}
-        for key in ['budget', 'goal', 'determinism', 'ctx', 'verbose']:
+        for key in ['budget', 'goal', 'determinism', 'bool_encoding', 'ctx', 'verbose']:
             if key in kwargs:
                 common[key] = kwargs[key]
         return common

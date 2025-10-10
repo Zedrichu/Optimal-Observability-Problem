@@ -10,12 +10,14 @@ from dynamic_solvers.utils import parse_threshold
 
 
 class OOPSpec(World, ABC):
-    def __init__(self, budget: int, goal: int, determinism: bool,
+    def __init__(self, budget: int, goal: int,
+                 determinism: bool, bool_encoding: bool,
                  ctx: Optional[Context] = None, verbose: bool = False):
         self.ctx = ctx or Context()  # Use provided context or create fresh one
         self.budget = budget
         self.goal = goal
         self.determinism = determinism
+        self.bool_encoding = False
         self.verbose = verbose
 
         self.ExpRew = None  # Expected reward variables
@@ -116,7 +118,7 @@ class OOPSpec(World, ABC):
     def build_strategy_constraints(self) -> List[z3.BoolRef]:
         # Randomized strategies (proper probability distributions)
         if self.determinism:
-            self.console.print('# Deterministic strategies activated (one-hot encoding or degenerate categorical distribution)\n')
+            self.console.print('\n# Deterministic strategies activated (one-hot encoding or degenerate categorical distribution)\n')
         else:
             self.console.print('\n# Randomized strategies (proper probability distributions)')
         constraints = []

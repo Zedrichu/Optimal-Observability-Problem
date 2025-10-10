@@ -6,9 +6,11 @@ from dynamic_solvers.builders.worlds import Maze
 
 
 class MazeTPMC(Maze, SSPSpec):
-    def __init__(self, budget: int, goal: int, width: int, depth: int, determinism: bool = False, ctx: Optional[Context] = None, verbose: bool = False):
+    def __init__(self, budget: int, goal: int, width: int, depth: int,
+                 determinism: bool = False, bool_encoding: bool = False,
+                 ctx: Optional[Context] = None, verbose: bool = False):
         Maze.__init__(self, width, depth)
-        SSPSpec.__init__(self, budget, goal, determinism, ctx, verbose)
+        SSPSpec.__init__(self, budget, goal, determinism, bool_encoding, ctx, verbose)
 
 
 if __name__ == "__main__":
