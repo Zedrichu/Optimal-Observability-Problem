@@ -64,12 +64,12 @@ class POPSpec(OOPSpec, ABC):
                     continue
 
                 # Decrement the state index after processing the goal state
-                s = s if s < self.goal else s - 1
+                state_idx = s if s < self.goal else s - 1
                 for o in range(self.budget):
                     if self.determinism:
                         equations.extend([
                             Implies(
-                                And(self.Y[s][o], self.X[o][a], self.ctx),
+                                And(self.Y[state_idx][o], self.X[o][a], self.ctx),
                                 self.ExpRew[s] == 1 + self.ExpRew[self.navigate(s, a)],
                                 self.ctx)
                             for a in range(len(self.actions))
@@ -77,7 +77,7 @@ class POPSpec(OOPSpec, ABC):
                     else:
                         equations.extend([
                             Implies(
-                                self.Y[s][o],
+                                self.Y[state_idx][o],
                                 self.ExpRew[s] == 1 + Sum([self.ExpRew[self.navigate(s, a)] * self.X[o][a]
                                                             for a in range(len(self.actions))]),
                                 self.ctx)
@@ -129,8 +129,8 @@ class POPSpec(OOPSpec, ABC):
                     self.Y[s][o1],
                     And(*[Not(self.Y[s][o2], self.ctx) for o2 in range(self.budget) if o2 != o1], self.ctx),
                     self.ctx)
-                for o1 in range(self.budget)
                 for s in range(len(self.Y))
+                for o1 in range(self.budget)
             ])
         else:
             # TODO: Can sum over booleans but must use 1.0 (z3.Real) instead of 1 (z3.Int)
