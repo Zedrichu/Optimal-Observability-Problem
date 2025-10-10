@@ -295,7 +295,7 @@ class BenchmarkRunner:
 
                 halo.text = f"Running trial ({trial + 1}/{self.trials}) ... {instance_text}"
 
-            trial_result = self.execute_isolated_trial(config, trial)
+            trial_result = self.execute_isolated_trial(config)
             trial_results.append(trial_result)
 
         # Aggregate results if multiple trials
