@@ -201,6 +201,7 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
                                        goal=args.goal,
                                        budget=args.budget,
                                        determinism=args.deterministic,
+                                       bool_encoding=False,
                                        verbose=args.verbose)
     solver = TPMCSolver(tpmc_instance.ctx, verbose=not benchmark)
     # Configure solver timeout
@@ -216,18 +217,21 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
         reward_str = f" ⭐  Reward: {result.reward}" if result.reward is not None else ""
         print(reward_str)
 
-        model_groups = group_model_vars(result.model)
-        sorted_prefixes = sorted(set(model_groups.keys()))
-
         file_res = open(args.results, 'w')
-        for prefix in sorted_prefixes:
-            sorted_group = sorted(model_groups[prefix], key=lambda  x: x[0])
-            output = f"\n[{prefix}]\n" + '\n'.join([f"{name} = {value}" for name,value in sorted_group])
-            file_res.write(output)
-            if args.fullres and args.verbose:
-                tpmc_instance.console.print(output)
-            if args.fullres:
-                print(output)
+        if result.model is None:
+            file_res.write("")
+        else:
+            model_groups = group_model_vars(result.model)
+            sorted_prefixes = sorted(set(model_groups.keys()))
+
+            for prefix in sorted_prefixes:
+                sorted_group = sorted(model_groups[prefix], key=lambda  x: x[0])
+                output = f"\n[{prefix}]\n" + '\n'.join([f"{name} = {value}" for name,value in sorted_group])
+                file_res.write(output)
+                if args.fullres and args.verbose:
+                    tpmc_instance.console.print(output)
+                if args.fullres:
+                    print(output)
         file_res.close()
 
         file_rew = open(args.rewards, 'w')
