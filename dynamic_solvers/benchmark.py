@@ -32,6 +32,7 @@ class BenchmarkConfig(argparse.Namespace):
     height: int = None
     deterministic: bool = False
     timeout: int = TIMEOUT
+    bellman_format: str = "default"
 
 
 def _instance_worker(config: BenchmarkConfig, result_queue: Queue):
@@ -56,8 +57,8 @@ def _instance_worker(config: BenchmarkConfig, result_queue: Queue):
             height=config.height,
             goal=config.goal,
             budget=config.budget,
-            threshold=config.threshold,
             determinism=config.deterministic,
+            bellman_format=config.bellman_format,
         )
 
         # Create a solver and configure it
@@ -194,43 +195,44 @@ def is_docker_environment():
     )
 
 
-def load_configurations_from_csv_file(csv_file: str) -> List[BenchmarkConfig]:
-    """Load benchmark configurations from a CSV file."""
-    configs = []
-
-    with open(csv_file, 'r', newline='') as file:
-        reader = csv.DictReader(file)
-
-        for row_num, row in enumerate(reader, start=2):
-            try:
-                config = BenchmarkConfig(
-                    variant=row['variant'].strip().lower(),
-                    world=row['world'].strip().lower(),
-                    budget=int(row['budget']),
-                    goal=int(row['goal']),
-                    threshold=row['threshold'].strip(),
-                    length=int(row['length']) if row.get('length', '').strip() else None,
-                    width=int(row['width']) if row.get('width', '').strip() else None,
-                    height=int(row['height']) if row.get('height', '').strip() else None,
-                    deterministic=row.get('deterministic', '').strip().lower() in ['true', '1', 'yes'],
-                    timeout=int(row.get('timeout', str(TIMEOUT))),
-                )
-                configs.append(config)
-
-            except (ValueError, KeyError) as e:
-                print(f"⚠️  Warning: Skipping invalid row {row_num} in {csv_file}: {e}")
-
-    return configs
-
-
 class BenchmarkRunner:
     """Benchmarking unit using existing dynamic_solvers infrastructure."""
 
-    def __init__(self, output_csv: str = "benchmark_results.csv", verbose: bool = False, trials: int = 1):
+    def __init__(self, output_csv: str = "benchmark_results.csv", verbose: bool = False, trials: int = 1, bellman_format: str = "default"):
         self.output_csv = output_csv
         self.results: List[Dict[str, Any]] = []
         self.verbose = verbose
         self.trials = trials
+        self.bellman_format = bellman_format
+
+    def load_configurations_from_csv_file(self, csv_file: str) -> List[BenchmarkConfig]:
+        """Load benchmark configurations from a CSV file."""
+        configs = []
+
+        with open(csv_file, 'r', newline='') as file:
+            reader = csv.DictReader(file)
+
+            for row_num, row in enumerate(reader, start=2):
+                try:
+                    config = BenchmarkConfig(
+                        variant=row['variant'].strip().lower(),
+                        world=row['world'].strip().lower(),
+                        budget=int(row['budget']),
+                        goal=int(row['goal']),
+                        threshold=row['threshold'].strip(),
+                        length=int(row['length']) if row.get('length', '').strip() else None,
+                        width=int(row['width']) if row.get('width', '').strip() else None,
+                        height=int(row['height']) if row.get('height', '').strip() else None,
+                        deterministic=row.get('deterministic', '').strip().lower() in ['true', '1', 'yes'],
+                        timeout=int(row.get('timeout', str(TIMEOUT))),
+                        bellman_format=self.bellman_format,
+                    )
+                    configs.append(config)
+
+                except (ValueError, KeyError) as e:
+                    print(f"⚠️  Warning: Skipping invalid row {row_num} in {csv_file}: {e}")
+
+        return configs
 
     def load_configurations(self, csv_files: List[str]) -> List[BenchmarkConfig]:
         """Load benchmark configurations from multiple CSV files consecutively."""
@@ -238,7 +240,7 @@ class BenchmarkRunner:
 
         for csv_file in csv_files:
 
-            configs = load_configurations_from_csv_file(csv_file)
+            configs = self.load_configurations_from_csv_file(csv_file)
             all_configs.extend(configs)
 
             if self.verbose:
@@ -295,7 +297,7 @@ class BenchmarkRunner:
 
                 halo.text = f"Running trial ({trial + 1}/{self.trials}) ... {instance_text}"
 
-            trial_result = self.execute_isolated_trial(config, trial)
+            trial_result = self.execute_isolated_trial(config)
             trial_results.append(trial_result)
 
         # Aggregate results if multiple trials
@@ -400,6 +402,9 @@ def main():
     parser.add_argument('--output', '-o', default='benchmark_results.csv', help='Output CSV file')
     parser.add_argument('--verbose', '-v', action='store_true', help='Verbose output')
     parser.add_argument('--trials', '-t', type=int, default=1, help='Number of trials to run for each configuration (default: 1)')
+    parser.add_argument('--bellman-format', '-bf', type=str, choices=['default', 'common', 'adapted'], default='default',
+        help='Bellman equation format: "default" (variant-specific), "common" (with stay-in-place), "adapted" (without stay-in-place)'
+    )
 
     args = parser.parse_args()
 
@@ -416,7 +421,7 @@ def main():
                 sys.exit(1)
 
         # Run benchmarks
-        runner = BenchmarkRunner(args.output, args.verbose, args.trials)
+        runner = BenchmarkRunner(args.output, args.verbose, args.trials, args.bellman_format)
 
         try:
             configs = runner.load_configurations(args.config_csv)
