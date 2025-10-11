@@ -107,6 +107,14 @@ Examples:
     )
 
     solver_group.add_argument(
+        '--bellman-format', '-bf',
+        type=str,
+        choices=['default', 'common', 'adapted'],
+        default='default',
+        help='Bellman equation format: "default" (variant-specific), "common" (with stay-in-place), "adapted" (without stay-in-place)'
+    )
+
+    solver_group.add_argument(
         '--timeout',
         type=int,
         default=30000,
@@ -186,7 +194,10 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
                                                  else f"Dimensions: {args.width}x{args.height}"
         print(f"    Budget: {args.budget}, Goal: {args.goal}, {dim_print}")
         print(f"    Strategy: {'Deterministic' if args.deterministic else 'Randomized'}, Threshold: {args.threshold}")
-        print()
+        print(f"    Operation mode (add-ons): \n"
+              f"        Bellman format -> {args.bellman_format}"
+              f"\n"
+        )
 
     # Convert strings to enums, after which all comparisons are integer-based
     variant = variant_from_string(args.variant)
@@ -201,6 +212,7 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
                                        goal=args.goal,
                                        budget=args.budget,
                                        determinism=args.deterministic,
+                                       bellman_format=args.bellman_format,
                                        verbose=args.verbose)
     solver = TPMCSolver(tpmc_instance.ctx, verbose=not benchmark)
     # Configure solver timeout
@@ -216,7 +228,7 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
         reward_str = f" ⭐  Reward: {result.reward}" if result.reward is not None else ""
         print(reward_str)
 
-        model_groups = group_model_vars(result.model)
+        model_groups = group_model_vars(result.model) if result.model is not None else {}
         sorted_prefixes = sorted(set(model_groups.keys()))
 
         file_res = open(args.results, 'w')
@@ -247,10 +259,8 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
 
     solver.cleanup()
 
-
 def group_model_vars(model: z3.ModelRef) -> defaultdict:
     # Extract and group variables in a Z3 model efficiently
-    from collections import defaultdict
     # Clean Grouping by Keys: on missing keys, create empty list, w/o boilerplate key checking
     var_groups = defaultdict(list)
     for var in model.decls():

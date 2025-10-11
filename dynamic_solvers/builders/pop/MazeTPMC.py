@@ -1,15 +1,26 @@
-from z3 import Context
-from typing import Optional
+from typing import Unpack
 
 from dynamic_solvers.builders.pop.POPSpec import POPSpec
 from dynamic_solvers.builders.worlds import Maze
+from dynamic_solvers.builders.types import OperationKWArgs
 
 
 class MazeTPMC(Maze, POPSpec):
-    def __init__(self, budget: int, goal: int, width: int, depth: int, determinism: bool,
-                 ctx: Optional[Context] = None, verbose: bool = False):
+    def __init__(self, budget: int, goal: int, width: int, depth: int,
+                 determinism: bool = False, **kwargs: Unpack[OperationKWArgs]):
+        """Create a Maze POP instance.
+
+        Args:
+            budget: Budget constraint (number of observation classes allowed).
+            goal: Goal state index.
+            width: Width of the maze.
+            depth: Depth of the maze.
+            determinism: Use deterministic strategies (default: False).
+            **kwargs: Additional parameters (ctx, verbose, bellman_format).
+                See OOPSpec.__init__ for details.
+        """
         Maze.__init__(self, width, depth)
-        POPSpec.__init__(self, budget, goal, determinism, ctx, verbose)
+        POPSpec.__init__(self, budget, goal, determinism, **kwargs)
 
 
 if __name__ == "__main__":
