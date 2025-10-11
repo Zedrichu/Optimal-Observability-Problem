@@ -1,4 +1,5 @@
 from enum import Enum, auto
+from typing import TypedDict, Optional, Unpack, Literal
 
 from z3 import Context
 
@@ -44,12 +45,74 @@ def puzzle_from_string(s: str) -> PuzzleType:
   return mapping[s.lower()]
 
 
+class TPMCKWArgs(TypedDict, total=False):
+    """Keyword arguments for TPMC constructors."""
+    # Problem settings
+    budget: int
+    goal: int
+    determinism: bool
+    # Operations and verbosity/logging
+    ctx: Optional[Context]
+    verbose: bool
+    # Reproducibility add-ons for experiments/optimizations
+    bellman_format: Optional[Literal["default", "common", "adapted"]]
+    # Dimension key-word arguments
+    length: Optional[int]
+    width: Optional[int]
+    height: Optional[int]
+
+
 class TPMCFactory:
+    """Factory for creating dynamic TPMC problem instances with context builders.
+
+    Common parameters
+    -----------------
+    All create methods accept keyword arguments declared by `TPMCKWArgs`:
+        budget : int
+            Budget constraint (number of sensors/observation classes allowed)
+        goal : int
+            Index of the goal state in the world
+        determinism : bool, optional
+            Use deterministic strategies (default: False)
+        bellman_format : str, optional
+            Bellman equation format: "default", "common", or "adapted" (default: "default")
+        ctx : z3.Context, optional
+            Z3 context for solver (default: creates new context)
+        verbose : bool, optional
+            Enable verbose output (default: False)
+
+    Dimension Parameters
+    --------------------
+    World-specific parameters:
+        length : int
+            Required for Line worlds
+        width : int
+            Required for Grid/Maze worlds
+        height : int
+            Required for Grid/Maze worlds (mapped to 'depth' for Maze internally)
+    """
+    # Define parameter sets for TPMC constructors as class constants for maintainability
+    COMMON_PARAMS = [
+        'budget', 'goal',
+        'determinism',
+        'ctx', 'verbose',
+        'bellman_format'
+    ]
+
     @staticmethod
-    def create(oop_variant: OOPVariant, puzzle_type: PuzzleType, **kwargs) -> OOPSpec:
+    def create(oop_variant: OOPVariant, puzzle_type: PuzzleType, **kwargs: Unpack[TPMCKWArgs]) -> OOPSpec:
         """
         Factory method that handles parameter selection and object creation.
         Client only needs to pass all available parameters; factory filters what's needed.
+
+        Uses **kwargs pattern for flexible parameter passing without explicit listing.
+        Type-safety is ensured by modern typed-dictionary unpacking.
+
+        Args:
+            oop_variant : OOPVariant
+            puzzle_type : PuzzleType
+            **kwargs : Unpacked[TPMCKWArgs]
+                Additional parameters
         """
         if oop_variant == OOPVariant.POP:
             return TPMCFactory._create_pop_solver(puzzle_type, **kwargs)
