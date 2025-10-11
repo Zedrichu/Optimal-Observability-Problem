@@ -6,9 +6,19 @@ from dynamic_solvers.builders.worlds import Line
 
 
 class LineTPMC(Line, POPSpec):
-    def __init__(self, budget: int, goal: int, length: int, determinism: bool = False, ctx: Optional[Context] = None, verbose: bool = False):
+    def __init__(self, budget: int, goal: int, length: int, determinism: bool = False, **kwargs):
+        """Create a Line POP instance.
+
+        Args:
+            budget: Budget constraint (number of observation classes allowed).
+            goal: Goal state index.
+            length: Length of the line world.
+            determinism: Use deterministic strategies (default: False).
+            **kwargs: Additional parameters (ctx, verbose, bellman_format).
+                See OOPSpec.__init__ for details.
+        """
         Line.__init__(self, length)
-        POPSpec.__init__(self, budget, goal, determinism, ctx, verbose)
+        POPSpec.__init__(self, budget, goal, determinism, **kwargs)
 
 
 if __name__ == "__main__":

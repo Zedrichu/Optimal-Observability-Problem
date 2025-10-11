@@ -6,9 +6,20 @@ from dynamic_solvers.builders.worlds import Grid
 
 
 class GridTPMC(Grid, POPSpec):
-    def __init__(self, budget: int, goal: int, width: int, height: int, determinism: bool = False, ctx: Optional[Context] = None, verbose: bool = False):
+    def __init__(self, budget: int, goal: int, width: int, height: int, determinism: bool = False, **kwargs):
+        """Create a Grid POP instance.
+
+        Args:
+            budget: Budget constraint (number of observation classes allowed).
+            goal: Goal state index.
+            width: Width of the grid.
+            height: Height of the grid.
+            determinism: Use deterministic strategies (default: False).
+            **kwargs: Additional parameters (ctx, verbose, bellman_format).
+                See OOPSpec.__init__ for details.
+        """
         Grid.__init__(self, width, height)
-        POPSpec.__init__(self, budget, goal, determinism, ctx, verbose)
+        POPSpec.__init__(self, budget, goal, determinism, **kwargs)
 
 
 if __name__ == "__main__":
