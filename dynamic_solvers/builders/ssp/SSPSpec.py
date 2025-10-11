@@ -2,14 +2,10 @@ from abc import ABC
 from itertools import chain
 from typing import List, override, Callable, Union
 
-from z3 import z3, Real, Bool, Or, Sum, Context, PbEq
+from z3 import z3, Real, Bool, Or, Sum, Context, PbEq, And, Implies, Not
 
 from dynamic_solvers.builders.OOPSpec import OOPSpec
-
-
-def _init_var_type(condition: bool) -> Callable[[str, Context], z3.ArithRef | z3.BoolRef]:
-    """Typed (first-class) constructor selector for Z3 variables based on conditional mode."""
-    return Bool if condition else Real
+from dynamic_solvers.utils import init_var_type
 
 
 class SSPSpec(OOPSpec, ABC):
@@ -29,19 +25,20 @@ class SSPSpec(OOPSpec, ABC):
         # e.g. `ys0 == 1` means that in state 0 the sensor is on, `ys0 == 0` - state sensor is off
         self.console.print("\n# Choice of observation on each non-goal state (state sensors that are on/off)")
 
-        # Parametric late-bound factory based on mode
-        initializer = _init_var_type(self.bool_encoding)
-        state_to_observation = [initializer(f'ys{s}', self.ctx) for s in sensor_states]
+        # Initialize variables based on encoding mode w/ dynamic constructor (Late-binding Factory Pattern)
+        initializer = init_var_type(self.bool_encoding)
+        state_to_observation = [initializer(f'ys{s}', self.ctx)
+                                for s in sensor_states]
 
         self.console.print(state_to_observation)
         return state_to_observation
 
     def declare_strategy_mapping(self, sensor_states: List[int]) -> List[List[z3.ExprRef]]:
-        # Action rates of randomized strategies per state (when the sensor is on)
-        self.console.print("\n# Action rates of randomized strategies per state (when sensor is on)")
+        # Action rates of strategies per state (when the sensor is on), or default strategy (when the sensor is off)
+        self.console.print("\n# Action rates of strategies per state (when sensor is on), or default strategy (when the sensor is off)")
 
-        # Parametric late-bound factory based on mode
-        initializer = _init_var_type(self.bool_encoding and self.determinism)
+        # Parametric late-bound factory based on encoding mode
+        initializer = init_var_type(self.bool_encoding and self.determinism)
         sensor_to_action = [[initializer(f'xo{s}{act}', self.ctx) for act in self.actions] for s in sensor_states]
 
         # Default strategy variables per action (when no sensor is observed - unknown state)
@@ -50,6 +47,39 @@ class SSPSpec(OOPSpec, ABC):
 
         self.console.print(sensor_to_action)
         return sensor_to_action
+
+    def _compute_state_bellman_bool_det(self, state: int, sensor: int) -> List[z3.BoolRef]:
+        equations = []
+        for a in range(len(self.actions)):
+            next_state = self.navigate(state, a)
+            reward_relation = self.ExpRew[state] == 1 + self.ExpRew[next_state]
+
+            # Next state activation -> reward computation with next state expected reward
+            # TODO!: Disjunction of activations in implication lhs. for streamlining
+
+            # Sensor on and chosen action for sensor
+            activation = And(self.Y[sensor], self.X[sensor][a], self.ctx)
+            equations.append(Implies(activation, reward_relation, self.ctx))
+
+            # Sensor off and default action chosen
+            activation = And(Not(self.Y[sensor], self.ctx), self.X[-1][a], self.ctx)
+            equations.append(Implies(activation, reward_relation, self.ctx))
+        return equations
+
+    def _compute_state_bellman_bool_rand(self, state: int, sensor: int) -> List[z3.BoolRef]:
+        equations = []
+
+        # Weighted next-state rewards for activated sensor
+        weighted_rewards = Sum([self.X[sensor][a] * self.ExpRew[self.navigate(state, a)]
+                                for a in range(len(self.actions))])
+        equations.append(Implies(self.Y[sensor], self.ExpRew[state] == 1 + weighted_rewards, self.ctx))
+
+        # Weighted next-state rewards for deactivated sensor (default observation)
+        weighted_rewards = Sum([self.X[-1][a] * self.ExpRew[self.navigate(state, a)]
+                                for a in range(len(self.actions))])
+        equations.append(Implies(Not(self.Y[sensor], self.ctx), self.ExpRew[state] == 1 + weighted_rewards, self.ctx))
+
+        return equations
 
     def build_action_term(self, action_idx: int, state_idx: int) -> z3.ArithRef:
         return ((1 - self.Y[state_idx]) * self.X[-1][action_idx] +

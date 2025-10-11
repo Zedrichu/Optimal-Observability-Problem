@@ -5,6 +5,7 @@ from typing import List, override
 from z3 import z3, Real, Or, Sum, Bool, Implies, And, Not
 
 from dynamic_solvers.builders.OOPSpec import OOPSpec
+from dynamic_solvers.utils import init_var_type
 
 
 class POPSpec(OOPSpec, ABC):
@@ -17,100 +18,55 @@ class POPSpec(OOPSpec, ABC):
         self.X = self.declare_strategy_mapping()
 
     def declare_observation_function(self, observable_states: List[int]) -> List[List[z3.ArithRef]]:
-        if self.bool_encoding:
-            # Choice of observations on the states (e.g. ys0o1 = True means that in state 0, observable 1 is observed)
-            self.console.print("\n# Choice of observations (e.g. ys0o1 = True means that in state 0, observable 1 is observed)")
-            state_to_observation = [[Bool(f'ys{s}o{o + 1}', self.ctx)
-                                     for o in range(self.budget)]
-                                    for s in observable_states]
-            self.console.print(state_to_observation)
-            return state_to_observation
+        # Choice of observations on the states (e.g. `ys0o1 = 1` means that in state 0, observable 1 is observed)
+        self.console.print("\n# Choice of observations (e.g. `ys0o1 = 1` means that in state 0, observable 1 is observed)")
 
-        # Choice of observations on the states (e.g. ys0o1 = 1 means that in state 0, observable 1 is observed)
-        self.console.print("\n# Choice of observations (e.g. ys0o1 = 1 means that in state 0, observable 1 is observed)")
-        state_to_observation = [[Real(f'ys{s}o{o+1}', self.ctx)
+        # Initialize variables based on encoding mode w/ dynamic constructor (Late-binding Factory Pattern)
+        initializer = init_var_type(self.bool_encoding)
+        state_to_observation = [[initializer(f'ys{s}o{o+1}', self.ctx)
                                     for o in range(self.budget)]
                                     for s in observable_states]
+
         self.console.print(state_to_observation)
         return state_to_observation
 
     def declare_strategy_mapping(self) -> List[List[z3.ArithRef]]:
-        if self.bool_encoding and self.determinism:
-            # Deterministic strategies (e.g. xo1a = True means that for observation 1, action a is taken)
-            self.console.print("\n# Deterministic strategies (e.g. xo1a = True means that for observation 1, action a is taken)")
-            observation_to_action = [[Bool(f'xo{o+1}{act}', self.ctx)
-                                        for act in self.actions]
-                                        for o in range(self.budget)]
-            self.console.print(observation_to_action)
-            return observation_to_action
+        # Action rates of observation-based strategies (e.g. `xo1a = 1` means for observation 1, action `a` is taken)
+        self.console.print("\n# Action rates of observation-based strategies "
+                           "(e.g. `xo1a = p` means for observation 1, action `a` is taken with probability `p`).")
 
-        # Rates of randomized strategies
-        self.console.print("\n# Rates of randomized strategies")
-        observation_to_action = [[Real(f'xo{o+1}{act}', self.ctx)
+        # Parametric late-bound factory based on encoding mode
+        initializer = init_var_type(self.bool_encoding and self.determinism)
+        observation_to_action = [[initializer(f'xo{o+1}{act}', self.ctx)
                                     for act in self.actions]
                                     for o in range(self.budget)]
+
         self.console.print(observation_to_action)
         return observation_to_action
 
-    @override
-    def build_bellman_equations(self) -> List[z3.BoolRef]:
-        if self.bool_encoding:
-            # Bellman equations for expected rewards in each world's state
-            self.console.print("\n# Bellman equations for expected rewards in each world's state")
-            equations = []
-            for s in range(self.size):
-                if s == self.goal:
-                    equations.append(self.ExpRew[s] == 0)
-                    continue
+    def _compute_state_bellman_bool_det(self, state: int, state_idx: int) -> List[z3.BoolRef]:
+        return [
+            Implies(
+                And(self.Y[state_idx][o], self.X[o][a], self.ctx),
+                self.ExpRew[state] == 1 + self.ExpRew[self.navigate(state, a)],
+                self.ctx)
+            for o in range(self.budget)
+            for a in range(len(self.actions))
+        ]
 
-                # Decrement the state index after processing the goal state
-                state_idx = s if s < self.goal else s - 1
-                for o in range(self.budget):
-                    if self.determinism:
-                        equations.extend([
-                            Implies(
-                                And(self.Y[state_idx][o], self.X[o][a], self.ctx),
-                                self.ExpRew[s] == 1 + self.ExpRew[self.navigate(s, a)],
-                                self.ctx)
-                            for a in range(len(self.actions))
-                        ])
-                    else:
-                        equations.extend([
-                            Implies(
-                                self.Y[state_idx][o],
-                                self.ExpRew[s] == 1 + Sum([self.ExpRew[self.navigate(s, a)] * self.X[o][a]
-                                                            for a in range(len(self.actions))]),
-                                self.ctx)
-                        ])
-            self.console.print(equations)
-            return equations
-        return super().build_bellman_equations()
+    def _compute_state_bellman_bool_rand(self, state: int, state_idx: int) -> List[z3.BoolRef]:
+        return [
+            Implies(
+                self.Y[state_idx][o],
+                self.ExpRew[state] == 1 + Sum([self.ExpRew[self.navigate(state, a)] * self.X[o][a]
+                                           for a in range(len(self.actions))]),
+                self.ctx)
+            for o in range(self.budget)
+        ]
 
     def build_action_term(self, action_idx: int, state_idx: int):
         return Sum([self.Y[state_idx][o] * self.X[o][action_idx]
                     for o in range(self.budget)])
-
-    @override
-    def build_strategy_constraints(self) -> List[z3.BoolRef]:
-        if self.bool_encoding and self.determinism:
-            self.console.print('# Deterministic strategies activated using Boolean encoding (one-hot encoding or degenerate categorical distribution)\n')
-            constraints = []
-            constraints.extend([
-                Or(*[self.X[o][a] for a in range(len(self.actions))], self.ctx)
-                for o in range(self.budget)
-            ])
-
-            for o in range(self.budget):
-                for a1 in range(len(self.actions)):
-                    constraints.extend([
-                        Implies(
-                            self.X[o][a1],
-                            And(*[Not(self.X[o][a2], self.ctx) for a2 in range(len(self.actions)) if a2 != a1] , self.ctx),
-                            self.ctx)
-                    ])
-            self.console.print(constraints)
-            return constraints
-        return super().build_strategy_constraints()
 
     def build_observation_constraints(self) -> List[z3.BoolRef]:
         # Observation function constraints - every state should be mapped to some observable class

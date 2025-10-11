@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Callable
 from io import StringIO
 
 from rich.console import Console
-from z3 import (Context, z3, Real, Q, Or, Sum, And, Not, Implies)
+from z3 import (Context, z3, Real, Q, Or, Sum, And, Not, Implies, Bool)
 
 from dynamic_solvers.builders.worlds import World
 from dynamic_solvers.utils import parse_threshold
@@ -63,42 +63,15 @@ class OOPSpec(World, ABC):
         self.console.print("\n# Bellman equations for expected rewards in each world's state")
         if self.bool_encoding:
             if self.determinism:
-                return self._build_det_boolean_bellman_equations()
+                bellman_generator = self._compute_state_bellman_bool_det
+                self.console.print(
+                    "\n# Deterministic strategies with boolean encoding (both strategies and observations).")
             else:
-                return self._build_rand_boolean_bellman_equations()
-        return self._build_real_bellman_equations()
-
-    def _build_det_boolean_bellman_equations(self) -> List[z3.BoolRef]:
-        self.console.print("\n# Deterministic strategies with boolean encoding (both strategies and observations).")
-        equations = []
-        for s in range(self.size):
-            if s == self.goal:
-                equations.append(self.ExpRew[s] == 0)
-                continue
-
-            # Decrement the state index after processing the goal state
-            s = s - 1 if s > self.goal else s
-
-            for a in range(len(self.actions)):
-                next_state = self.navigate(s, a)
-                reward_relation = self.ExpRew[s] == 1 + self.ExpRew[next_state]
-
-                # Next state activation -> reward computation with next state expected reward
-                # TODO!: Disjunction of activations in implication lhs. for streamlining
-
-                # Sensor on and chosen action for sensor
-                activation = And(self.Y[s], self.X[s][a], self.ctx)
-                equations.append(Implies(activation, reward_relation, self.ctx))
-
-                # Sensor off and default action chosen
-                activation = And(Not(self.Y[s], self.ctx), self.X[-1][a], self.ctx)
-                equations.append(Implies(activation, reward_relation, self.ctx))
-
-        self.console.print(equations)
-        return equations
-
-    def _build_rand_boolean_bellman_equations(self) -> List[z3.BoolRef]:
-        self.console.print("\n# Randomised strategies with boolean encoding (observations only).")
+                bellman_generator = self._compute_state_bellman_bool_rand
+                self.console.print("\n# Randomised strategies with boolean encoding (observations only).")
+        else:
+            bellman_generator = self._compute_state_bellman_real
+            self.console.print("\n# Strategy and observation variables encoded as reals.")
         equations = []
         for s in range(self.size):
             if s == self.goal:
@@ -107,42 +80,28 @@ class OOPSpec(World, ABC):
 
             # Decrement the state index after processing the goal state
             idx = s - 1 if s > self.goal else s
-
-            # Weighted next-state rewards for activated sensor
-            weighted_rewards = Sum([self.X[idx][a] * self.ExpRew[self.navigate(s, a)]
-                                    for a in range(len(self.actions))])
-            equations.append(Implies(self.Y[idx], self.ExpRew[s] == 1 + weighted_rewards, self.ctx))
-
-            # Weighted next-state rewards for deactivated sensor (default observation)
-            weighted_rewards = Sum([self.X[-1][a] * self.ExpRew[self.navigate(s, a)]
-                                    for a in range(len(self.actions))])
-            equations.append(Implies(Not(self.Y[idx], self.ctx), self.ExpRew[s] == 1 + weighted_rewards, self.ctx))
+            equations.extend(bellman_generator(s, idx))
 
         self.console.print(equations)
         return equations
 
-    def _build_real_bellman_equations(self) -> List[z3.BoolRef]:
-        self.console.print("\n# Strategy and observation variables encoded as reals.")
-        equations = []
-        for s in range(self.size):
-            if s == self.goal:
-                equations.append(self.ExpRew[s] == 0)
-                continue
+    @abstractmethod
+    def _compute_state_bellman_bool_det(self, state: int, state_idx: int) -> List[z3.BoolRef]:
+        raise NotImplementedError()
 
-            # Build action terms for each direction using a transition function
-            terms = self.initialize_terms()
-            for a in range(len(self.actions)):
-                # Decrement the state index after processing the goal state
-                idx = s - 1 if s > self.goal else s
+    @abstractmethod
+    def _compute_state_bellman_bool_rand(self, state: int, state_idx: int) -> List[z3.BoolRef]:
+        raise NotImplementedError()
 
-                action_term = self.build_action_term(a, idx)
-                next_state = self.navigate(s, a)
-                destination_rew = self.build_destination_rew(next_state)
-                terms.append(action_term * destination_rew)
-            equations.append(self.ExpRew[s] == Sum(terms))
-
-        self.console.print(equations)
-        return equations
+    def _compute_state_bellman_real(self, state: int, state_idx: int) -> List[z3.BoolRef]:
+        # Build action terms for each direction using a transition function
+        terms = self.initialize_terms()
+        for a in range(len(self.actions)):
+            action_term = self.build_action_term(a, state_idx)
+            next_state = self.navigate(state, a)
+            destination_rew = self.build_destination_rew(next_state)
+            terms.append(action_term * destination_rew)
+        return [z3.BoolRef(self.ExpRew[state] == Sum(terms))]
 
     def initialize_terms(self):
         """ Initial term in Bellman sum for current state - reward of staying in place.
@@ -188,7 +147,7 @@ class OOPSpec(World, ABC):
                            "\n# Proper boolean encoding activated for strategy variables.")
         # At least 1 action is enabled from each observation
         constraints = [Or(*[self.X[o][a] for a in range(len(self.actions))], self.ctx)
-                       for o in range(self.budget)
+                       for o in range(len(self.X))
         ]
 
         # At most 1 action can be enabled from each observation
@@ -197,8 +156,8 @@ class OOPSpec(World, ABC):
                 self.X[o][a1],
                 And(*[Not(self.X[o][a2], self.ctx) for a2 in range(len(self.actions)) if a1 != a2]),
                 self.ctx)
+            for o in range(len(self.X))
             for a1 in range(len(self.actions))
-            for o in range(self.budget)
         ])
 
         self.console.print(constraints)
