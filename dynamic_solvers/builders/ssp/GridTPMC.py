@@ -26,7 +26,7 @@ class GridTPMC(Grid, SSPSpec):
     def draw_model(self, model: dict, goal_state: int, budget: int, use_color: bool = True) -> str:
         """Draw grid world with sensor placements marked in the SSP setting."""
         lines = []
-        lines.append(f"Grid World ({self.width}x{self.height}):")
+        lines.append(f"Grid World ({self.width}x{self.height}) (SSP):")
         lines.append("")
 
         # Calculate width needed for state numbers
@@ -58,7 +58,7 @@ class GridTPMC(Grid, SSPSpec):
             lines.append(sensor_line)
             lines.append("")
 
-        lines.append(f"\nLegend: ✓=goal, "
+        lines.append(f"Legend: ✓=goal, "
                      f"{get_observation_marker(0, use_color, binary=True)}=sensor on, "
                      f"{get_observation_marker(1, use_color, binary=True)}=sensor off")
 

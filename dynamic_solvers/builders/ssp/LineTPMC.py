@@ -37,7 +37,7 @@ class LineTPMC(Line, SSPSpec):
 
         for state in range(self.length):
             if state == goal_state:
-                state_line += f" {state:{num_width}} "
+                state_line += f" {state:{num_width}}  "
                 # Center the symbol in the cell
                 padding = (cell_width - 1) // 2
                 sensor_line += " " * padding + "✓" + " " * (cell_width - padding)
@@ -49,7 +49,7 @@ class LineTPMC(Line, SSPSpec):
                 padding = (cell_width - 1) // 2
                 sensor_line += " " * padding + symbol + " " * (cell_width - padding)
 
-        lines.append("Line World:")
+        lines.append(f"Line World ({self.length}) (SSP):")
         lines.append(state_line)
         lines.append(sensor_line)
         lines.append(f"\nLegend: ✓=goal, "

@@ -54,7 +54,7 @@ class LineTPMC(Line, POPSpec):
                 padding = (cell_width - 1) // 2
                 obs_line += " " * padding + symbol + " " * (cell_width - padding - 1)
 
-        lines.append("Line World (POP):")
+        lines.append(f"Line World ({self.length}) (POP):")
         lines.append(state_line)
         lines.append(obs_line)
 

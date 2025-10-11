@@ -32,7 +32,7 @@ class MazeTPMC(Maze, POPSpec):
         # Calculate width needed for state numbers
         max_state = self.size - 1
         num_width = len(str(max_state))
-        cell_width = num_width + 3  # 1 leading space + num_width + 2 trailing spaces
+        cell_width = num_width + 2  # Add padding
 
         # Top row (states 0 to width-1)
         top_state_line = ""
@@ -50,7 +50,7 @@ class MazeTPMC(Maze, POPSpec):
                     if model.get(f'ys{state}o{o}', 0) == 1:
                         obs_class = o
                         break
-                symbol = get_observation_marker(obs_class, use_color)
+                symbol = get_observation_marker(obs_class, use_color, binary=False)
                 # Center the symbol in the cell (ANSI colors don't affect width)
                 padding = (cell_width - 1) // 2
                 top_obs_line += " " * padding + symbol + " " * (cell_width - padding)
@@ -63,6 +63,9 @@ class MazeTPMC(Maze, POPSpec):
         # The 3 pillars should align under states: 0, (width-1)//2, and (width-1)
         pillar_positions = [0, (self.width - 1) // 2, self.width - 1]
 
+        # Actual cell width in output (1 space + num_width digits + 2 spaces)
+        actual_cell_width = num_width + 3
+
         state = self.width
         for depth_level in range(self.depth - 1):
             row_state_line = ""
@@ -74,10 +77,10 @@ class MazeTPMC(Maze, POPSpec):
 
                 # Add spacing to align this column under the correct position from top row
                 if col == 0:
-                    spacing = pillar_positions[0] * cell_width
+                    spacing = pillar_positions[0] * actual_cell_width
                 else:
                     # Space from end of previous column to start of this column
-                    spacing = (pillar_positions[col] - pillar_positions[col - 1] - 1) * cell_width
+                    spacing = (pillar_positions[col] - pillar_positions[col - 1] - 1) * actual_cell_width
 
                 row_state_line += " " * spacing
                 row_obs_line += " " * spacing
