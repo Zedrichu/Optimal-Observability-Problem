@@ -1,12 +1,13 @@
-from z3 import Context
-from typing import Optional
+from typing import Unpack
 
 from dynamic_solvers.builders.ssp.SSPSpec import SSPSpec
 from dynamic_solvers.builders.worlds import Maze
+from dynamic_solvers.builders.types import OperationKWArgs
 
 
 class MazeTPMC(Maze, SSPSpec):
-    def __init__(self, budget: int, goal: int, width: int, depth: int, determinism: bool = False, **kwargs):
+    def __init__(self, budget: int, goal: int, width: int, depth: int,
+                 determinism: bool = False, **kwargs: Unpack[OperationKWArgs]):
         """Create a Maze SSP instance.
 
         Args:
