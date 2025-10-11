@@ -120,41 +120,51 @@ class TPMCFactory:
             return TPMCFactory._create_ssp_solver(puzzle_type, **kwargs)
 
     @staticmethod
-    def _create_pop_solver(puzzle_type: PuzzleType, **kwargs) -> OOPSpec:
-        # Factory extracts only the parameters each constructor needs
-        common_params = TPMCFactory._extract_common_params(kwargs)
+    def _create_pop_solver(puzzle_type: PuzzleType, **kwargs: Unpack[TPMCKWArgs]) -> OOPSpec:
+        """Create POP variant instance with filtered parameters."""
+        common = TPMCFactory._extract_common_params(kwargs)
+        dimension = TPMCFactory._extract_dimension_params(puzzle_type, kwargs)
 
-        if puzzle_type == PuzzleType.LINE:
-            params = {**common_params, 'length': kwargs['length']}
-            return LineTPMCPOP(**params)
-        elif puzzle_type == PuzzleType.GRID:
-            params = {**common_params, 'width': kwargs['width'], 'height': kwargs['height']}
-            return GridTPMCPOP(**params)
-        elif puzzle_type == PuzzleType.MAZE:
-            params = {**common_params, 'width': kwargs['width'], 'depth': kwargs['height']}
-            return MazeTPMCPOP(**params)
+        # Merge common and dimension-specific params
+        params = {**common, **dimension}
+
+        # Dispatch to appropriate constructor
+        constructors = {
+            PuzzleType.LINE: LineTPMCPOP,
+            PuzzleType.GRID: GridTPMCPOP,
+            PuzzleType.MAZE: MazeTPMCPOP
+        }
+        return constructors[puzzle_type](**params)
 
     @staticmethod
-    def _create_ssp_solver(puzzle_type: PuzzleType, **kwargs) -> OOPSpec:
-        # Factory extracts only the parameters each constructor needs
-        common_params = TPMCFactory._extract_common_params(kwargs)
-        ssp_params = {**common_params}
+    def _create_ssp_solver(puzzle_type: PuzzleType, **kwargs: Unpack[TPMCKWArgs]) -> OOPSpec:
+        """Create SSP variant instance with filtered parameters."""
+        common = TPMCFactory._extract_common_params(kwargs)
+        dimension = TPMCFactory._extract_dimension_params(puzzle_type, kwargs)
 
-        if puzzle_type == PuzzleType.LINE:
-            params = {**ssp_params, 'length': kwargs['length']}
-            return LineTPMCSSP(**params)
-        elif puzzle_type == PuzzleType.GRID:
-            params = {**ssp_params, 'width': kwargs['width'], 'height': kwargs['height']}
-            return GridTPMCSSP(**params)
-        elif puzzle_type == PuzzleType.MAZE:
-            params = {**ssp_params, 'width': kwargs['width'], 'depth': kwargs['height']}
-            return MazeTPMCSSP(**params)
+        # Merge common and dimension-specific params
+        params = {**common, **dimension}
+
+        # Dispatch to appropriate constructor
+        constructors = {
+            PuzzleType.LINE: LineTPMCSSP,
+            PuzzleType.GRID: GridTPMCSSP,
+            PuzzleType.MAZE: MazeTPMCSSP
+        }
+        return constructors[puzzle_type](**params)
 
     @staticmethod
     def _extract_common_params(kwargs) -> dict:
         """Extract parameters common to all constructors."""
-        common = {}
-        for key in ['budget', 'goal', 'determinism', 'ctx', 'verbose']:
-            if key in kwargs:
-                common[key] = kwargs[key]
-        return common
+        return {key: kwargs[key] for key in TPMCFactory.COMMON_PARAMS if key in kwargs}
+
+    @staticmethod
+    def _extract_dimension_params(puzzle_type: PuzzleType, kwargs) -> dict:
+        """Extract dimension-specific parameters based on world type."""
+        if puzzle_type == PuzzleType.LINE:
+            return {'length': kwargs['length']}
+        elif puzzle_type == PuzzleType.GRID:
+            return {'width': kwargs['width'], 'height': kwargs['height']}
+        elif puzzle_type == PuzzleType.MAZE:
+            # Maze uses 'depth' internally instead of 'height'
+            return {'width': kwargs['width'], 'depth': kwargs['height']}
