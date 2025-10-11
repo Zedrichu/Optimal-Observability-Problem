@@ -6,10 +6,11 @@ from dynamic_solvers.builders.worlds import Maze
 
 
 class MazeTPMC(Maze, POPSpec):
-    def __init__(self, budget: int, goal: int, width: int, depth: int, determinism: bool,
+    def __init__(self, budget: int, goal: int, width: int, depth: int,
+                 determinism: bool, bool_encoding: bool = False,
                  ctx: Optional[Context] = None, verbose: bool = False):
         Maze.__init__(self, width, depth)
-        POPSpec.__init__(self, budget, goal, determinism, ctx, verbose)
+        POPSpec.__init__(self, budget, goal, determinism, bool_encoding, ctx, verbose)
 
 
 if __name__ == "__main__":

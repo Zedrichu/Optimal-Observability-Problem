@@ -6,9 +6,11 @@ from dynamic_solvers.builders.worlds import Grid
 
 
 class GridTPMC(Grid, POPSpec):
-    def __init__(self, budget: int, goal: int, width: int, height: int, determinism: bool = False, ctx: Optional[Context] = None, verbose: bool = False):
+    def __init__(self, budget: int, goal: int, width: int, height: int,
+                 determinism: bool = False, bool_encoding: bool = False,
+                 ctx: Optional[Context] = None, verbose: bool = False):
         Grid.__init__(self, width, height)
-        POPSpec.__init__(self, budget, goal, determinism, ctx, verbose)
+        POPSpec.__init__(self, budget, goal, determinism,bool_encoding, ctx, verbose)
 
 
 if __name__ == "__main__":
