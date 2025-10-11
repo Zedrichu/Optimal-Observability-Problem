@@ -11,12 +11,14 @@ from dynamic_solvers.utils import parse_threshold
 
 class OOPSpec(World, ABC):
     def __init__(self, budget: int, goal: int, determinism: bool,
-                 ctx: Optional[Context] = None, verbose: bool = False):
+                 ctx: Optional[Context] = None, verbose: bool = False,
+                 bellman_format: str = "default"):
         self.ctx = ctx or Context()  # Use provided context or create fresh one
         self.budget = budget
         self.goal = goal
         self.determinism = determinism
         self.verbose = verbose
+        self.bellman_format = bellman_format
 
         self.ExpRew = None  # Expected reward variables
         self.Y = None       # Observation function variables
@@ -83,13 +85,27 @@ class OOPSpec(World, ABC):
 
     def initialize_terms(self):
         """ Initial term in Bellman sum for current state - reward of staying in place.
-        Common format of Bellman equations used by default. [See base paper]"""
-        return [1]
+
+        Three supported formats:
+        - "default": Default configuration for Bellman equation format.
+        - "common": Common format of Bellman equations with stay-in-place cost [1]. [See base paper]
+        - "adapted": Adapted format (used originally in code) without stay-in-place cost [].
+        """
+        if self.bellman_format == "adapted":
+            return []
+        return [1]  # "common" format (also "default")
 
     def build_destination_rew(self, next_state: int) -> z3.ArithRef:
         """ Expected reward from the state the selected action leads to, to the goal.
-        Common format of Bellman equations used by default. [See base paper]"""
-        return self.ExpRew[next_state]
+
+        Three supported formats:
+        - "default": Default configuration for Bellman equation format.
+        - "common": Common format of Bellman equations with just ExpRew[next_state]. [See base paper]
+        - "adapted": Adapted format (used originally in code) adding transition cost 1 + ExpRew[next_state].
+        """
+        if self.bellman_format == "adapted":
+            return 1 + self.ExpRew[next_state]
+        return self.ExpRew[next_state]  # "common" format (also "default")
 
     @abstractmethod
     def build_action_term(self, action_idx: int, state_idx: int) -> z3.ArithRef:
