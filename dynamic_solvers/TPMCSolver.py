@@ -4,7 +4,7 @@ import time
 from z3 import (set_option, Solver, Context,
                 unsat, sat, unknown)
 
-from dynamic_solvers.ResultTPMC import ResultTPMC
+from dynamic_solvers.ResultOOP import ResultOOP
 from dynamic_solvers.builders.OOPSpec import OOPSpec
 
 
@@ -48,7 +48,7 @@ class TPMCSolver:
 
         return result[0] if len(result) > 0 else unknown
 
-    def solve(self, tpmc: OOPSpec, threshold: str, timeout_ms: int) -> ResultTPMC:
+    def solve(self, tpmc: OOPSpec, threshold: str, timeout_ms: int) -> ResultOOP:
         tpmc.declare_variables()
         tpmc_constraints = tpmc.collect_constraints(threshold)
         self.solver.add(tpmc_constraints)
@@ -79,7 +79,7 @@ class TPMCSolver:
 
         self.cleanup()
 
-        return ResultTPMC(
+        return ResultOOP(
             solve_time=solve_time,
             result=result,
             reward=reward,
