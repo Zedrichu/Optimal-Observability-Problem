@@ -1,8 +1,7 @@
 from enum import Enum, auto
-from typing import TypedDict, Optional, Unpack, Literal
+from typing import Unpack
 
-from z3 import Context
-
+from dynamic_solvers.builders.types import DimensionKWArgs, OperationKWArgs, TPMCParams
 from dynamic_solvers.builders.OOPSpec import OOPSpec
 from dynamic_solvers.builders.pop.GridTPMC import GridTPMC as GridTPMCPOP
 from dynamic_solvers.builders.pop.LineTPMC import LineTPMC as LineTPMCPOP
@@ -45,62 +44,12 @@ def puzzle_from_string(s: str) -> PuzzleType:
   return mapping[s.lower()]
 
 
-class TPMCKWArgs(TypedDict, total=False):
-    """Keyword arguments for TPMC constructors."""
-    # Problem settings
-    budget: int
-    goal: int
-    determinism: bool
-    # Operations and verbosity/logging
-    ctx: Optional[Context]
-    verbose: bool
-    # Reproducibility add-ons for experiments/optimizations
-    bellman_format: Optional[Literal["default", "common", "adapted"]]
-    # Dimension key-word arguments
-    length: Optional[int]
-    width: Optional[int]
-    height: Optional[int]
-
-
 class TPMCFactory:
     """Factory for creating dynamic TPMC problem instances with context builders.
-
-    Common parameters
-    -----------------
-    All create methods accept keyword arguments declared by `TPMCKWArgs`:
-        budget : int
-            Budget constraint (number of sensors/observation classes allowed)
-        goal : int
-            Index of the goal state in the world
-        determinism : bool, optional
-            Use deterministic strategies (default: False)
-        bellman_format : str, optional
-            Bellman equation format: "default", "common", or "adapted" (default: "default")
-        ctx : z3.Context, optional
-            Z3 context for solver (default: creates new context)
-        verbose : bool, optional
-            Enable verbose output (default: False)
-
-    Dimension Parameters
-    --------------------
-    World-specific parameters:
-        length : int
-            Required for Line worlds
-        width : int
-            Required for Grid/Maze worlds
-        height : int
-            Required for Grid/Maze worlds (mapped to 'depth' for Maze internally)
-    """
-    # Define parameter sets for TPMC constructors as class constants for maintainability
-    COMMON_PARAMS = [
-        'budget', 'goal',
-        'determinism',
-        'ctx', 'verbose',
-        'bellman_format'
-    ]
+    The creational method accepts keyword arguments declared by `TPMCParams`."""
 
     @staticmethod
-    def create(oop_variant: OOPVariant, puzzle_type: PuzzleType, **kwargs: Unpack[TPMCKWArgs]) -> OOPSpec:
+    def create(oop_variant: OOPVariant, puzzle_type: PuzzleType, **kwargs: Unpack[TPMCParams]) -> OOPSpec:
         """
         Factory method that handles parameter selection and object creation based on variant and world.
         Client only needs to pass all available parameters; factory filters what's needed.
@@ -109,15 +58,32 @@ class TPMCFactory:
         Type-safety is ensured by modern typed-dictionary unpacking.
 
         Args:
-            oop_variant : OOPVariant
-            puzzle_type : PuzzleType
-            **kwargs : Unpacked[TPMCKWArgs]
-                Additional parameters
+            oop_variant (OOPVariant) : Enum tag for the selected OOP variant
+            puzzle_type (PuzzleType) : Enum tag for the selected puzzle type
+            **kwargs (Unpacked[TPMCParams]) : Additional parameters declared by TypedDict `TPMCParams`
+
+        Keyword Args:
+            Core Problem Settings:
+                budget (int): Budget constraint (number of observation classes allowed).
+                goal (int): Goal state index.
+                determinism (bool): Restrict to deterministic strategies (default: False).
+
+            World-specific Dimension Parameters:
+                length (int): Length of the world (Line).
+                width (int): Width of the world (Grid/Maze).
+                height (int): Height of the world (Grid) or Depth of the world (Maze).
+                depth (int): Depth of the world (Maze) [internally mapped from `height`].
+
+            Operational Parameters:
+                ctx (Optional[Context]): Z3 context to use (default: None, creates fresh context).
+                verbose (bool): Enable verbose output (default: False).
+                bellman_format (Optional[Literal["default", "common", "adapted"]]): Format for Bellman equations
+
+        Returns:
+            OOPSpec : configured instance specification for OOP
         """
-        common = TPMCFactory._extract_common_params(kwargs)
-        dimension = TPMCFactory._extract_dimension_params(puzzle_type, kwargs)
-        # Merge common and dimension-specific params
-        params = {**common, **dimension}
+        op_params = TPMCFactory._extract_operation_params(**kwargs)
+        dim_params = TPMCFactory._extract_dimension_params(puzzle_type, kwargs)
 
         # Dispatch to appropriate constructor based on problem variant and then puzzle type
         constructors = {
@@ -132,15 +98,25 @@ class TPMCFactory:
                 PuzzleType.MAZE: MazeTPMCSSP
             },
         }
-        return constructors[oop_variant][puzzle_type](**params)
+        return constructors[oop_variant][puzzle_type](
+            # Explicit parameter passing for core settings
+            budget=kwargs["budget"],
+            goal=kwargs["goal"],
+            determinism=kwargs.get("determinism", False),
+            **dim_params,
+            **op_params,
+        )
 
     @staticmethod
-    def _extract_common_params(kwargs) -> dict:
-        """Extract parameters common to all constructors."""
-        return {key: kwargs[key] for key in TPMCFactory.COMMON_PARAMS if key in kwargs}
+    def _extract_operation_params(**kwargs: TPMCParams) -> OperationKWArgs:
+        """Extract operational parameters common to all constructors."""
+        res: OperationKWArgs = {}
+        op_params = set(OperationKWArgs.__annotations__.keys())
+        res.update({key: kwargs[key] for key in op_params if key in kwargs})
+        return res
 
     @staticmethod
-    def _extract_dimension_params(puzzle_type: PuzzleType, kwargs) -> dict:
+    def _extract_dimension_params(puzzle_type: PuzzleType, kwargs: TPMCParams) -> DimensionKWArgs:
         """Extract dimension-specific parameters based on world type."""
         if puzzle_type == PuzzleType.LINE:
             return {'length': kwargs['length']}
