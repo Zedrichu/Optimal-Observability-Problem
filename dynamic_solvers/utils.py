@@ -32,6 +32,8 @@ def get_observation_marker(obs_class: int, use_color: bool = True, binary: bool 
             '\033[90m●\033[0m',  # Bright black (gray)
             '\033[37m●\033[0m',  # White
         ]
+        if binary:
+            return colors[0] if obs_class == 1 else colors[1]
         if obs_class <= 0 or obs_class > len(colors):
             return '○'  # Default for invalid classes
         return colors[obs_class - 1]
@@ -78,7 +80,6 @@ def convert_text_to_html(text: str, title: str = "World Visualization") -> str:
 
     # Escape any remaining HTML characters
     html_text = html_text.replace('&', '&amp;').replace('<span', '###SPAN###').replace('</span>', '###/SPAN###')
-    html_text = html_text.replace('<', '&lt;').replace('>', '&gt;')
     html_text = html_text.replace('###SPAN###', '<span').replace('###/SPAN###', '</span>')
 
     # Build complete HTML document
