@@ -102,7 +102,7 @@ class TPMCFactory:
     @staticmethod
     def create(oop_variant: OOPVariant, puzzle_type: PuzzleType, **kwargs: Unpack[TPMCKWArgs]) -> OOPSpec:
         """
-        Factory method that handles parameter selection and object creation.
+        Factory method that handles parameter selection and object creation based on variant and world.
         Client only needs to pass all available parameters; factory filters what's needed.
 
         Uses **kwargs pattern for flexible parameter passing without explicit listing.
@@ -114,44 +114,25 @@ class TPMCFactory:
             **kwargs : Unpacked[TPMCKWArgs]
                 Additional parameters
         """
-        if oop_variant == OOPVariant.POP:
-            return TPMCFactory._create_pop_solver(puzzle_type, **kwargs)
-        elif oop_variant == OOPVariant.SSP:
-            return TPMCFactory._create_ssp_solver(puzzle_type, **kwargs)
-
-    @staticmethod
-    def _create_pop_solver(puzzle_type: PuzzleType, **kwargs: Unpack[TPMCKWArgs]) -> OOPSpec:
-        """Create POP variant instance with filtered parameters."""
         common = TPMCFactory._extract_common_params(kwargs)
         dimension = TPMCFactory._extract_dimension_params(puzzle_type, kwargs)
-
         # Merge common and dimension-specific params
         params = {**common, **dimension}
 
-        # Dispatch to appropriate constructor
+        # Dispatch to appropriate constructor based on problem variant and then puzzle type
         constructors = {
-            PuzzleType.LINE: LineTPMCPOP,
-            PuzzleType.GRID: GridTPMCPOP,
-            PuzzleType.MAZE: MazeTPMCPOP
+            OOPVariant.POP: {
+                PuzzleType.LINE: LineTPMCPOP,
+                PuzzleType.GRID: GridTPMCPOP,
+                PuzzleType.MAZE: MazeTPMCPOP
+            },
+            OOPVariant.SSP: {
+                PuzzleType.LINE: LineTPMCSSP,
+                PuzzleType.GRID: GridTPMCSSP,
+                PuzzleType.MAZE: MazeTPMCSSP
+            },
         }
-        return constructors[puzzle_type](**params)
-
-    @staticmethod
-    def _create_ssp_solver(puzzle_type: PuzzleType, **kwargs: Unpack[TPMCKWArgs]) -> OOPSpec:
-        """Create SSP variant instance with filtered parameters."""
-        common = TPMCFactory._extract_common_params(kwargs)
-        dimension = TPMCFactory._extract_dimension_params(puzzle_type, kwargs)
-
-        # Merge common and dimension-specific params
-        params = {**common, **dimension}
-
-        # Dispatch to appropriate constructor
-        constructors = {
-            PuzzleType.LINE: LineTPMCSSP,
-            PuzzleType.GRID: GridTPMCSSP,
-            PuzzleType.MAZE: MazeTPMCSSP
-        }
-        return constructors[puzzle_type](**params)
+        return constructors[oop_variant][puzzle_type](**params)
 
     @staticmethod
     def _extract_common_params(kwargs) -> dict:
