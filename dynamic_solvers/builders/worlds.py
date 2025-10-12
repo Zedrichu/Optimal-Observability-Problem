@@ -35,7 +35,7 @@ class Line(World):
 
 
 class Grid(World):
-    def __init__(self, width, height):
+    def __init__(self, width: int, height: int):
         self.width = width
         self.height = height
 
@@ -81,7 +81,7 @@ class Grid(World):
 
 
 class Maze(World):
-    def __init__(self, width, depth):
+    def __init__(self, width: int, depth: int):
         if width % 2 == 0:
             raise ValueError('Width must be odd for maze generation')
 

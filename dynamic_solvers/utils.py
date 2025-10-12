@@ -1,7 +1,7 @@
 import re
 from typing import Tuple, Callable, List
 
-def parse_threshold(arg: str) -> Tuple[List[int], Callable]:
+def parse_threshold(arg: str) -> Tuple[List[int], Callable[[int, int], bool]]:
     sign_idx = arg.find('<')
     if sign_idx == -1:
         raise ValueError("No sign in threshold")

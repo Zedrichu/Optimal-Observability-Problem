@@ -12,7 +12,7 @@ import sys
 from contextlib import nullcontext
 from dataclasses import dataclass
 from multiprocessing import Process, Queue
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Literal
 
 from alive_progress import alive_bar
 from halo import Halo
@@ -27,15 +27,15 @@ class BenchmarkConfig(argparse.Namespace):
     budget: int
     goal: int
     threshold: str
-    length: int = None
-    width: int = None
-    height: int = None
+    length: int | None = None
+    width: int | None = None
+    height: int | None = None
     deterministic: bool = False
     timeout: int = TIMEOUT
-    bellman_format: str = "default"
+    bellman_format: Literal["default", "common", "adapted"] = "default"
 
 
-def _instance_worker(config: BenchmarkConfig, result_queue: Queue):
+def _instance_worker(config: BenchmarkConfig, result_queue: Queue[dict]):
     """Worker function to run a single instance loaded from the configuration.
      The solver runs in an isolated process, publishing results to the queue.
      Process-specific code with multiprocessing patterns for fresh state and proper cleanup.
@@ -198,7 +198,8 @@ def is_docker_environment():
 class BenchmarkRunner:
     """Benchmarking unit using existing dynamic_solvers infrastructure."""
 
-    def __init__(self, output_csv: str = "benchmark_results.csv", verbose: bool = False, trials: int = 1, bellman_format: str = "default"):
+    def __init__(self, output_csv: str = "benchmark_results.csv", verbose: bool = False, trials: int = 1,
+                 bellman_format: Literal["default", "common", "adapted"] = "default"):
         self.output_csv = output_csv
         self.results: List[Dict[str, Any]] = []
         self.verbose = verbose
@@ -253,7 +254,7 @@ class BenchmarkRunner:
         model_desc = create_model_description(config)
 
         # Create queue for result communication from processes
-        result_queue = Queue()
+        result_queue : Queue[dict] = Queue()
 
         # Solve instance in a separate process
         process = Process(target=_instance_worker, args=(config, result_queue))

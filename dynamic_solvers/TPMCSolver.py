@@ -9,7 +9,8 @@ from dynamic_solvers.builders.OOPSpec import OOPSpec
 
 
 class TPMCSolver:
-    solver: Solver | None
+    solver: Solver
+    verbose: bool
 
     def __init__(self, ctx: Context, verbose: bool):
         self.verbose = verbose
