@@ -9,6 +9,7 @@ import argparse
 import sys
 import os
 from collections import defaultdict
+from typing import List, Tuple
 
 import z3
 from z3 import sat
@@ -269,7 +270,7 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
 
     solver.cleanup()
 
-def group_model_vars(model: z3.ModelRef) -> defaultdict:
+def group_model_vars(model: z3.ModelRef) -> defaultdict[str, List[Tuple[str, z3.ExprRef]]]:
     # Extract and group variables in a Z3 model efficiently
     # Clean Grouping by Keys: on missing keys, create empty list, w/o boilerplate key checking
     var_groups = defaultdict(list)

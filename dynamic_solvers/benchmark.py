@@ -256,7 +256,7 @@ class BenchmarkRunner:
         model_desc = create_model_description(config)
 
         # Create queue for result communication from processes
-        result_queue : Queue = Queue()
+        result_queue : Queue[dict] = Queue()
 
         # Solve instance in a separate process, passing operational params
         process = Process(target=_instance_worker, args=(config, result_queue, self.op_hyperparams))
