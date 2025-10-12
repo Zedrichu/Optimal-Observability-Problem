@@ -43,7 +43,7 @@ class LineTPMC(Line, SSPSpec):
                 sensor_line += " " * padding + "✓" + " " * (cell_width - padding)
             else:
                 state_line += f" {state:{num_width}}  "
-                sensor_on = model.get(f'ys{state}', 0)
+                sensor_on = self.is_obs_selected(model, f'ys{state}')
                 symbol = get_observation_marker(sensor_on, use_color, binary=True)
                 # Center the symbol in the cell
                 padding = (cell_width - 1) // 2

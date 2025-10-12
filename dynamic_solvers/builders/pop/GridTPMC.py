@@ -51,7 +51,7 @@ class GridTPMC(Grid, POPSpec):
                     # Find which observation class this state belongs to
                     obs_class = 0
                     for o in range(1, budget + 1):
-                        if model.get(f'ys{state}o{o}', 0) == 1:
+                        if self.is_obs_selected(model, f'ys{state}o{o}'):
                             obs_class = o
                             break
                     symbol = get_observation_marker(obs_class, use_color)

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional, Literal
+from typing import List, Optional, Literal, Callable
 
 from rich.console import Console
 from z3 import (Context, z3, Real, Q, Or, Sum, And, Not, Implies)
@@ -26,6 +26,8 @@ class OOPSpec(World, ABC):
         self.bellman_format = bellman_format or "default"
 
         self.exp_rew_evaluator = None
+
+        self.is_obs_selected = self._init_extract_obs_function()
 
         self.console = Console(quiet=not verbose, record=True)
 
@@ -216,3 +218,9 @@ class OOPSpec(World, ABC):
     @abstractmethod
     def collect_constraints(self, threshold: str) -> List[z3.BoolRef]:
         raise NotImplementedError()
+
+    def _init_extract_obs_function(self) -> Callable[[dict, str], bool]:
+        if self.bool_encoding:
+            return lambda model, name: model.get(name, False)
+        else:
+            return lambda model, name: model.get(name, 0) == 1
