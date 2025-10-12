@@ -98,7 +98,7 @@ class OOPSpec(World, ABC):
     def _compute_state_bellman_bool_rand(self, state: int, state_idx: int) -> List[z3.BoolRef]:
         raise NotImplementedError()
 
-    def _compute_state_bellman_real(self, state: int, state_idx: int) -> List[z3.BoolRef]:
+    def _compute_state_bellman_real(self, state: int, state_idx: int) -> List[bool]:
         # Build action terms for each direction using a transition function
         terms = self.initialize_terms()
         for a in range(len(self.actions)):
@@ -106,7 +106,7 @@ class OOPSpec(World, ABC):
             next_state = self.navigate(state, a)
             destination_rew = self.build_destination_rew(next_state)
             terms.append(action_term * destination_rew)
-        return [z3.BoolRef(self.ExpRew[state] == Sum(terms))]
+        return [self.ExpRew[state] == Sum(terms)]
 
     def initialize_terms(self):
         """ Initial term in Bellman sum for current state - reward of staying in place.

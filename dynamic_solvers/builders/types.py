@@ -36,6 +36,7 @@ class OperationKWArgs(TypedDict, total=False):
     ctx: Optional[Context]
     verbose: bool
     bellman_format: Optional[Literal["default", "common", "adapted"]]
+    bool_encoding: Optional[bool]
 
 
 class TPMCParams(DimensionKWArgs, OperationKWArgs):
