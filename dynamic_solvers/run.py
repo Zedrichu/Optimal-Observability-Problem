@@ -76,7 +76,7 @@ Examples:
         '--threshold', '-t',
         type=str,
         required=True,
-        help='Threshold constraint (e.g., "<=3/4", "<1/2", "<=Q(2,3)")'
+        help='Threshold constraint (e.g., "<=3/4", "< 2", "<=Q(2,3)", "<Q(4/7))'
     )
 
     # World-specific dimensions
@@ -111,6 +111,7 @@ Examples:
         '--bellman-format', '-bf',
         type=str,
         choices=['default', 'common', 'adapted'],
+        required=False,
         default='default',
         help='Bellman equation format: "default" (variant-specific), "common" (with stay-in-place), "adapted" (without stay-in-place)'
     )
