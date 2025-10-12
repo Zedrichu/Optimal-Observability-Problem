@@ -1,28 +1,29 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional, Callable
-from io import StringIO
+from typing import List, Optional, Literal
 
 from rich.console import Console
-from z3 import (Context, z3, Real, Q, Or, Sum, And, Not, Implies, Bool)
+from z3 import (Context, z3, Real, Q, Or, Sum, And, Not, Implies)
 
 from dynamic_solvers.builders.worlds import World
 from dynamic_solvers.utils import parse_threshold
 
 
 class OOPSpec(World, ABC):
-    def __init__(self, budget: int, goal: int,
-                 determinism: bool, bool_encoding: bool,
-                 ctx: Optional[Context] = None, verbose: bool = False):
+    ExpRew: List[Real] # Expected reward variables
+    Y: List # Observation function variables
+    X: List # Strategy mapping variables (action rates)
+
+    def __init__(self, budget: int, goal: int, determinism: bool,
+                 ctx: Optional[Context] = None, verbose: bool = False,
+                 bool_encoding: bool = False,
+                 bellman_format: Literal["default", "common", "adapted"] | None = "default"):
         self.ctx = ctx or Context()  # Use provided context or create fresh one
         self.budget = budget
         self.goal = goal
         self.determinism = determinism
-        self.bool_encoding = True
+        self.bool_encoding = bool_encoding
         self.verbose = verbose
-
-        self.ExpRew = None  # Expected reward variables
-        self.Y = None       # Observation function variables
-        self.X = None       # Strategy mapping variables (action rates)
+        self.bellman_format = bellman_format or "default"
 
         self.exp_rew_evaluator = None
 
@@ -34,6 +35,10 @@ class OOPSpec(World, ABC):
 
     @abstractmethod
     def declare_observation_function(self, observable_states: List[z3.ArithRef]) -> List[z3.ArithRef]:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def draw_model(self, model: dict, goal_state: int, budget: int, use_color: bool = True) -> str:
         raise NotImplementedError()
 
     @abstractmethod
@@ -105,13 +110,27 @@ class OOPSpec(World, ABC):
 
     def initialize_terms(self):
         """ Initial term in Bellman sum for current state - reward of staying in place.
-        Common format of Bellman equations used by default. [See base paper]"""
-        return [1]
+
+        Three supported formats:
+        - "default": Default configuration for Bellman equation format.
+        - "common": Common format of Bellman equations with stay-in-place cost [1]. [See base paper]
+        - "adapted": Adapted format (used originally in code) without stay-in-place cost [].
+        """
+        if self.bellman_format == "adapted":
+            return []
+        return [1]  # "common" format (also "default")
 
     def build_destination_rew(self, next_state: int) -> z3.ArithRef:
         """ Expected reward from the state the selected action leads to, to the goal.
-        Common format of Bellman equations used by default. [See base paper]"""
-        return self.ExpRew[next_state]
+
+        Three supported formats:
+        - "default": Default configuration for Bellman equation format.
+        - "common": Common format of Bellman equations with just ExpRew[next_state]. [See base paper]
+        - "adapted": Adapted format (used originally in code) adding transition cost 1 + ExpRew[next_state].
+        """
+        if self.bellman_format == "adapted":
+            return 1 + self.ExpRew[next_state]
+        return self.ExpRew[next_state]  # "common" format (also "default")
 
     @abstractmethod
     def build_action_term(self, action_idx: int, state_idx: int) -> z3.ArithRef:
@@ -175,7 +194,8 @@ class OOPSpec(World, ABC):
         for strategy in self.X:
             # Constrain the probability rates under proper distribution as observation groups
             # if not self.determinism:
-            prob_range_constraints = [bound for rate in strategy
+            prob_range_constraints = [bound
+                                      for rate in strategy
                                       for bound in [rate <= 1, rate >= 0]]
             constraints.extend(prob_range_constraints)
 

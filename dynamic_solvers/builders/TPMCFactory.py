@@ -1,7 +1,7 @@
 from enum import Enum, auto
+from typing import Unpack
 
-from z3 import Context
-
+from dynamic_solvers.builders.types import DimensionKWArgs, OperationKWArgs, TPMCParams
 from dynamic_solvers.builders.OOPSpec import OOPSpec
 from dynamic_solvers.builders.pop.GridTPMC import GridTPMC as GridTPMCPOP
 from dynamic_solvers.builders.pop.LineTPMC import LineTPMC as LineTPMCPOP
@@ -45,53 +45,83 @@ def puzzle_from_string(s: str) -> PuzzleType:
 
 
 class TPMCFactory:
+    """Factory for creating dynamic TPMC problem instances with context builders.
+    The creational method accepts keyword arguments declared by `TPMCParams`."""
+
     @staticmethod
-    def create(oop_variant: OOPVariant, puzzle_type: PuzzleType, **kwargs) -> OOPSpec:
+    def create(oop_variant: OOPVariant, puzzle_type: PuzzleType, **kwargs: Unpack[TPMCParams]) -> OOPSpec:
         """
-        Factory method that handles parameter selection and object creation.
+        Factory method that handles parameter selection and object creation based on variant and world.
         Client only needs to pass all available parameters; factory filters what's needed.
+
+        Uses **kwargs pattern for flexible parameter passing without explicit listing.
+        Type-safety is ensured by modern typed-dictionary unpacking.
+
+        Args:
+            oop_variant (OOPVariant) : Enum tag for the selected OOP variant
+            puzzle_type (PuzzleType) : Enum tag for the selected puzzle type
+            **kwargs (Unpacked[TPMCParams]) : Additional parameters declared by TypedDict `TPMCParams`
+
+        Keyword Args:
+            Core Problem Settings:
+                budget (int): Budget constraint (number of observation classes allowed).
+                goal (int): Goal state index.
+                determinism (bool): Restrict to deterministic strategies (default: False).
+
+            World-specific Dimension Parameters:
+                length (int): Length of the world (Line).
+                width (int): Width of the world (Grid/Maze).
+                height (int): Height of the world (Grid) or Depth of the world (Maze).
+                depth (int): Depth of the world (Maze) [internally mapped from `height`].
+
+            Operational Parameters:
+                ctx (Optional[Context]): Z3 context to use (default: None, creates fresh context).
+                verbose (bool): Enable verbose output (default: False).
+                bellman_format (Optional[Literal["default", "common", "adapted"]]): Format for Bellman equations
+
+        Returns:
+            OOPSpec : configured instance specification for OOP
         """
-        if oop_variant == OOPVariant.POP:
-            return TPMCFactory._create_pop_solver(puzzle_type, **kwargs)
-        elif oop_variant == OOPVariant.SSP:
-            return TPMCFactory._create_ssp_solver(puzzle_type, **kwargs)
+        op_params = TPMCFactory._extract_operation_params(**kwargs)
+        dim_params = TPMCFactory._extract_dimension_params(puzzle_type, kwargs)
+
+        # Dispatch to appropriate constructor based on problem variant and then puzzle type
+        constructors = {
+            OOPVariant.POP: {
+                PuzzleType.LINE: LineTPMCPOP,
+                PuzzleType.GRID: GridTPMCPOP,
+                PuzzleType.MAZE: MazeTPMCPOP
+            },
+            OOPVariant.SSP: {
+                PuzzleType.LINE: LineTPMCSSP,
+                PuzzleType.GRID: GridTPMCSSP,
+                PuzzleType.MAZE: MazeTPMCSSP
+            },
+        }
+        return constructors[oop_variant][puzzle_type](
+            # Explicit parameter passing for core settings
+            budget=kwargs["budget"],
+            goal=kwargs["goal"],
+            determinism=kwargs.get("determinism", False),
+            **dim_params,
+            **op_params,
+        )
 
     @staticmethod
-    def _create_pop_solver(puzzle_type: PuzzleType, **kwargs) -> OOPSpec:
-        # Factory extracts only the parameters each constructor needs
-        common_params = TPMCFactory._extract_common_params(kwargs)
+    def _extract_operation_params(**kwargs: TPMCParams) -> OperationKWArgs:
+        """Extract operational parameters common to all constructors."""
+        res: OperationKWArgs = {}
+        op_params = set(OperationKWArgs.__annotations__.keys())
+        res.update({key: kwargs[key] for key in op_params if key in kwargs})
+        return res
 
+    @staticmethod
+    def _extract_dimension_params(puzzle_type: PuzzleType, kwargs: TPMCParams) -> DimensionKWArgs:
+        """Extract dimension-specific parameters based on world type."""
         if puzzle_type == PuzzleType.LINE:
-            params = {**common_params, 'length': kwargs['length']}
-            return LineTPMCPOP(**params)
+            return {'length': kwargs['length']}
         elif puzzle_type == PuzzleType.GRID:
-            params = {**common_params, 'width': kwargs['width'], 'height': kwargs['height']}
-            return GridTPMCPOP(**params)
+            return {'width': kwargs['width'], 'height': kwargs['height']}
         elif puzzle_type == PuzzleType.MAZE:
-            params = {**common_params, 'width': kwargs['width'], 'depth': kwargs['height']}
-            return MazeTPMCPOP(**params)
-
-    @staticmethod
-    def _create_ssp_solver(puzzle_type: PuzzleType, **kwargs) -> OOPSpec:
-        # Factory extracts only the parameters each constructor needs
-        common_params = TPMCFactory._extract_common_params(kwargs)
-        ssp_params = {**common_params}
-
-        if puzzle_type == PuzzleType.LINE:
-            params = {**ssp_params, 'length': kwargs['length']}
-            return LineTPMCSSP(**params)
-        elif puzzle_type == PuzzleType.GRID:
-            params = {**ssp_params, 'width': kwargs['width'], 'height': kwargs['height']}
-            return GridTPMCSSP(**params)
-        elif puzzle_type == PuzzleType.MAZE:
-            params = {**ssp_params, 'width': kwargs['width'], 'depth': kwargs['height']}
-            return MazeTPMCSSP(**params)
-
-    @staticmethod
-    def _extract_common_params(kwargs) -> dict:
-        """Extract parameters common to all constructors."""
-        common = {}
-        for key in ['budget', 'goal', 'determinism', 'bool_encoding', 'ctx', 'verbose']:
-            if key in kwargs:
-                common[key] = kwargs[key]
-        return common
+            # Maze uses 'depth' internally instead of 'height'
+            return {'width': kwargs['width'], 'depth': kwargs['height']}

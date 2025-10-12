@@ -131,6 +131,9 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
+# Agentic config
+CLAUDE.md
+
 # IDEs
 # JetBrains
 .idea/
@@ -139,6 +142,9 @@ cython_debug/
 *.swp
 *.swo
 *~
+
+# Git Worktrees
+.worktree/
 
 # Ruff stuff:
 .ruff_cache/
@@ -161,6 +167,8 @@ Thumbs.db
 # Generated solving output
 **/results.txt
 **/reward.txt
+**/drawing.txt
+**/drawing.html
 **/predefined.txt
 **/table_1.csv
 **/table_2.csv

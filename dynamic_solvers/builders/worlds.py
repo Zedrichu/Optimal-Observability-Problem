@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List
+import re
 
 
 class World(ABC):
@@ -13,6 +14,7 @@ class World(ABC):
     @abstractmethod
     def dist(self, source: int, target: int) -> int:
         raise NotImplementedError()
+
 
 class Line(World):
     def __init__(self, length: int):
@@ -33,7 +35,7 @@ class Line(World):
 
 
 class Grid(World):
-    def __init__(self, width, height):
+    def __init__(self, width: int, height: int):
         self.width = width
         self.height = height
 
@@ -79,7 +81,7 @@ class Grid(World):
 
 
 class Maze(World):
-    def __init__(self, width, depth):
+    def __init__(self, width: int, depth: int):
         if width % 2 == 0:
             raise ValueError('Width must be odd for maze generation')
 
