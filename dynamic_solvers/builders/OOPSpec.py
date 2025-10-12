@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Literal
 from io import StringIO
 
 from rich.console import Console
@@ -10,19 +10,19 @@ from dynamic_solvers.utils import parse_threshold
 
 
 class OOPSpec(World, ABC):
+    ExpRew: List[Real] # Expected reward variables
+    Y: List # Observation function variables
+    X: List # Strategy mapping variables (action rates)
+
     def __init__(self, budget: int, goal: int, determinism: bool,
                  ctx: Optional[Context] = None, verbose: bool = False,
-                 bellman_format: str = "default"):
+                 bellman_format: Literal["default", "common", "adapted"] | None = "default"):
         self.ctx = ctx or Context()  # Use provided context or create fresh one
         self.budget = budget
         self.goal = goal
         self.determinism = determinism
         self.verbose = verbose
-        self.bellman_format = bellman_format
-
-        self.ExpRew = None  # Expected reward variables
-        self.Y = None       # Observation function variables
-        self.X = None       # Strategy mapping variables (action rates)
+        self.bellman_format = bellman_format or "default"
 
         self.exp_rew_evaluator = None
 
@@ -34,6 +34,10 @@ class OOPSpec(World, ABC):
 
     @abstractmethod
     def declare_observation_function(self, observable_states: List[z3.ArithRef]) -> List[z3.ArithRef]:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def draw_model(self, model: dict, goal_state: int, budget: int, use_color: bool = True) -> str:
         raise NotImplementedError()
 
     @abstractmethod

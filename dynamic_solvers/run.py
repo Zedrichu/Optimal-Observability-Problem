@@ -9,10 +9,12 @@ import argparse
 import sys
 import os
 from collections import defaultdict
+from typing import List, Tuple
 
 import z3
 from z3 import sat
 
+from dynamic_solvers.utils import convert_text_to_html
 from dynamic_solvers.TPMCSolver import TPMCSolver
 from dynamic_solvers.builders.TPMCFactory import TPMCFactory, variant_from_string, puzzle_from_string
 
@@ -75,7 +77,7 @@ Examples:
         '--threshold', '-t',
         type=str,
         required=True,
-        help='Threshold constraint (e.g., "<=3/4", "<1/2", "<=Q(2,3)")'
+        help='Threshold constraint (e.g., "<=3/4", "< 2", "<=Q(2,3)", "<Q(4/7))'
     )
 
     # World-specific dimensions
@@ -110,6 +112,7 @@ Examples:
         '--bellman-format', '-bf',
         type=str,
         choices=['default', 'common', 'adapted'],
+        required=False,
         default='default',
         help='Bellman equation format: "default" (variant-specific), "common" (with stay-in-place), "adapted" (without stay-in-place)'
     )
@@ -144,9 +147,9 @@ Examples:
     )
 
     output_group.add_argument(
-        '--fullres', '-fr',
+        '--draw',
         action='store_true',
-        help='Enable verbose output for results'
+        help='Generate and display ANSI drawing of the world with sensor placements'
     )
 
     return parser
@@ -234,32 +237,40 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
         file_res = open(args.results, 'w')
         for prefix in sorted_prefixes:
             sorted_group = sorted(model_groups[prefix], key=lambda  x: x[0])
-            output = f"\n[{prefix}]\n" + '\n'.join([f"{name} = {value}" for name,value in sorted_group])
+            output = f"\n<|{prefix}|>\n" + '\n'.join([f"{name} = {value}" for name,value in sorted_group])
             file_res.write(output)
-            if args.fullres and args.verbose:
+            if args.verbose:
                 tpmc_instance.console.print(output)
-            if args.fullres:
-                print(output)
         file_res.close()
 
         file_rew = open(args.rewards, 'w')
         file_rew.write(f"{result.reward if result.result == sat else "N/A"}\n")
         file_rew.close()
 
+        if args.draw:
+            obs_fun = dict(model_groups.get('ys'))
+            drawing = tpmc_instance.draw_model(obs_fun, args.goal, args.budget, use_color=True)
+            with open('drawing.html', 'w') as file:
+                file.write(convert_text_to_html(drawing))
+            with open('drawing.txt', 'w') as file:
+                file.write(drawing)
+                tpmc_instance.console.print(f"\n{drawing}\n", highlight=False)
+                file.close()
+
         txt = tpmc_instance.console.export_text(clear=True)
         with open('log_record.txt', 'w') as f:
             f.write(txt)
             f.close()
 
-    if args.verbose:
-        print(f" 📁 Result model found and saved to: {args.results}; "
-              f" Rewards written to: {args.rewards}")
-        if result.model:
-            print("    Model found and saved")
+        if args.verbose:
+            print(f" 📁 Result model found and saved to: {args.results}; "
+                f" Rewards written to: {args.rewards}")
+            if result.model:
+                print("    Model found and saved")
 
     solver.cleanup()
 
-def group_model_vars(model: z3.ModelRef) -> defaultdict:
+def group_model_vars(model: z3.ModelRef) -> defaultdict[str, List[Tuple[str, z3.ExprRef]]]:
     # Extract and group variables in a Z3 model efficiently
     # Clean Grouping by Keys: on missing keys, create empty list, w/o boilerplate key checking
     var_groups = defaultdict(list)
