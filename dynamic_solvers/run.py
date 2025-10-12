@@ -242,6 +242,7 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
         file_res = open(args.results, 'w')
         if result.model is None:
             file_res.write("")
+            model_groups = {}
         else:
             model_groups = group_model_vars(result.model)
             sorted_prefixes = sorted(set(model_groups.keys()))
@@ -259,7 +260,7 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
         file_rew.write(f"{result.reward if result.result == sat else "N/A"}\n")
         file_rew.close()
 
-        if args.draw:
+        if args.draw and result.model is not None:
             obs_fun = dict(model_groups.get('ys'))
             drawing = tpmc_instance.draw_model(obs_fun, args.goal, args.budget, use_color=True)
             with open('drawing.html', 'w') as file:
