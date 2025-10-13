@@ -173,6 +173,7 @@ Thumbs.db
 **/table_1.csv
 **/table_2.csv
 log_record.txt
+**/benchmark_results.csv
 
 # Pre-generated Z3 files of problem instances
 line_*_z3.py
