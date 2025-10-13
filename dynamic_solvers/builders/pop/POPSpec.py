@@ -1,8 +1,8 @@
 from abc import ABC
 from itertools import chain
-from typing import List, override
+from typing import List
 
-from z3 import z3, Real, Or, Sum, Bool, Implies, And, Not
+from z3 import z3, Or, Sum, Implies, And, Not, PbEq
 
 from dynamic_solvers.builders.OOPSpec import OOPSpec
 from dynamic_solvers.utils import init_var_type
@@ -70,16 +70,13 @@ class POPSpec(OOPSpec, ABC):
 
     def build_observation_constraints(self) -> List[z3.BoolRef]:
         # Observation function constraints - every state should be mapped to some observable class
-        self.console.print("\n# Observation function constraints - every state should be mapped to some observable class")
+        self.console.print("\n# Observation function constraints - every state should be mapped to a single/concrete observable class (total function)")
         constraints = []
-        for state_obs in self.Y:
-            if self.bool_encoding:
-                constraints.extend([Or(*state_obs, self.ctx)])
-            else:
-                constraints.extend([Or(obs == 0, obs == 1, self.ctx) for obs in state_obs])
 
-        self.console.print('# Every state should be mapped to exactly one equivalence class')
         if self.bool_encoding:
+            # Every state is assigned some observation (at least one of them, total function)
+            constraints.extend([Or(*state_obs, self.ctx) for state_obs in self.Y])
+            # For each state, assigned observations are mutually exclusive (if one is marked, others are refuted)
             constraints.extend([
                 Implies(
                     self.Y[s][o1],
@@ -88,8 +85,20 @@ class POPSpec(OOPSpec, ABC):
                 for s in range(len(self.Y))
                 for o1 in range(self.budget)
             ])
+
+            # Try no. 2: ITE operators to perform the sum over booleans - function maps to a single observation
+            # constraints.extend([Sum(state_obs) == 1.0 for state_obs in self.Y])
+
+            # Try no. 3: Pseudo-Boolean equality constraint - function maps to a single observation
+            constraints.extend([PbEq([(obs, 1) for obs in state_obs], 1, self.ctx) for state_obs in self.Y])
         else:
+            # Every state is assigned some observation (at least one of them, total function)
+            constraints.extend([Or(obs == 0, obs == 1, self.ctx)
+                                    for state_obs in self.Y
+                                    for obs in state_obs])
+
             # TODO: Can sum over booleans but must use 1.0 (z3.Real) instead of 1 (z3.Int)
+            # Only a single observation class can be assigned to each state
             constraints.extend([Sum(state_obs) == 1 for state_obs in self.Y])
 
         self.console.print(constraints)
@@ -98,7 +107,7 @@ class POPSpec(OOPSpec, ABC):
     def collect_constraints(self, threshold: str) -> List[z3.BoolRef]:
         self.console.print("\n  🛠️  Building constraints...", justify="center")
 
-        t = Real('t', self.ctx)
+        # t = Real('t', self.ctx)
         constraint_builders = [
             self.build_fully_observable_constraints(),
             self.build_bellman_equations(),

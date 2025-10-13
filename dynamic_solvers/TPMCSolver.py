@@ -41,7 +41,7 @@ class TPMCSolver:
             # Signal Z3 to interrupt its computation
             try:
                 self.solver.interrupt()
-                thread.join(timeout=2.0)  # Give Z3 time to cleanup gracefully
+                thread.join(timeout=5.0)  # Give Z3 time to cleanup gracefully
             except:
                 del thread
                 pass  # If interrupt fails, daemon thread won't block process exit
