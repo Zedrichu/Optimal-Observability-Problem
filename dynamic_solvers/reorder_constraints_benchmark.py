@@ -3,7 +3,7 @@ import subprocess
 import os
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-PERMS = list(itertools.permutations([0, 1, 2, 3]))
+PERMS = list(itertools.permutations(range(4)))
 MAX_PARALLEL = 4
 
 def run_benchmark(perm):
