@@ -136,7 +136,7 @@ class SSPSpec(OOPSpec, ABC):
         ]
 
         self.console.print("\nApplying order of constraints:")
-        self.console.print(",".join(f"{i} <- {order}" for (i, order) in enumerate(self.order_constraints)))
+        self.console.print(", ".join(f"{i} <- {order}" for (i, order) in enumerate(self.order_constraints)))
 
         constraint_builders = [builders[i]() for i in self.order_constraints]
         # self.console.print("\nOrder of constraints after applying reordering:")

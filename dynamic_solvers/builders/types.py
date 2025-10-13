@@ -3,7 +3,7 @@
 This module contains TypedDict definitions used across the TPMC factory and leaf-instance constructors.
 """
 
-from typing import TypedDict, Optional, Literal, Required, NotRequired
+from typing import TypedDict, Optional, Literal, Required, NotRequired, List
 from z3 import Context
 
 
@@ -31,11 +31,13 @@ class OperationKWArgs(TypedDict, total=False):
         verbose (bool): Enable verbose output (default: False).
         bellman_format (Optional[Literal["default", "common", "adapted"]]):
             Format for Bellman equations
+        order_constraints (Optional[List[int]]): Order of assertion of constraints for TPMC solver.
     """
     ctx: Optional[Context]
     verbose: bool
     bellman_format: Optional[Literal["default", "common", "adapted"]]
     bool_encoding: Optional[bool]
+    order_constraints: Optional[List[int]]
 
 
 class TPMCParams(DimensionKWArgs, OperationKWArgs):
