@@ -411,6 +411,9 @@ def main():
         help='Bellman equation format: "default" (variant-specific), "common" (with stay-in-place), "adapted" (without stay-in-place)'
     )
     parser.add_argument('--real-encoding', '-re', action='store_true', help='Encoding of TPMC parameters as real variables (slow performance)')
+    parser.add_argument('--order-constraints', type=str,
+        help='Comma-separated order of assertion of HL constraint groups for OOP instances. Should be a permutation of 0,1,2,3'
+    )
 
     args = parser.parse_args()
 
@@ -434,12 +437,24 @@ def main():
                 print(f"❌ Configuration file not found: {config_file}")
                 sys.exit(1)
 
+        # Parse order of constraints if provided
+        order_constraints = args.order_constraints
+        try:
+            if order_constraints:
+                order_constraints = list(map(int, args.order_constraints.split(',')))
+                if sorted(order_constraints) != [0, 1, 2, 3]:
+                    raise ValueError
+        except ValueError:
+            print(f"❌ Invalid order_constraints format: {order_constraints}. Must be a comma-separated permutation of 0,1,2,3.")
+            sys.exit(1)
+
         # Run benchmarks
         runner = BenchmarkRunner(
             args.output, args.verbose, args.trials,
             verbose=False,
             bellman_format=args.bellman_format,
             bool_encoding=not args.real_encoding,
+            order_constraints=order_constraints,
         )
 
         try:
