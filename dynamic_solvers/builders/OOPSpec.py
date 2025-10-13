@@ -16,13 +16,15 @@ class OOPSpec(World, ABC):
 
     def __init__(self, budget: int, goal: int, determinism: bool,
                  ctx: Optional[Context] = None, verbose: bool = False,
-                 bellman_format: Literal["default", "common", "adapted"] | None = "default"):
+                 bellman_format: Literal["default", "common", "adapted"] | None = "default",
+                 order_constraints: Optional[List[int]] = None):
         self.ctx = ctx or Context()  # Use provided context or create fresh one
         self.budget = budget
         self.goal = goal
         self.determinism = determinism
         self.verbose = verbose
         self.bellman_format = bellman_format or "default"
+        self.order_constraints = order_constraints if order_constraints else [0,1,2,3]
 
         self.exp_rew_evaluator = None
 
