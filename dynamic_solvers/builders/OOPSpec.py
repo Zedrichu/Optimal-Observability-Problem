@@ -182,7 +182,7 @@ class OOPSpec(World, ABC):
         ])
 
         # Try no.2: Pseudo-Boolean equality constraint - exactly one action enabled per observation strategy
-        constraints.extend([PbEq([(action_rate, 1) for action_rate in strategy], 1, self.ctx) for strategy in self.X])
+        # constraints.extend([PbEq([(action_rate, 1) for action_rate in strategy], 1, self.ctx) for strategy in self.X])
 
         self.console.print(constraints)
         return constraints
