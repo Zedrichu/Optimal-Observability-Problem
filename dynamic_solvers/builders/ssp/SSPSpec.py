@@ -1,8 +1,8 @@
 from abc import ABC
 from itertools import chain
-from typing import List, override, Callable, Union
+from typing import List, override
 
-from z3 import z3, Real, Bool, Or, Sum, Context, PbEq, And, Implies, Not
+from z3 import z3, Real, Or, Sum, And, Implies, Not, PbEq
 
 from dynamic_solvers.builders.OOPSpec import OOPSpec
 from dynamic_solvers.utils import init_var_type
@@ -117,7 +117,8 @@ class SSPSpec(OOPSpec, ABC):
         self.console.print("\n# Budget constraint - total no. of sensors activated <= budget")
 
         if self.bool_encoding:
-            constraint = PbEq([(y, 1) for y in self.Y], self.budget, self.ctx) # Cardinality constraint equal B w/ pseudo-booleans
+            # Cardinality constraint equal B w/ pseudo-booleans (more performant than If(y,1,0) summation)
+            constraint = PbEq([(y, 1) for y in self.Y], self.budget, self.ctx)
         else:
             constraint = Sum(self.Y) == self.budget # TODO!: Check whether == or <= works better ? original mentions == budget
 
