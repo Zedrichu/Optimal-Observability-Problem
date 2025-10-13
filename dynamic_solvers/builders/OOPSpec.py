@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List, Optional, Literal, Callable
 
 from rich.console import Console
-from z3 import (Context, z3, Real, Q, Or, Sum, And, Not, Implies)
+from z3 import (Context, z3, Real, Q, Or, Sum, And, Not, Implies, PbEq)
 
 from dynamic_solvers.builders.worlds import World
 from dynamic_solvers.utils import parse_threshold
@@ -180,6 +180,9 @@ class OOPSpec(World, ABC):
             for o in range(len(self.X))
             for a1 in range(len(self.actions))
         ])
+
+        # Try no.2: Pseudo-Boolean equality constraint - exactly one action enabled per observation strategy
+        constraints.extend([PbEq([(action_rate, 1) for action_rate in strategy], 1, self.ctx) for strategy in self.X])
 
         self.console.print(constraints)
         return constraints
