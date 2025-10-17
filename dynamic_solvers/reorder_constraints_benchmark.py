@@ -17,6 +17,7 @@ def run_benchmark(perm):
     cmd = [
         "python3", "-m", "dynamic_solvers.benchmark",
         "dynamic_solvers/configs/runtime-variance.csv",
+        "-bf adapted"
         "--order-constraints", perm_str,
         "-o", output_file
     ]
