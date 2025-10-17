@@ -1,4 +1,3 @@
-import operator
 import os
 import csv
 import argparse
@@ -12,30 +11,55 @@ def main():
 
     directory = args.directory
     results = []
+    number_instances = 0
 
     for filename in os.listdir(directory):
-        if filename.endswith('.csv'):
-            filepath = os.path.join(directory, filename)
-            solved = 0
-            duration = 0.0
-            total = 0
-            with open(filepath, newline='') as csvfile:
-                reader = csv.reader(csvfile)
-                reader.__next__() # Skip header
-                for row in reader:
-                    total += 1
-                    status = row[6].strip().strip().upper()
-                    if status != "UNKNOWN":
-                        solved += 1
-                        duration += float(row[4].strip())
-            results.append((filename, solved, total, duration))
+        if not filename.endswith('.csv'):
+            raise ValueError(f'Unexpected file format: {filename}')
+        filepath = os.path.join(directory, filename)
+        solved = 0
+        duration = 0.0
+        if number_instances == 0:
+            with open(filepath) as f:
+                number_instances = sum(1 for _ in f) - 1
+        with open(filepath, newline='') as csvfile:
+            reader = csv.reader(csvfile)
+            next(reader)  # Skip header
+            for row in reader:
+                status = row[6].strip().upper()
+                if status != "UNKNOWN":
+                    solved += 1
+                    duration += float(row[4].strip())
+        results.append((filename, solved, duration))
 
     # Sort files by solved count descending
-    results.sort(key = lambda x: (x[1], -x[2]), reverse=True)
+    results.sort(key=lambda x: (x[1], -x[2]), reverse=True)
 
-    for i, (filename, solved, total, duration) in enumerate(results):
-        file_id = str(i+1).rjust(2, ' ')
-        print(f'{file_id} {filename}: {solved} ({(solved/total*100):.2f}%) solved instances in {duration:.2f}s')
+    output_results(results, number_instances)
+    plot_results(results, number_instances)
+
+def output_results(results, number_instances):
+    # Print summary
+    for i, (filename, solved, duration) in enumerate(results):
+        file_id = str(i + 1).rjust(2, ' ')
+        print(f'{file_id} {filename}: {solved} ({(solved / number_instances * 100):.2f}%) solved instances in {duration:.2f}s')
+
+def plot_results(results, number_instances):
+    import matplotlib.pyplot as plt
+    x_vals = [r[1] for r in results]
+    y_vals = [r[2] for r in results]
+
+    plt.figure(figsize=(8, 5))
+    plt.scatter(x_vals, y_vals, color='steelblue')
+
+    x_unique = sorted(set(x_vals))
+    plt.xticks(x_unique, [f"{x} ({(x/number_instances*100):.2f}%)" for x in x_unique])
+    plt.title("Solved Instances vs Cumulative Time")
+    plt.xlabel("Number of Instances Solved")
+    plt.ylabel("Cumulative Time (s)")
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.tight_layout()
+    plt.show()
 
 if __name__ == '__main__':
     main()
