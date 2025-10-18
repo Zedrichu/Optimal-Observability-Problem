@@ -3,11 +3,7 @@ import numpy as np
 import glob
 
 def parse_time(time_str: str) -> float:
-    TIMEOUT = 180.0
-    if time_str == 't.o.' or float(time_str) > TIMEOUT*0.975:
-        return -1.0
-    else:
-        return float(time_str)
+    return -1.0 if time_str == 't.o.' else float(time_str)
 
 def output_variance_results(file_pattern: str):
     files = glob.glob(file_pattern)
@@ -19,24 +15,21 @@ def output_variance_results(file_pattern: str):
     num_instances = len(dfs[0])
     stats = []
     for idx in range(num_instances):
-        times = np.array([np.float64(parse_time(df.iloc[idx]['Time (s)'])) for df in dfs], dtype=np.float64)
         statuses = np.array([df.iloc[idx]['Status'] for df in dfs], dtype=np.str_)
-        timeout_mask = (times == -1.0)
-        timeout_count = np.count_nonzero(timeout_mask)
         unknown_mask = (statuses == 'UNKNOWN')
-        unknown_count = np.count_nonzero(unknown_mask)
-        # We are only interested in 'solving' runtimes. Filter out UNKNOWNs due to timeouts or z3 issues.
+        times = np.array([np.float64(parse_time(df.iloc[idx]['Time (s)'])) for df in dfs], dtype=np.float64)
+        # We are only interested in 'solving' runtimes. Filter out UNKNOWNs due to timeouts.
         valid_times = times[~unknown_mask]
+        timeout_count = np.count_nonzero(unknown_mask)
         mean = np.nanmean(valid_times) if valid_times.size > 0 else "-"
         variance = np.var(valid_times) if valid_times.size > 0 else "-"
         std = np.nanstd(valid_times) if valid_times.size > 0 else "-"
         stats.append({
             'Instance': f"{dfs[0].iloc[idx]['Variant']}-{dfs[0].iloc[idx]['Model']}",
             'Mean Solve Time': mean,
-            'Var. Solve Time': variance,
             'Std. Solve Time': std,
+            'Var. Solve Time': variance,
             '# Timeouts': timeout_count,
-            '# UNKNOWN': unknown_count
         })
     stats_df = pd.DataFrame(stats)
     print(stats_df)
