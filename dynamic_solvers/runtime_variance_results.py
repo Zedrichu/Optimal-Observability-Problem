@@ -27,12 +27,14 @@ def output_variance_results(file_pattern: str):
         unknown_count = np.count_nonzero(unknown_mask)
         # We are only interested in 'solving' runtimes. Filter out UNKNOWNs due to timeouts or z3 issues.
         valid_times = times[~unknown_mask]
-        variance = np.var(valid_times) if valid_times.size > 0 else np.nan
-        mean = np.nanmean(valid_times) if valid_times.size > 0 else np.nan
+        mean = np.nanmean(valid_times) if valid_times.size > 0 else "-"
+        variance = np.var(valid_times) if valid_times.size > 0 else "-"
+        std = np.nanstd(valid_times) if valid_times.size > 0 else "-"
         stats.append({
             'Instance': f"{dfs[0].iloc[idx]['Variant']}-{dfs[0].iloc[idx]['Model']}",
             'Mean Solve Time': mean,
             'Var. Solve Time': variance,
+            'Std. Solve Time': std,
             '# Timeouts': timeout_count,
             '# UNKNOWN': unknown_count
         })
