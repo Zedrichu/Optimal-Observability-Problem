@@ -40,9 +40,10 @@ def main():
 
 def output_results(results, number_instances):
     # Print summary
+    print("Order, Solved, Solved %, Time")
     for i, (filename, solved, duration) in enumerate(results):
-        file_id = str(i + 1).rjust(2, ' ')
-        print(f'{file_id} {filename}: {solved} ({(solved / number_instances * 100):.2f}%) solved instances in {duration:.2f}s')
+        order = "(" + filename.replace('order-', '').replace('.csv', '').replace('_', ',') + ")"
+        print(order, solved, f"{(solved / number_instances * 100):.2f}%", f"{duration:.2f}s")
 
 def plot_results(results, number_instances):
     import matplotlib.pyplot as plt
