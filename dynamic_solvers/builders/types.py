@@ -1,7 +1,6 @@
 """Type definitions for TPMC parameter passing.
 
-This module contains TypedDict definitions used across the TPMC factory
-and leaf constructors. Separated to avoid circular imports.
+This module contains TypedDict definitions used across the TPMC factory and leaf-instance constructors.
 """
 
 from typing import TypedDict, Optional, Literal, Required, NotRequired

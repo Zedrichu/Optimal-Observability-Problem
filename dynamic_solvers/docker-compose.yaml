@@ -7,10 +7,11 @@ services:
       context: ..
     container_name: oop
     environment:
-      - CONFIG_CSV=/configs/Pos-POP-config.csv
-      - OUTPUT_CSV=/out/results.csv
+      - CONFIG_CSV=/configs/runtime-variance.csv
+      - OUTPUT_CSV=/out/${COMPOSE_PROJECT_NAME}-results.csv
       - VERBOSE=-v
-    env_file: .env
+      - BF=adapted
+    # env_file: .env
     volumes:
       - ./configs:/configs
       - ./out:/out
