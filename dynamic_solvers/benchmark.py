@@ -12,10 +12,11 @@ import sys
 from contextlib import nullcontext
 from dataclasses import dataclass
 from multiprocessing import Process, Queue
-from typing import List, Dict, Any, Literal, Unpack
+from typing import List, Dict, Any, Unpack
 
 from alive_progress import alive_bar
 from halo import Halo
+
 from dynamic_solvers.builders.types import OperationKWArgs
 
 TIMEOUT = 90000
@@ -408,6 +409,7 @@ def main():
     parser.add_argument('--bellman-format', '-bf', type=str, choices=['default', 'common', 'adapted'], default='default',
         help='Bellman equation format: "default" (variant-specific), "common" (with stay-in-place), "adapted" (without stay-in-place)'
     )
+    parser.add_argument('--real-encoding', '-re', action='store_true', help='Encoding of TPMC parameters as real variables (slow performance)')
 
     args = parser.parse_args()
 
@@ -427,7 +429,8 @@ def main():
         runner = BenchmarkRunner(
             args.output, args.verbose, args.trials,
             verbose=False,
-            bellman_format=args.bellman_format
+            bellman_format=args.bellman_format,
+            bool_encoding=not args.real_encoding,
         )
 
         try:

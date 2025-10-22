@@ -118,6 +118,12 @@ Examples:
     )
 
     solver_group.add_argument(
+        '--real-encoding', '-re',
+        action='store_true',
+        help='Encoding of TPMC parameters as real variables (slow performance)'
+    )
+
+    solver_group.add_argument(
         '--timeout',
         type=int,
         default=30000,
@@ -199,6 +205,7 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
         print(f"    Strategy: {'Deterministic' if args.deterministic else 'Randomized'}, Threshold: {args.threshold}")
         print(f"    Operation mode (add-ons): \n"
               f"        Bellman format -> {args.bellman_format}"
+              f"        Boolean encoding -> {not args.real_encoding}\n"
               f"\n"
         )
 
@@ -216,6 +223,7 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
                                        budget=args.budget,
                                        determinism=args.deterministic,
                                        bellman_format=args.bellman_format,
+                                       bool_encoding=not args.real_encoding,
                                        verbose=args.verbose)
     solver = TPMCSolver(tpmc_instance.ctx, verbose=not benchmark)
     # Configure solver timeout
@@ -231,23 +239,28 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
         reward_str = f" ⭐  Reward: {result.reward}" if result.reward is not None else ""
         print(reward_str)
 
-        model_groups = group_model_vars(result.model) if result.model is not None else {}
-        sorted_prefixes = sorted(set(model_groups.keys()))
-
         file_res = open(args.results, 'w')
-        for prefix in sorted_prefixes:
-            sorted_group = sorted(model_groups[prefix], key=lambda  x: x[0])
-            output = f"\n<|{prefix}|>\n" + '\n'.join([f"{name} = {value}" for name,value in sorted_group])
-            file_res.write(output)
-            if args.verbose:
-                tpmc_instance.console.print(output)
+        if result.model is None:
+            file_res.write("")
+            model_groups = {}
+        else:
+            model_groups = group_model_vars(result.model)
+            sorted_prefixes = sorted(set(model_groups.keys()))
+
+            file_res = open(args.results, 'w')
+            for prefix in sorted_prefixes:
+                sorted_group = sorted(model_groups[prefix], key=lambda  x: x[0])
+                output = f"\n<|{prefix}|>\n" + '\n'.join([f"{name} = {value}" for name,value in sorted_group])
+                file_res.write(output)
+                if args.verbose:
+                    tpmc_instance.console.print(output)
         file_res.close()
 
         file_rew = open(args.rewards, 'w')
         file_rew.write(f"{result.reward if result.result == sat else "N/A"}\n")
         file_rew.close()
 
-        if args.draw:
+        if args.draw and result.model is not None:
             obs_fun = dict(model_groups.get('ys'))
             drawing = tpmc_instance.draw_model(obs_fun, args.goal, args.budget, use_color=True)
             with open('drawing.html', 'w') as file:

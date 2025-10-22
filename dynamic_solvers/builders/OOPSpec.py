@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional, Literal
-from io import StringIO
+from typing import List, Optional, Literal, Callable
 
 from rich.console import Console
-from z3 import (Context, z3, Real, Q, Or, Sum)
+from z3 import (Context, z3, Real, Q, Or, Sum, And, Not, Implies, PbEq)
 
 from dynamic_solvers.builders.worlds import World
 from dynamic_solvers.utils import parse_threshold
@@ -16,15 +15,19 @@ class OOPSpec(World, ABC):
 
     def __init__(self, budget: int, goal: int, determinism: bool,
                  ctx: Optional[Context] = None, verbose: bool = False,
+                 bool_encoding: bool = True,
                  bellman_format: Literal["default", "common", "adapted"] | None = "default"):
         self.ctx = ctx or Context()  # Use provided context or create fresh one
         self.budget = budget
         self.goal = goal
         self.determinism = determinism
+        self.bool_encoding = bool_encoding
         self.verbose = verbose
         self.bellman_format = bellman_format or "default"
 
         self.exp_rew_evaluator = None
+
+        self.is_obs_selected = self._init_extract_obs_function()
 
         self.console = Console(quiet=not verbose, record=True)
 
@@ -65,27 +68,47 @@ class OOPSpec(World, ABC):
     def build_bellman_equations(self) -> List[z3.BoolRef]:
         # Bellman equations for expected rewards in each world's state
         self.console.print("\n# Bellman equations for expected rewards in each world's state")
-
+        if self.bool_encoding:
+            if self.determinism:
+                bellman_generator = self._compute_state_bellman_bool_det
+                self.console.print(
+                    "\n# Deterministic strategies with boolean encoding (both strategies and observations).")
+            else:
+                bellman_generator = self._compute_state_bellman_bool_rand
+                self.console.print("\n# Randomised strategies with boolean encoding (observations only).")
+        else:
+            bellman_generator = self._compute_state_bellman_real
+            self.console.print("\n# Strategy and observation variables encoded as reals.")
         equations = []
         for s in range(self.size):
             if s == self.goal:
                 equations.append(self.ExpRew[s] == 0)
                 continue
 
-            # Build action terms for each direction using a transition function
-            terms = self.initialize_terms()
-            for a in range(len(self.actions)):
-                # Decrement the state index after processing the goal state
-                idx = s - 1 if s > self.goal else s
-
-                action_term = self.build_action_term(a, idx)
-                next_state = self.navigate(s, a)
-                destination_rew = self.build_destination_rew(next_state)
-                terms.append(action_term * destination_rew)
-            equations.append(self.ExpRew[s] == Sum(terms))
+            # Decrement the state index after processing the goal state
+            idx = s - 1 if s > self.goal else s
+            equations.extend(bellman_generator(s, idx))
 
         self.console.print(equations)
         return equations
+
+    @abstractmethod
+    def _compute_state_bellman_bool_det(self, state: int, state_idx: int) -> List[z3.BoolRef]:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def _compute_state_bellman_bool_rand(self, state: int, state_idx: int) -> List[z3.BoolRef]:
+        raise NotImplementedError()
+
+    def _compute_state_bellman_real(self, state: int, state_idx: int) -> List[bool]:
+        # Build action terms for each direction using a transition function
+        terms = self.initialize_terms()
+        for a in range(len(self.actions)):
+            action_term = self.build_action_term(a, state_idx)
+            next_state = self.navigate(state, a)
+            destination_rew = self.build_destination_rew(next_state)
+            terms.append(action_term * destination_rew)
+        return [self.ExpRew[state] == Sum(terms)]
 
     def initialize_terms(self):
         """ Initial term in Bellman sum for current state - reward of staying in place.
@@ -134,9 +157,41 @@ class OOPSpec(World, ABC):
         return constraint
 
     def build_strategy_constraints(self) -> List[z3.BoolRef]:
+        """Dispatch to type-specific (encoding-specific) strategy constraints."""
+        if self.bool_encoding and self.determinism:
+            return self._build_boolean_strategy_constraints()
+        else:
+            return self._build_real_strategy_constraints()
+
+    def _build_boolean_strategy_constraints(self) -> List[z3.BoolRef]:
+        self.console.print("\n# Deterministic strategies (one-hot encoding or degenerate categorical distribution)."
+                           "\n# Proper boolean encoding activated for strategy variables.")
+        # At least 1 action is enabled from each observation
+        constraints = [Or(*[self.X[o][a] for a in range(len(self.actions))], self.ctx)
+                       for o in range(len(self.X))
+        ]
+
+        # At most 1 action can be enabled from each observation
+        constraints.extend([
+            Implies(
+                self.X[o][a1],
+                And(*[Not(self.X[o][a2], self.ctx) for a2 in range(len(self.actions)) if a1 != a2]),
+                self.ctx)
+            for o in range(len(self.X))
+            for a1 in range(len(self.actions))
+        ])
+
+        # Try no.2: Pseudo-Boolean equality constraint - exactly one action enabled per observation strategy
+        # constraints.extend([PbEq([(action_rate, 1) for action_rate in strategy], 1, self.ctx) for strategy in self.X])
+
+        self.console.print(constraints)
+        return constraints
+
+    def _build_real_strategy_constraints(self) -> List[z3.BoolRef]:
         # Randomized strategies (proper probability distributions)
         if self.determinism:
-            self.console.print('# Deterministic strategies activated (one-hot encoding or degenerate categorical distribution)\n')
+            self.console.print(
+                '\n# Deterministic strategies (one-hot encoding or degenerate categorical distribution)\n')
         else:
             self.console.print('\n# Randomized strategies (proper probability distributions)')
         constraints = []
@@ -144,15 +199,16 @@ class OOPSpec(World, ABC):
         for strategy in self.X:
             # Constrain the probability rates under proper distribution as observation groups
             # if not self.determinism:
-            prob_range_constraints = [bound for rate in strategy
-                                            for bound in [rate <= 1, rate >= 0] ]
+            prob_range_constraints = [bound
+                                      for rate in strategy
+                                      for bound in [rate <= 1, rate >= 0]]
             constraints.extend(prob_range_constraints)
 
             # Strategies must be unitary (rates sum up to 1)
             constraints.append(Sum(strategy) == 1)
 
             if self.determinism: # One-hot encoding or degenerate categorical distribution
-                categorical_constraints = [ Or(rate == 0, rate == 1, self.ctx) for rate in strategy ]
+                categorical_constraints = [Or(rate == 0, rate == 1, self.ctx) for rate in strategy]
                 constraints.extend(categorical_constraints)
 
         self.console.print(constraints)
@@ -165,3 +221,9 @@ class OOPSpec(World, ABC):
     @abstractmethod
     def collect_constraints(self, threshold: str) -> List[z3.BoolRef]:
         raise NotImplementedError()
+
+    def _init_extract_obs_function(self) -> Callable[[dict, str], bool]:
+        if self.bool_encoding:
+            return lambda model, name: model.get(name, False)
+        else:
+            return lambda model, name: model.get(name, 0) == 1

@@ -2,9 +2,10 @@ from abc import ABC
 from itertools import chain
 from typing import List, override
 
-from z3 import z3, Real, Or, Sum
+from z3 import z3, Real, Or, Sum, And, Implies, Not, PbEq
 
 from dynamic_solvers.builders.OOPSpec import OOPSpec
+from dynamic_solvers.utils import init_var_type
 
 
 class SSPSpec(OOPSpec, ABC):
@@ -19,32 +20,73 @@ class SSPSpec(OOPSpec, ABC):
         self.Y = self.declare_observation_function(nongoal_states)
         self.X = self.declare_strategy_mapping(nongoal_states)
 
-    def declare_observation_function(self, sensor_states: List[int]) -> List[z3.ArithRef]:
+    def declare_observation_function(self, sensor_states: List[int]) -> List[ z3.ArithRef | z3.BoolRef ]:
         # Choice of observations on each non-goal state (state sensors)
         # e.g. `ys0 == 1` means that in state 0 the sensor is on, `ys0 == 0` - state sensor is off
         self.console.print("\n# Choice of observation on each non-goal state (state sensors that are on/off)")
-        state_to_observation = [Real(f'ys{s}', self.ctx) for s in sensor_states]
+
+        # Initialize variables based on encoding mode w/ dynamic constructor (Late-binding Factory Pattern)
+        initializer = init_var_type(self.bool_encoding)
+        state_to_observation = [initializer(f'ys{s}', self.ctx)
+                                for s in sensor_states]
+
         self.console.print(state_to_observation)
         return state_to_observation
 
-    def declare_strategy_mapping(self, sensor_states: List[int]) -> List[List[z3.ArithRef]]:
-        # Action rates of randomized strategies per state (when the sensor is on)
-        self.console.print("\n# Action rates of randomized strategies per state (when sensor is on)")
-        sensor_to_action = [[Real(f'xo{s}{act}', self.ctx) for act in self.actions] for s in sensor_states]
+    def declare_strategy_mapping(self, sensor_states: List[int]) -> List[List[z3.ExprRef]]:
+        # Action rates of strategies per state (when the sensor is on), or default strategy (when the sensor is off)
+        self.console.print("\n# Action rates of strategies per state (when sensor is on), or default strategy (when the sensor is off)")
+
+        # Parametric late-bound factory based on encoding mode
+        initializer = init_var_type(self.bool_encoding and self.determinism)
+        sensor_to_action = [[initializer(f'xo{s}{act}', self.ctx) for act in self.actions] for s in sensor_states]
 
         # Default strategy variables per action (when no sensor is observed - unknown state)
-        default_policy = [Real(f'x⊥{act}', self.ctx) for act in self.actions]
+        default_policy = [initializer(f'x⊥{act}', self.ctx) for act in self.actions]
         sensor_to_action.append(default_policy)
 
         self.console.print(sensor_to_action)
         return sensor_to_action
 
-    def build_action_term(self, action_idx: int, state_idx: int):
+    def _compute_state_bellman_bool_det(self, state: int, sensor: int) -> List[z3.BoolRef]:
+        equations = []
+        for a in range(len(self.actions)):
+            next_state = self.navigate(state, a)
+            reward_relation = self.ExpRew[state] == 1 + self.ExpRew[next_state]
+
+            # Next state activation -> reward computation with next state expected reward
+            # TODO!: Disjunction of activations in implication lhs. for streamlining
+
+            # Sensor on and chosen action for sensor
+            activation = And(self.Y[sensor], self.X[sensor][a], self.ctx)
+            equations.append(Implies(activation, reward_relation, self.ctx))
+
+            # Sensor off and default action chosen
+            activation = And(Not(self.Y[sensor], self.ctx), self.X[-1][a], self.ctx)
+            equations.append(Implies(activation, reward_relation, self.ctx))
+        return equations
+
+    def _compute_state_bellman_bool_rand(self, state: int, sensor: int) -> List[z3.BoolRef]:
+        equations = []
+
+        # Weighted next-state rewards for activated sensor
+        weighted_rewards = Sum([self.X[sensor][a] * self.ExpRew[self.navigate(state, a)]
+                                for a in range(len(self.actions))])
+        equations.append(Implies(self.Y[sensor], self.ExpRew[state] == 1 + weighted_rewards, self.ctx))
+
+        # Weighted next-state rewards for deactivated sensor (default observation)
+        weighted_rewards = Sum([self.X[-1][a] * self.ExpRew[self.navigate(state, a)]
+                                for a in range(len(self.actions))])
+        equations.append(Implies(Not(self.Y[sensor], self.ctx), self.ExpRew[state] == 1 + weighted_rewards, self.ctx))
+
+        return equations
+
+    def build_action_term(self, action_idx: int, state_idx: int) -> z3.ArithRef:
         return ((1 - self.Y[state_idx]) * self.X[-1][action_idx] +
                 self.Y[state_idx] * self.X[state_idx][action_idx])
 
     @override
-    def initialize_terms(self):
+    def initialize_terms(self) -> list[int]:
         """For SSP instances w/o determinism use adapted Bellman equation format."""
         if self.bellman_format == 'default':
             return [] if not self.determinism else [1]
@@ -60,17 +102,26 @@ class SSPSpec(OOPSpec, ABC):
 
     def build_observation_constraints(self) -> List[z3.BoolRef]:
         # Observation function constraints - every state should be mapped to some observable class
-        # For SSP, 2 observation classes exist: activated sensor or unknown
-        self.console.print(f"\n# Observation function constraints - every state should be mapped to some observable class"
-              f"\n# For SSP, 2 observation classes exist: activated sensor or unknown")
-        constraints = [Or(sensor == 0, sensor == 1, self.ctx) for sensor in self.Y]
-        self.console.print(constraints)
+        # For SSP, 2 observation classes exist: activated sensor or unknown - complete encoding as bools
+        if self.bool_encoding:
+            constraints = []
+        else:
+            self.console.print(f"\n# Observation function constraints - every state should be mapped to some observable class"
+                               f"\n# For SSP, 2 observation classes exist: activated sensor or unknown")
+            constraints = [Or(sensor == 0, sensor == 1, self.ctx) for sensor in self.Y]
+            self.console.print(constraints)
         return constraints
 
     def build_budget_constraint(self):
         # Budget constraint - total sensors used <= budget
-        self.console.print("# Budget constraint - total no. of sensors activated <= budget")
-        constraint = Sum(self.Y) == self.budget # TODO!: Check whether == or <= works better ? original mentions == budget
+        self.console.print("\n# Budget constraint - total no. of sensors activated <= budget")
+
+        if self.bool_encoding:
+            # Cardinality constraint equal B w/ pseudo-booleans (more performant than If(y,1,0) summation)
+            constraint = PbEq([(y, 1) for y in self.Y], self.budget, self.ctx)
+        else:
+            constraint = Sum(self.Y) == self.budget # TODO!: Check whether == or <= works better ? original mentions == budget
+
         self.console.print(constraint)
         return constraint
 

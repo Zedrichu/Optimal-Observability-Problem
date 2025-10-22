@@ -1,6 +1,9 @@
 import re
 from typing import Tuple, Callable, List
 
+from z3 import Bool, Real, Context, z3
+
+
 def parse_threshold(arg: str) -> Tuple[List[int], Callable[[int, int], bool]]:
     sign_idx = arg.find('<')
     if sign_idx == -1:
@@ -10,6 +13,12 @@ def parse_threshold(arg: str) -> Tuple[List[int], Callable[[int, int], bool]]:
     terms = list(map(int, re.findall(r"\d+", arg)))
     assert len(terms) > 0
     return terms, sign
+
+
+def init_var_type(condition: bool) -> Callable[[str, Context], z3.ArithRef | z3.BoolRef]:
+    """Typed (first-class) constructor selector for Z3 variables based on conditional mode."""
+    return Bool if condition else Real
+
 
 def get_observation_marker(obs_class: int, use_color: bool = True, binary: bool = False) -> str:
     """Get colored circle or digit for observation class using ANSI colors when appropriate.
@@ -44,6 +53,7 @@ def get_observation_marker(obs_class: int, use_color: bool = True, binary: bool 
         if obs_class <= 0 or obs_class > 9:
             return '#'  # Default for invalid classes
         return str(obs_class)
+
 
 def convert_text_to_html(text: str, title: str = "World Visualization") -> str:
     """Convert ANSI-colored text to HTML.
