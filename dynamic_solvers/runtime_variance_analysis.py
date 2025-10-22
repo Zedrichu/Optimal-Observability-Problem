@@ -14,6 +14,10 @@ def output_variance_results(file_pattern: str):
     dfs = [pd.read_csv(f) for f in files]
     num_instances = len(dfs[0])
     stats = []
+
+    print("| ID |   Instance   | Mean Solve Time | Std. Solve Time | Coef. of Variation | # Timeouts |")
+    print("|----|--------------|-----------------|-----------------|--------------------|------------|")
+
     for idx in range(num_instances):
         statuses = np.array([df.iloc[idx]['Status'] for df in dfs], dtype=np.str_)
         unknown_mask = (statuses == 'UNKNOWN')
@@ -21,18 +25,21 @@ def output_variance_results(file_pattern: str):
         # We are only interested in 'solving' runtimes. Filter out UNKNOWNs due to timeouts.
         valid_times = times[~unknown_mask]
         timeout_count = np.count_nonzero(unknown_mask)
-        mean = np.nanmean(valid_times) if valid_times.size > 0 else "-"
-        variance = np.var(valid_times) if valid_times.size > 0 else "-"
-        std = np.nanstd(valid_times) if valid_times.size > 0 else "-"
-        stats.append({
-            'Instance': f"{dfs[0].iloc[idx]['Variant']}-{dfs[0].iloc[idx]['Model']}",
-            'Mean Solve Time': mean,
-            'Std. Solve Time': std,
-            'Var. Solve Time': variance,
-            '# Timeouts': timeout_count,
-        })
-    stats_df = pd.DataFrame(stats)
-    print(stats_df)
+        mean, std, cv = "-".rjust(15), "-".rjust(15), "-".rjust(18)
+        if valid_times.size > 0:
+            mean = f"{np.mean(valid_times):.4f}".rjust(15)
+            std = f"{np.std(valid_times):.4f}".rjust(15)
+            cv = f"{(float(std) / float(mean) * 100):.4f}".rjust(18)
+
+        id = str(idx + 1).rjust(2)
+        instance = f"{dfs[0].iloc[idx]['Variant']}-{dfs[0].iloc[idx]['Model']}".ljust(12)
+        timeout_count = str(timeout_count).rjust(10)
+
+        stats = f"| {id} | {instance} | {mean} | {std} | {cv} | {timeout_count} |"
+        print(stats)
+
+    # stats_df = pd.DataFrame(stats)
+    # print(stats_df)
 
 if '__main__' == __name__:
     import sys
