@@ -5,10 +5,9 @@ services:
     build:
       dockerfile: dynamic_solvers/Dockerfile
       context: ..
-    container_name: oop
     environment:
       - CONFIG_CSV=/configs/runtime-variance.csv
-      - OUTPUT_CSV=/out/${COMPOSE_PROJECT_NAME}-results.csv
+      - OUTPUT_CSV=/out/results-${COMPOSE_PROJECT_NAME}.csv
       - VERBOSE=-v
       - BF=adapted
     # env_file: .env
