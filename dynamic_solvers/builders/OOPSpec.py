@@ -15,7 +15,7 @@ class OOPSpec(World, ABC):
 
     def __init__(self, budget: int, goal: int, determinism: bool,
                  ctx: Optional[Context] = None, verbose: bool = False,
-                 bool_encoding: bool = False,
+                 bool_encoding: bool = True,
                  bellman_format: Literal["default", "common", "adapted"] | None = "default"):
         self.ctx = ctx or Context()  # Use provided context or create fresh one
         self.budget = budget
