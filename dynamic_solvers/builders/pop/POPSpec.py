@@ -87,6 +87,7 @@ class POPSpec(OOPSpec, ABC):
             ])
 
             # Try no. 2: ITE operators to perform the sum over booleans - function maps to a single observation
+            # Decidability ensured if using 1.0 (z3.Real) instead of 1 (z3.Int)
             # constraints.extend([Sum(state_obs) == 1.0 for state_obs in self.Y])
 
             # Try no. 3: Pseudo-Boolean equality constraint - function maps to a single observation
@@ -98,8 +99,6 @@ class POPSpec(OOPSpec, ABC):
                                     for state_obs in self.Y
                                     for obs in state_obs])
 
-
-            # TODO: Can sum over booleans but must use 1.0 (z3.Real) instead of 1 (z3.Int) for decidability
             # Degenerate categorical distributions (one-hot) of observation assignments for each state (only a single observation class can be assigned)
             constraints.extend([Sum(state_obs) == 1 for state_obs in self.Y])
 
