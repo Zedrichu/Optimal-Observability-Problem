@@ -424,7 +424,8 @@ def main():
 
         print(f"\nHyperparameters:\n"
               f"   Bellman format -> {args.bellman_format}\n"
-              f"   Trials no. -> {args.trials}\n"
+              f"   Encoding       -> {"Real" if args.real_encoding else "Boolean"}\n"
+              f"   Trials no.     -> {args.trials}\n"
               f"   Verbose output -> {"✅" if args.verbose else "❌"}\n")
 
         # Check that all config files exist

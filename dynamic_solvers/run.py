@@ -204,8 +204,8 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
         print(f"    Budget: {args.budget}, Goal: {args.goal}, {dim_print}")
         print(f"    Strategy: {'Deterministic' if args.deterministic else 'Randomized'}, Threshold: {args.threshold}")
         print(f"    Operation mode (add-ons): \n"
-              f"        Bellman format -> {args.bellman_format}"
-              f"        Boolean encoding -> {not args.real_encoding}\n"
+              f"        Bellman format -> {args.bellman_format}\n"
+              f"        Encoding -> {"Real" if args.real_encoding else "Boolean"}\n"
               f"\n"
         )
 
