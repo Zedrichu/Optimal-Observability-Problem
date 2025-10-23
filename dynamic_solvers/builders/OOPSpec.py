@@ -206,11 +206,11 @@ class OOPSpec(World, ABC):
             # Strategies must be unitary (rates sum up to 1)
             constraints.append(Sum(strategy) == 1)
 
-        # Remove for loop in grouped strategy constraints - crucial batching for 2 original solutions w/ adapted Bellman
-        for strategy in self.X:
-            if self.determinism: # One-hot encoding or degenerate categorical distribution
-                categorical_constraints = [Or(rate == 0, rate == 1, self.ctx) for rate in strategy]
-                constraints.extend(categorical_constraints)
+        if self.determinism: # One-hot encoding or degenerate categorical distribution
+            categorical_constraints = [Or(rate == 0, rate == 1, self.ctx) 
+                                       for strategy in self.X
+                                       for rate in strategy]
+            constraints.extend(categorical_constraints)
 
         self.console.print(constraints)
         return constraints
