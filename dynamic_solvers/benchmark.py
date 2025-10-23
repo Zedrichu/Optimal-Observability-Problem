@@ -233,6 +233,7 @@ class BenchmarkRunner:
         self.output_csv = output_csv
         self.results: List[Dict[str, Any]] = []
         self.verbose = benchmark_verbose
+        self.docker_env = is_docker_environment()
         self.trials = trials
 
         # Operational parameters passed to all workers (runtime choices, not problem definition)
@@ -287,7 +288,7 @@ class BenchmarkRunner:
         instance_text = f"{config.variant.upper()} instance {model_desc} w/ B: {config.budget}; τ: '{config.threshold}'"
 
         halo = Halo(text=f"Running ... {instance_text}", spinner="dots12", color="magenta")
-        if self.verbose:
+        if self.verbose and not self.docker_env:
             halo.start()
 
         # Run multiple trials
@@ -414,10 +415,18 @@ def main():
     args = parser.parse_args()
 
     try:
+        if is_docker_environment():
+            print("🐳 Detected Docker environment. Limiting stdout throughput...")
 
         if not args.config_csv:
             parser.print_help()
             sys.exit(1)
+
+        print(f"\nHyperparameters:\n"
+              f"   Bellman format -> {args.bellman_format}\n"
+              f"   Encoding       -> {"Real" if args.real_encoding else "Boolean"}\n"
+              f"   Trials no.     -> {args.trials}\n"
+              f"   Verbose output -> {"✅" if args.verbose else "❌"}\n")
 
         # Check that all config files exist
         for config_file in args.config_csv:

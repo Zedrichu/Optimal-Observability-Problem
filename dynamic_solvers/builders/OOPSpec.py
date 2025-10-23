@@ -195,21 +195,22 @@ class OOPSpec(World, ABC):
         else:
             self.console.print('\n# Randomized strategies (proper probability distributions)')
         constraints = []
-        # TODO!: Check for determinism first and apply binary constraints only (no need for range)
         for strategy in self.X:
             # Constrain the probability rates under proper distribution as observation groups
-            # if not self.determinism:
-            prob_range_constraints = [bound
+            # if not self.determinism: # Range bounds are NOT! redundant with binarization of strategies
+            prob_range_constraints = [bound 
                                       for rate in strategy
-                                      for bound in [rate <= 1, rate >= 0]]
+                                      for bound in [rate <= 1, rate >= 0] ]
             constraints.extend(prob_range_constraints)
 
             # Strategies must be unitary (rates sum up to 1)
             constraints.append(Sum(strategy) == 1)
 
-            if self.determinism: # One-hot encoding or degenerate categorical distribution
-                categorical_constraints = [Or(rate == 0, rate == 1, self.ctx) for rate in strategy]
-                constraints.extend(categorical_constraints)
+        if self.determinism: # One-hot encoding or degenerate categorical distribution
+            categorical_constraints = [Or(rate == 0, rate == 1, self.ctx) 
+                                       for strategy in self.X
+                                       for rate in strategy]
+            constraints.extend(categorical_constraints)
 
         self.console.print(constraints)
         return constraints
