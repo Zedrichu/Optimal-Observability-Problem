@@ -2,15 +2,16 @@ import re
 import time
 
 from z3 import *
-from optimal_placement_ssp.optimal_placement_ssp_benchmark import GOAL_STATE, NUM_STATES, build_constraints
+from optimal_placement_ssp.optimal_placement_ssp_benchmark import GOAL_STATE, NUM_STATES, build_constraints, \
+     instance, BIN_SEARCH_LOW, BIN_SEARCH_HIGH
 
 if __name__ == "__main__":
     import sys
-    if len(sys.argv) != 3:
-        print("Usage: python sensor_on.py <state_on_1> <state_on_2>")
+    if len(sys.argv) != 2:
+        print("Usage: python sensor_on.py <states_on> (comma-separated)")
         sys.exit(1)
 
-    states_on = list(map(int, sys.argv[1:3]))
+    states_on = list(map(int, sys.argv[1].split(",")))
     for state in states_on:
         if state == GOAL_STATE:
             raise ValueError("Cannot place sensor on goal state")
@@ -19,8 +20,8 @@ if __name__ == "__main__":
 
     max_iterations = 100
     tolerance = 1e-15
-    low = 1.0
-    high = 17.0
+    low = BIN_SEARCH_LOW
+    high = BIN_SEARCH_HIGH
 
     strategies = {}
     thresholds = []
@@ -28,7 +29,6 @@ if __name__ == "__main__":
     for i in range(max_iterations):
         threshold = (low + high) / 2
         thresholds.append(threshold)
-        # print(f" \u03C4 = {threshold}")
 
         solver = Solver()
         constraints = build_constraints(states_on, threshold)
@@ -38,8 +38,7 @@ if __name__ == "__main__":
         end_time = time.process_time()
 
         if result == sat:
-            print(f"Iteration {str(i + 1).rjust(2, ' ')}: "
-                  f"  SAT for SSP with (@s{states_on[0]}, @s{states_on[1]}) and τ: {threshold}")
+            print(f"Iteration {str(i + 1).rjust(2)}:   SAT for {instance(states_on, threshold)}")
             # Collect strategy for this iteration
             strategy = []
             model = solver.model()
@@ -49,8 +48,7 @@ if __name__ == "__main__":
             strategies[i] = sorted(strategy, key=lambda s: s[0])
             high = threshold
         elif result == unsat:
-            print(f"Iteration {str(i + 1).rjust(2, ' ')}: "
-                  f"UNSAT for SSP with (@s{states_on[0]}, @s{states_on[1]}) and τ: {threshold}")
+            print(f"Iteration {str(i + 1).rjust(2)}: UNSAT for {instance(states_on, threshold)}")
             low = threshold
         if high - low < tolerance:
             print(f"The optimal sensor threshold is approximately {thresholds[max(strategies.keys())]} ± {tolerance}")
@@ -64,5 +62,4 @@ if __name__ == "__main__":
             action_rate_var = strategy[j][0]
             action_rate_strat = terms[j][0]/terms[j][1] if len(terms) > 1 else terms[j][0]
             strategy_strings += [f"{action_rate_var} = {action_rate_strat}"]
-        print(f"Strategy for iteration {i} (\u03C4 = {thresholds[i]}): {" | ".join(strategy_strings)}")
-              # f"{strategy[0][0]} = {xol_terms[0]/xol_terms[1]} | {strategy[1][0]} = {strategy[1][1]}")
+        print(f"Strategy for iteration {i} (τ < {thresholds[i]}): {" | ".join(strategy_strings)}")
