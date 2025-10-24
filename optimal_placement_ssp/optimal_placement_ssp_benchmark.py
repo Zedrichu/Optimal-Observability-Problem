@@ -1,14 +1,30 @@
 from enum import Enum
-from itertools import combinations
+from itertools import combinations as combine
 from multiprocessing.shared_memory import SharedMemory
 
 from z3 import *
+
+
+def compute_placements(num_states: int, goal_state: int, budget: int):
+    placements = []
+    # Add only unique placements (ignore symmetric ones)
+    combinations = list(combine([i for i in range(num_states) if i != goal_state], budget))
+    for combination in combinations:
+        last_sensor = combination[-1]
+        if last_sensor < goal_state:
+            placements.append(combination)
+            continue
+        first_sensor = combination[0]
+        dist_to_end = num_states - last_sensor - 1
+        if first_sensor <= dist_to_end:
+            placements.append(combination)
+    return placements
 
 # Hyperparameters
 NUM_STATES = 11
 GOAL_STATE = 5
 BUDGET = (NUM_STATES - 1)//2 - 1
-PLACEMENTS = list(combinations([i for i in range(NUM_STATES) if i != GOAL_STATE], BUDGET))
+PLACEMENTS = compute_placements(NUM_STATES, GOAL_STATE, BUDGET)
 
 BIN_SEARCH_LOW = 4.0
 BIN_SEARCH_HIGH = 4.4
@@ -104,13 +120,15 @@ def wrap_timeout_check(solver: Solver, timeout_ms: int):
 
     return result[0] if len(result) > 0 else unknown
 
-def solve(shared_memory_name: str, states_on: list[int], threshold: ArithRef, pid: int, timeout_ms: int) -> None:
+def solve(states_on: list[int], threshold: ArithRef, pid: int, timeout_ms: int) -> Result:
     print(f"Solving for {instance(states_on, threshold)}")
     constraints = build_constraints(states_on, threshold)
 
     solver = Solver()
     solver.add(constraints)
     result = wrap_timeout_check(solver, timeout_ms)
+    result = solver.check()
+    # result = wrap_timeout_check(solver, timeout_ms)
     result = Result.SAT if result == sat \
         else Result.UNSAT if result == unsat \
         else Result.UNKNOWN
@@ -118,70 +136,58 @@ def solve(shared_memory_name: str, states_on: list[int], threshold: ArithRef, pi
     if result == Result.SAT:
         print(f"\tSAT for {instance(states_on, threshold)}")
 
-    shared_memory = None
-    try:
-        shared_memory = SharedMemory(name=shared_memory_name, create=False)
-        shared_memory.buf[pid] = result.value
-    except Exception as e:
-        print(f"Error in process {pid}: {e}")
-    finally:
-        if shared_memory is not None:
-            shared_memory.close()
+    return result
 
 def benchmark():
     print(f"Searching for the optimal placement among {len(PLACEMENTS)} placements:")
-    shared_memory = None
-    try:
-        # Create shared memory for each process to write its result
-        shared_memory = SharedMemory(create=True, size=len(PLACEMENTS))
-        buffer = shared_memory.buf[:len(PLACEMENTS)]
 
-        max_iterations = 10
-        low = BIN_SEARCH_LOW
-        high = BIN_SEARCH_HIGH
-        placements_to_ignore = set()
-        timeout_ms = TIMEOUT_MS
+    placements_to_ignore = set()
+    timeout_ms = TIMEOUT_MS
 
-        for i in range(max_iterations):
-            buffer[:len(PLACEMENTS)] = bytearray([0]*len(PLACEMENTS))
+    max_iterations = 10
+    low = BIN_SEARCH_LOW
+    high = BIN_SEARCH_HIGH
 
-            threshold = (low + high) / 2
-            print(f"Iteration {i + 1}: \u03C4 = {threshold}, timeout={timeout_ms}ms")
+    for i in range(max_iterations):
+        threshold = (low + high) / 2
+        print(f"Iteration {i + 1}: \u03C4 = {threshold}, timeout = {timeout_ms}ms")
 
-            for (p, placement) in enumerate(PLACEMENTS):
-                if p not in placements_to_ignore:
-                    solve(shared_memory.name, placement, threshold, p, timeout_ms)
-
-            sats = [r for r, result in enumerate(buffer) if result == Result.SAT.value]
-            unsats = [r for r, result in enumerate(buffer) if result == Result.UNSAT.value]
-            unknowns = [result for result in buffer if result != Result.SAT.value and result != Result.UNSAT.value]
-            print(f"SATs: {len(sats)}, UNSATs: {len(unsats)}, UNKNOWNs: {len(unknowns)}")
-
-            if i == 1:
-                placements_to_ignore = set(unsats)
-            else:
-                if len(sats) > 0:
-                    [placements_to_ignore.add(r) for r in unsats]
-            if 0 < len(sats) <= 2:
-                if len(unknowns) > 0:
-                    # Try again to solve/refute the unknown instances with more time
-                    timeout_ms = 1.5*timeout_ms
+        sats, unsats, unknowns = [], [], []
+        for (p, placement) in enumerate(PLACEMENTS):
+            if p not in placements_to_ignore:
+                result = solve(placement, threshold, p, timeout_ms)
+                if result == Result.SAT:
+                    sats.append(p)
+                elif result == Result.UNSAT:
+                    unsats.append(p)
                 else:
-                    for p in sats:
-                        print(f"The optimal sensor placement is ({", ".join([f"@s{s}" for s in PLACEMENTS[p]])})")
-                        break
-            elif len(sats) > 2:
-                print(f"{len(sats)} SAT(s) found, decreasing threshold")
+                    unknowns.append(p)
+        print(f"SATs: {len(sats)}, UNSATs: {len(unsats)}, UNKNOWNs: {len(unknowns)}")
+
+        if i == 0:
+            if len(sats) == 0:
+                print("No solutions found in first search. Try again with a larger BIN_SEARCH_LOW value.")
+                exit(1)
+            else:
+                placements_to_ignore = set(unsats)
+        else:
+            if len(sats) > 0:
+                [placements_to_ignore.add(r) for r in unsats]
+        if len(sats) == 1:
+            if len(unknowns) > 0:
+                print(f"1 SAT found but still {len(unknowns)} UNKNOWNS, decreasing threshold and increasing timeout")
+                timeout_ms = int(1.5*timeout_ms)
                 high = threshold
-            elif len(sats) == 0:
-                print("No SATs, increasing threshold")
-                low = threshold
-    except Exception as e:
-        print(f"Error in benchmark: {e}")
-        pass
-    finally:
-        if shared_memory is not None:
-            shared_memory.unlink()
+            else:
+                print(f"The optimal sensor placement is ({", ".join([f"@s{s}" for s in PLACEMENTS[sats[0]]])})")
+                break
+        elif len(sats) > 1:
+            print(f"{len(sats)} SAT(s) found, decreasing threshold")
+            high = threshold
+        elif len(sats) == 0:
+            print("No SATs, increasing threshold")
+            low = threshold
+        print(f"SATs: {(sats)}\nUNSATs: {(unsats)}\nUNKNOWNs: {(unknowns)}\nplacements_to_ignore: {placements_to_ignore}")
 
 if __name__ == "__main__":
     benchmark()
