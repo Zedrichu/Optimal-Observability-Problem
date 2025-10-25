@@ -1,3 +1,4 @@
+import time
 from enum import Enum
 from itertools import combinations as combine
 
@@ -20,7 +21,7 @@ def compute_placements(num_states: int, goal_state: int, budget: int):
     return placements
 
 # Hyperparameters
-NUM_STATES = 21
+NUM_STATES = 15
 GOAL_STATE = (NUM_STATES - 1)//2
 N = (NUM_STATES - 1)//2
 BUDGET = N - 1
@@ -186,9 +187,12 @@ if __name__ == "__main__":
     print(f"BIN_SEARCH_LOW={BIN_SEARCH_LOW}, BIN_SEARCH_HIGH={BIN_SEARCH_HIGH}")
     print(f"PLACEMENTS={len(PLACEMENTS)}")
 
+    start_time = time.process_time()
     benchmark()
-
+    end_tme = time.process_time()
     print()
+
+    print(f"Benchmarked in {(end_tme - start_time):.2f}s")
     print("Ran benchmark with the following hyperparameters:")
     print(f"NUM_STATES={NUM_STATES}, GOAL_STATE={GOAL_STATE}, N={N}, BUDGET={BUDGET}")
     print(f"BIN_SEARCH_LOW={BIN_SEARCH_LOW}, BIN_SEARCH_HIGH={BIN_SEARCH_HIGH}")
