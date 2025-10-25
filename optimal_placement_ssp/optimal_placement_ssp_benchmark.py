@@ -23,7 +23,7 @@ def compute_placements(num_states: int, goal_state: int, budget: int):
 NUM_STATES = 21
 GOAL_STATE = (NUM_STATES - 1)//2
 N = (NUM_STATES - 1)//2
-BUDGET = NUM_STATES - 1
+BUDGET = N - 1
 
 if BUDGET < 1:
     print("ERROR: BUDGET must be greater than 1")
