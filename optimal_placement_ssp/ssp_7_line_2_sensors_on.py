@@ -25,6 +25,7 @@ if __name__ == "__main__":
 
     strategies = {}
     thresholds = []
+    model = None
 
     for i in range(max_iterations):
         threshold = (low + high) / 2
@@ -51,7 +52,6 @@ if __name__ == "__main__":
             print(f"Iteration {str(i + 1).rjust(2)}: UNSAT for {instance(states_on, threshold)}")
             low = threshold
         if high - low < tolerance:
-            print(f"The optimal sensor threshold is approximately {thresholds[max(strategies.keys())]} ± {tolerance}")
             break
 
     print()
@@ -63,3 +63,9 @@ if __name__ == "__main__":
             action_rate_strat = terms[j][0]/terms[j][1] if len(terms) > 1 else terms[j][0]
             strategy_strings += [f"{action_rate_var} = {action_rate_strat}"]
         print(f"Strategy for iteration {i} (τ < {thresholds[i]}): {" | ".join(strategy_strings)}")
+    print(f"The optimal sensor threshold is approximately {thresholds[max(strategies.keys())]} ± {tolerance}")
+    print()
+    if model is not None:
+        print("Model for the latest (most refined) strategy:")
+        for d in sorted(model.decls(), key=lambda x: x.name()):
+            print(f"{d.name().rjust(6)}: {model[d]}")
