@@ -1,6 +1,5 @@
 from enum import Enum
 from itertools import combinations as combine
-from multiprocessing.shared_memory import SharedMemory
 
 from z3 import *
 
@@ -21,16 +20,23 @@ def compute_placements(num_states: int, goal_state: int, budget: int):
     return placements
 
 # Hyperparameters
-NUM_STATES = 11
-GOAL_STATE = 5
-BUDGET = (NUM_STATES - 1)//2 - 1
+NUM_STATES = 21
+GOAL_STATE = (NUM_STATES - 1)//2
+N = (NUM_STATES - 1)//2
+BUDGET = NUM_STATES - 1
+
+if BUDGET < 1:
+    print("ERROR: BUDGET must be greater than 1")
+    print(f"NUM_STATES={NUM_STATES}, GOAL_STATE={GOAL_STATE}, N={N}, BUDGET={BUDGET}")
+
+    exit(1)
+
+BIN_SEARCH_LOW = N*(N+1)/2/N + (N - BUDGET)
+BIN_SEARCH_HIGH = 2*BIN_SEARCH_LOW + (N - BUDGET)
+
 PLACEMENTS = compute_placements(NUM_STATES, GOAL_STATE, BUDGET)
 
-BIN_SEARCH_LOW = 4.0
-BIN_SEARCH_HIGH = 4.4
-
 actions = ['l', 'r']
-TIMEOUT_MS = 3000
 
 class Result(Enum):
     SAT = 1
@@ -54,43 +60,33 @@ def build_constraints(states_on: list[int], threshold: ArithRef | float):
 
     # Variables
     PI = [Real(f"pi{i}") for i in range(NUM_STATES)]
-    Y = [Bool(f"y{i}") for i in range(NUM_STATES) if i != GOAL_STATE]
-    X = [[Real(f"xo{i}{a}") for a in actions] for i in range(NUM_STATES) if i != GOAL_STATE]
+    X = [[Real(f"xo{i}{a}") for a in actions] for i in states_on]
     X.append([Real(f"xo⊥{a}") for a in actions])
 
-    # Experiment constraints
-    # We know the optimal strategy for states with sensors
-    for state in states_on:
-        idx = state if state < GOAL_STATE else state - 1
+    # Strategy constraints & Bellman equation for states with sensor ON
+    for s, state in enumerate(states_on):
         constraints.extend([
-            Y[idx] == True,
-            X[idx][0] == int(state > GOAL_STATE),
-            X[idx][1] == int(state < GOAL_STATE),
+            X[s][0] == int(state > GOAL_STATE),
+            X[s][1] == int(state < GOAL_STATE),
+            PI[state] == 1 + Sum([X[s][a] * PI[navigate(state, act)] for (a, act) in enumerate(actions)])
         ])
 
+    # Strategy constraints for default/unknown strategy
+    constraints.extend([bound for rate in X[-1] for bound in [rate <= 1, rate >= 0]])
+    constraints.append(Sum(X[-1]) == 1)
+
+    # Bellman equations for goal state and states with sensor OFF
+    constraints.append(PI[GOAL_STATE] == 0)
+    constraints.extend([
+        PI[s] == 1 + Sum([X[-1][a] * PI[navigate(s, act)] for (a, act) in enumerate(actions)])
+        for s in range(NUM_STATES) if s not in states_on and s != GOAL_STATE
+    ])
+
     # Fully observable constraints
-    constraints.extend([PI[state] >= abs(state - GOAL_STATE) for state in range(NUM_STATES)])
-
-    # Bellman equations
-    for i in range(NUM_STATES):
-        if i == GOAL_STATE:
-            constraints.append(PI[i] == 0)
-            continue
-
-        obs = i if i < GOAL_STATE else i - 1
-        constraints.append(Implies(Y[obs], PI[i] == 1 + Sum([X[obs][a] * PI[navigate(i, act)] for (a, act) in enumerate(actions)])))
-        constraints.append(Implies(Not(Y[obs]), PI[i] == 1 + Sum([X[-1][a] * PI[navigate(i, act)] for (a, act) in enumerate(actions)])))
+    constraints.extend([PI[state] >= abs(state - GOAL_STATE) for state in range(NUM_STATES) if state != GOAL_STATE])
 
     # Threshold constraint
     constraints.append(Sum([PI[s] for s in range(NUM_STATES) if s!=GOAL_STATE])/(NUM_STATES - 1) < threshold)
-
-    # Strategy constraints
-    for strategy in X:
-        constraints.extend([bound for rate in strategy for bound in [rate <= 1, rate >= 0]])
-        constraints.append(Sum(strategy) == 1)
-
-    # Budget constraint
-    constraints.append(PbEq([(y, 1) for y in Y], len(states_on)))
 
     return constraints
 
@@ -120,15 +116,13 @@ def wrap_timeout_check(solver: Solver, timeout_ms: int):
 
     return result[0] if len(result) > 0 else unknown
 
-def solve(states_on: list[int], threshold: ArithRef, pid: int, timeout_ms: int) -> Result:
+def solve(states_on: list[int], threshold: ArithRef) -> Result:
     print(f"Solving for {instance(states_on, threshold)}")
     constraints = build_constraints(states_on, threshold)
 
     solver = Solver()
     solver.add(constraints)
-    result = wrap_timeout_check(solver, timeout_ms)
     result = solver.check()
-    # result = wrap_timeout_check(solver, timeout_ms)
     result = Result.SAT if result == sat \
         else Result.UNSAT if result == unsat \
         else Result.UNKNOWN
@@ -139,23 +133,23 @@ def solve(states_on: list[int], threshold: ArithRef, pid: int, timeout_ms: int) 
     return result
 
 def benchmark():
-    print(f"Searching for the optimal placement among {len(PLACEMENTS)} placements:")
+    print()
 
     placements_to_ignore = set()
-    timeout_ms = TIMEOUT_MS
 
-    max_iterations = 10
+    max_iterations = 100
+    tolerance = 1e-15
     low = BIN_SEARCH_LOW
     high = BIN_SEARCH_HIGH
 
     for i in range(max_iterations):
         threshold = (low + high) / 2
-        print(f"Iteration {i + 1}: \u03C4 = {threshold}, timeout = {timeout_ms}ms")
+        print(f"Iteration {i + 1}: \u03C4 = {threshold} (low = {low}, high = {high})")
 
         sats, unsats, unknowns = [], [], []
         for (p, placement) in enumerate(PLACEMENTS):
             if p not in placements_to_ignore:
-                result = solve(placement, threshold, p, timeout_ms)
+                result = solve(placement, threshold)
                 if result == Result.SAT:
                     sats.append(p)
                 elif result == Result.UNSAT:
@@ -173,21 +167,29 @@ def benchmark():
         else:
             if len(sats) > 0:
                 [placements_to_ignore.add(r) for r in unsats]
-        if len(sats) == 1:
-            if len(unknowns) > 0:
-                print(f"1 SAT found but still {len(unknowns)} UNKNOWNS, decreasing threshold and increasing timeout")
-                timeout_ms = int(1.5*timeout_ms)
-                high = threshold
-            else:
-                print(f"The optimal sensor placement is ({", ".join([f"@s{s}" for s in PLACEMENTS[sats[0]]])})")
-                break
+        if len(sats) == 0:
+            print("No SATs, increasing threshold")
+            low = threshold
+        elif len(sats) == 1:
+            print(f"The optimal sensor placement is ({", ".join([f"@s{s}" for s in PLACEMENTS[sats[0]]])})")
+            break
         elif len(sats) > 1:
             print(f"{len(sats)} SAT(s) found, decreasing threshold")
             high = threshold
-        elif len(sats) == 0:
-            print("No SATs, increasing threshold")
-            low = threshold
-        print(f"SATs: {(sats)}\nUNSATs: {(unsats)}\nUNKNOWNs: {(unknowns)}\nplacements_to_ignore: {placements_to_ignore}")
+        if high - low < tolerance:
+            print(f"The search bounds of the binary search have converged.")
+            return
 
 if __name__ == "__main__":
+    print("Running benchmark with the following hyperparameters:")
+    print(f"NUM_STATES={NUM_STATES}, GOAL_STATE={GOAL_STATE}, N={N}, BUDGET={BUDGET}")
+    print(f"BIN_SEARCH_LOW={BIN_SEARCH_LOW}, BIN_SEARCH_HIGH={BIN_SEARCH_HIGH}")
+    print(f"PLACEMENTS={len(PLACEMENTS)}")
+
     benchmark()
+
+    print()
+    print("Ran benchmark with the following hyperparameters:")
+    print(f"NUM_STATES={NUM_STATES}, GOAL_STATE={GOAL_STATE}, N={N}, BUDGET={BUDGET}")
+    print(f"BIN_SEARCH_LOW={BIN_SEARCH_LOW}, BIN_SEARCH_HIGH={BIN_SEARCH_HIGH}")
+    print(f"PLACEMENTS={len(PLACEMENTS)}")
