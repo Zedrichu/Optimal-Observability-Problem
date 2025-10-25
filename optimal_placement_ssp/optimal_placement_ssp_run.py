@@ -46,7 +46,7 @@ if __name__ == "__main__":
             for d in model.decls():
                 if "xo⊥" in d.name():
                     strategy.append((d.name(), model[d]))
-            strategies[i] = sorted(strategy, key=lambda s: s[0])
+            strategies[i] = strategy
             high = threshold
         elif result == unsat:
             print(f"Iteration {str(i + 1).rjust(2)}: UNSAT for {instance(states_on, threshold)}")
@@ -56,6 +56,7 @@ if __name__ == "__main__":
 
     print()
     for (i, strategy) in strategies.items():
+        # Parse Q(x,y) terms for each of strategy's action rate.
         terms = [list(map(int, re.findall(r"\d+", str(strategy[a][1])))) for a in range(len(strategy))]
         strategy_strings = []
         for j, term in enumerate(terms):
@@ -64,8 +65,11 @@ if __name__ == "__main__":
             strategy_strings += [f"{action_rate_var} = {action_rate_strat}"]
         print(f"Strategy for iteration {i} (τ < {thresholds[i]}): {" | ".join(strategy_strings)}")
     print(f"The optimal sensor threshold is approximately {thresholds[max(strategies.keys())]} ± {tolerance}")
+
     print()
     if model is not None:
         print("Model for the latest (most refined) strategy:")
         for d in sorted(model.decls(), key=lambda x: x.name()):
-            print(f"{d.name().rjust(6)}: {model[d]}")
+            if d.name().startswith("pi") or d.name().startswith("xo"):
+                terms = list(map(int, re.findall(r"\d+", str(model[d]))))
+                print(f"{d.name().rjust(5)}: {terms[0]/terms[1] if len(terms) > 1 else terms[0]}")
