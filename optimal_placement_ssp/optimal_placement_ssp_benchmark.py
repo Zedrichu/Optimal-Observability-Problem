@@ -5,18 +5,15 @@ from itertools import combinations as combine
 from z3 import *
 
 
-def compute_placements(num_states: int, goal_state: int, budget: int):
+def compute_placements(num_states: int, goal_state: int, budget: int) -> list[tuple[int, ...]]:
     placements = []
-    # Add only unique placements (ignore symmetric ones)
-    combinations = list(combine([i for i in range(num_states) if i != goal_state], budget))
+    combinations = list(combine([i for i in range(num_states) if i < goal_state], min(budget, goal_state)))
+    # Only add unique placements (ignore symmetric ones)
     for combination in combinations:
         last_sensor = combination[-1]
-        if last_sensor < goal_state:
-            placements.append(combination)
-            continue
-        first_sensor = combination[0]
         dist_to_end = num_states - last_sensor - 1
-        if first_sensor <= dist_to_end:
+        first_sensor = combination[0]
+        if last_sensor < goal_state or first_sensor <= dist_to_end:
             placements.append(combination)
     return placements
 
@@ -46,7 +43,7 @@ class Result(Enum):
 
 def instance(states_on: Iterable[int], threshold: ArithRef | float) -> str:
     states_on = ", ".join([f"@s{state_on}" for state_on in states_on])
-    return f"SSP with ({states_on}) and τ < {threshold}"
+    return f"SSP with ({states_on}) and τ <= {threshold}"
 
 def navigate(state: int, action: str) -> int:
     if action == 'l':
@@ -87,7 +84,7 @@ def build_constraints(states_on: list[int], threshold: ArithRef | float):
     constraints.extend([PI[state] >= abs(state - GOAL_STATE) for state in range(NUM_STATES) if state != GOAL_STATE])
 
     # Threshold constraint
-    constraints.append(Sum([PI[s] for s in range(NUM_STATES) if s!=GOAL_STATE])/(NUM_STATES - 1) < threshold)
+    constraints.append(Sum([PI[s] for s in range(NUM_STATES) if s!=GOAL_STATE])/(NUM_STATES - 1) <= threshold)
 
     return constraints
 
