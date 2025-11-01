@@ -23,7 +23,7 @@ SSP,G(15x15),"<  Q(3150, 224)",14,15.087801,N/A,UNSAT,
 SSP,M(49x25),"<= Q(9912, 120)",72,t.o.,N/A,UNKNOWN,
 SSP,M(49x25),"<= Q(4956, 120)",72,19.156323,413/10,SAT,
 SSP,M(49x25),"<  Q(4956, 120)",72,15.052247,N/A,UNSAT,
-POP,L(249),"<= Q(250, 2)",2,t.o.,N/A,ERROR,Process terminated without result
+POP,L(249),"<= Q(250, 2)",2,t.o.,N/A,UNKNOWN,
 POP,L(249),"<= Q(125, 2)",2,t.o.,N/A,UNKNOWN,
 POP,L(249),"<  Q(125, 2)",2,14.864930,N/A,UNSAT,
 POP,G(20x20),"<= Q(15200, 399)",2,t.o.,N/A,UNKNOWN,
