@@ -4,7 +4,7 @@ import os
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 PERMS = list(itertools.permutations(range(4)))
-MAX_PARALLEL = 4
+MAX_PARALLEL = 1
 
 def run_benchmark(perm):
     perm_str = ','.join(map(str, perm))
@@ -18,6 +18,7 @@ def run_benchmark(perm):
         "python3", "-m", "dynamic_solvers.benchmark",
         "dynamic_solvers/configs/runtime-variance.csv",
         "-bf", "adapted",
+        "-re",
         "--order-constraints", perm_str,
         "-o", output_file
     ]
