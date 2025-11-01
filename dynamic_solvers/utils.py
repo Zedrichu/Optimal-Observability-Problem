@@ -42,7 +42,7 @@ def get_observation_marker(obs_class: int, use_color: bool = True, binary: bool 
             '\033[37m●\033[0m',  # White
         ]
         if binary:
-            return colors[0] if obs_class == 1 else colors[1]
+            return colors[0] if obs_class == 0 else colors[1]
         if obs_class <= 0 or obs_class > len(colors):
             return '○'  # Default for invalid classes
         return colors[obs_class - 1]
