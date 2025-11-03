@@ -128,20 +128,28 @@ class SSPSpec(OOPSpec, ABC):
     def collect_constraints(self, threshold: str) -> List[z3.BoolRef]:
         self.console.print("\n  🛠️  Building constraints...", justify="center")
 
-        builders = [
-            lambda: [*self.build_fully_observable_constraints(), self.build_threshold_constraint(threshold)],
-            lambda: self.build_bellman_equations(),
-            lambda: [*self.build_strategy_constraints(), *self.build_observation_constraints()],
-            lambda: [self.build_budget_constraint()],
+        if self.order_constraints is not None:
+            builders = [
+                lambda: [*self.build_fully_observable_constraints(), self.build_threshold_constraint(threshold)],
+                lambda: self.build_bellman_equations(),
+                lambda: [*self.build_strategy_constraints(), *self.build_observation_constraints()],
+                lambda: [self.build_budget_constraint()],
+            ]
+
+            self.console.print("\nApplying order of constraints:")
+            self.console.print(", ".join(f"{i} <- {order}" for (i, order) in enumerate(self.order_constraints)))
+
+            constraints = [builders[i]() for i in self.order_constraints]
+
+            # Flatten constraints for solver loading
+            return list(chain.from_iterable(constraints))
+
+        constraints = [
+            * self.build_fully_observable_constraints(),
+            * self.build_bellman_equations(),
+            self.build_threshold_constraint(threshold),
+            * self.build_strategy_constraints(),
+            * self.build_observation_constraints(),
+            self.build_budget_constraint(),
         ]
-
-        self.console.print("\nApplying order of constraints:")
-        self.console.print(", ".join(f"{i} <- {order}" for (i, order) in enumerate(self.order_constraints)))
-
-        constraint_builders = [builders[i]() for i in self.order_constraints]
-        # self.console.print("\nOrder of constraints after applying reordering:")
-        # self.console.print(constraint_builders)
-
-        # Flatten constraints for solver loading
-        all_constraints = list(chain.from_iterable(constraint_builders))
-        return all_constraints
+        return constraints

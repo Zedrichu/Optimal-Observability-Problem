@@ -2,7 +2,7 @@ from abc import ABC
 from itertools import chain
 from typing import List
 
-from z3 import z3, Or, Sum, Implies, And, Not, PbEq
+from z3 import z3, Or, Sum, Implies, And, Not, PbEq, Real
 
 from dynamic_solvers.builders.OOPSpec import OOPSpec
 from dynamic_solvers.utils import init_var_type
@@ -107,21 +107,27 @@ class POPSpec(OOPSpec, ABC):
 
     def collect_constraints(self, threshold: str) -> List[z3.BoolRef]:
         self.console.print("\n  🛠️  Building constraints...", justify="center")
+        
+        if self.order_constraints is not None:
+            builders = [
+                lambda: [*self.build_fully_observable_constraints(), self.build_threshold_constraint(threshold)],
+                lambda: self.build_bellman_equations(),
+                lambda: [*self.build_strategy_constraints(), *self.build_observation_constraints()],
+                lambda: [],
+            ]
+            self.console.print("\nApplying order of constraints:")
+            self.console.print(", ".join(f"{i} <- {order}" for (i, order) in enumerate(self.order_constraints)))
+            constraints = [builders[i]() for i in self.order_constraints]
+            
+            # Flatten constraints for solver loading
+            return list(chain.from_iterable(constraints))
 
-        builders = [
-            lambda: [*self.build_fully_observable_constraints(), self.build_threshold_constraint(threshold)],
-            lambda: self.build_bellman_equations(),
-            lambda: [*self.build_strategy_constraints(), *self.build_observation_constraints()],
-            lambda: [],
+        constraints = [
+            *self.build_fully_observable_constraints(),
+            *self.build_bellman_equations(),
+            self.build_threshold_constraint(threshold),
+            *self.build_strategy_constraints(),
+            *self.build_observation_constraints(),
         ]
 
-        self.console.print("\nApplying order of constraints:")
-        self.console.print(", ".join(f"{i} <- {order}" for (i, order) in enumerate(self.order_constraints)))
-
-        constraint_builders = [builders[i]() for i in self.order_constraints]
-        # self.console.print("\nOrder of constraints after applying reordering:")
-        # self.console.print(constraint_builders)
-
-        # Flatten constraints for solver loading
-        all_constraints = list(chain.from_iterable(constraint_builders))
-        return all_constraints
+        return constraints

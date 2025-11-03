@@ -25,7 +25,7 @@ class OOPSpec(World, ABC):
         self.bool_encoding = bool_encoding
         self.verbose = verbose
         self.bellman_format = bellman_format or "default"
-        self.order_constraints = order_constraints if order_constraints else [0,1,2,3]
+        self.order_constraints = order_constraints
 
         self.exp_rew_evaluator = None
 
