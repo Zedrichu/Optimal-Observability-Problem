@@ -124,6 +124,12 @@ Examples:
     )
 
     solver_group.add_argument(
+        '--order-constraints',
+        type=str,
+        help='Comma-separated order of assertion of HL constraint groups for OOP instances. Should be a permutation of 0,1,2,3'
+    )
+
+    solver_group.add_argument(
         '--timeout',
         type=int,
         default=30000,
@@ -193,6 +199,16 @@ def validate_arguments(args: argparse.Namespace) -> None:
     if not any(op in args.threshold for op in ['<=', '<']):
         raise ValueError("Threshold must contain an upper bound comparison operator (<=, <)")
 
+    # Validate order of constraints
+    try:
+        if args.order_constraints:
+            order_constraints = list(map(int, args.order_constraints.split(',')))
+            if sorted(order_constraints) != [0, 1, 2, 3]:
+                raise ValueError
+    except ValueError:
+        raise ValueError(
+            f"Invalid order_constraints format: {args.order_constraints}. Must be a comma-separated permutation of 0,1,2,3.")
+
 
 def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
     """Main solving logic."""
@@ -205,13 +221,16 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
         print(f"    Strategy: {'Deterministic' if args.deterministic else 'Randomized'}, Threshold: {args.threshold}")
         print(f"    Operation mode (add-ons): \n"
               f"        Bellman format -> {args.bellman_format}\n"
-              f"        Encoding -> {"Real" if args.real_encoding else "Boolean"}\n"
+              f"        Encoding       -> {"Real" if args.real_encoding else "Boolean"}\n"
+              f"        Verbose output -> {"✅" if args.verbose else "❌"}\n"
+              f"        Ordering       -> {args.order_constraints if args.order_constraints else "default"}"
               f"\n"
         )
 
     # Convert strings to enums, after which all comparisons are integer-based
     variant = variant_from_string(args.variant)
     world = puzzle_from_string(args.world)
+    order_constraints = list(map(int, args.order_constraints.split(","))) if args.order_constraints else args.order_constraints
 
     # Create a problem instance in location tpMC representation
     # Factory handles parameter selection - client runner just passes everything
@@ -224,6 +243,7 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
                                        determinism=args.deterministic,
                                        bellman_format=args.bellman_format,
                                        bool_encoding=not args.real_encoding,
+                                       order_constraints=order_constraints,
                                        verbose=args.verbose)
     solver = TPMCSolver(tpmc_instance.ctx, verbose=not benchmark)
     # Configure solver timeout

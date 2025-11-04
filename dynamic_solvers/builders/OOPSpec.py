@@ -16,7 +16,8 @@ class OOPSpec(World, ABC):
     def __init__(self, budget: int, goal: int, determinism: bool,
                  ctx: Optional[Context] = None, verbose: bool = False,
                  bool_encoding: bool = True,
-                 bellman_format: Literal["default", "common", "adapted"] | None = "default"):
+                 bellman_format: Literal["default", "common", "adapted"] | None = "default",
+                 order_constraints: Optional[List[int]] = None):
         self.ctx = ctx or Context()  # Use provided context or create fresh one
         self.budget = budget
         self.goal = goal
@@ -24,6 +25,7 @@ class OOPSpec(World, ABC):
         self.bool_encoding = bool_encoding
         self.verbose = verbose
         self.bellman_format = bellman_format or "default"
+        self.order_constraints = order_constraints
 
         self.exp_rew_evaluator = None
 
@@ -198,7 +200,7 @@ class OOPSpec(World, ABC):
         for strategy in self.X:
             # Constrain the probability rates under proper distribution as observation groups
             # if not self.determinism: # Range bounds are NOT! redundant with binarization of strategies
-            prob_range_constraints = [bound 
+            prob_range_constraints = [bound
                                       for rate in strategy
                                       for bound in [rate <= 1, rate >= 0] ]
             constraints.extend(prob_range_constraints)
@@ -207,7 +209,7 @@ class OOPSpec(World, ABC):
             constraints.append(Sum(strategy) == 1)
 
         if self.determinism: # One-hot encoding or degenerate categorical distribution
-            categorical_constraints = [Or(rate == 0, rate == 1, self.ctx) 
+            categorical_constraints = [Or(rate == 0, rate == 1, self.ctx)
                                        for strategy in self.X
                                        for rate in strategy]
             constraints.extend(categorical_constraints)
