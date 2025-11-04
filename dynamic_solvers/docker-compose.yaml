@@ -8,9 +8,11 @@ services:
     environment:
       - CONFIG_CSV=/configs/runtime-variance.csv
       - OUTPUT_CSV=/out/results-${COMPOSE_PROJECT_NAME}.csv
-      - VERBOSE=-v
-      - ENCODING=
-      - BF=default
+      - VERBOSE=true
+      - REAL_ENCODING=false
+      - TRIALS=1
+      # - BF=default
+      # - ORDER=0,1,2,3
     # env_file: .env
     volumes:
       - ./configs:/configs

@@ -20,5 +20,8 @@ ENV PATH="/oop/.venv/bin:$PATH"
 COPY dynamic_solvers ./dynamic_solvers
 COPY dynamic_solvers/configs /configs
 
-ENTRYPOINT ["/bin/bash", "-c"]
-CMD ["python3 -m dynamic_solvers.benchmark \"$CONFIG_CSV\" --output \"$OUTPUT_CSV\" $VERBOSE $ENCODING -bf $BF"]
+# Prepare entrypoint script for deployment
+COPY dynamic_solvers/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
