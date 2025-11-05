@@ -4,8 +4,8 @@ import time
 from z3 import (set_option, Solver, Context,
                 unsat, sat, unknown)
 
-from dynamic_solvers.ResultOOP import ResultOOP
-from dynamic_solvers.builders.OOPSpec import OOPSpec
+from ResultOOP import ResultOOP
+from builders.OOPSpec import OOPSpec
 
 
 class TPMCSolver:

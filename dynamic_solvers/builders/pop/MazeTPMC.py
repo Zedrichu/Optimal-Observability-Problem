@@ -1,9 +1,9 @@
 from typing import Unpack
 
-from dynamic_solvers.builders.pop.POPSpec import POPSpec
-from dynamic_solvers.builders.worlds import Maze
-from dynamic_solvers.builders.types import OperationKWArgs
-from dynamic_solvers.utils import get_observation_marker
+from builders.pop.POPSpec import POPSpec
+from builders.worlds import Maze
+from builders.typedicts import OperationKWArgs
+from utils import get_observation_marker
 
 
 class MazeTPMC(Maze, POPSpec):

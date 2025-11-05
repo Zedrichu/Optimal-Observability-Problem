@@ -4,8 +4,8 @@ from typing import List, override
 
 from z3 import z3, Real, Or, Sum, And, Implies, Not, PbEq
 
-from dynamic_solvers.builders.OOPSpec import OOPSpec
-from dynamic_solvers.utils import init_var_type
+from builders.OOPSpec import OOPSpec
+from utils import init_var_type
 
 
 class SSPSpec(OOPSpec, ABC):

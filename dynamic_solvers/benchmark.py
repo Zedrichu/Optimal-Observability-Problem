@@ -17,7 +17,7 @@ from typing import List, Dict, Any, Unpack
 from alive_progress import alive_bar
 from halo import Halo
 
-from dynamic_solvers.builders.types import OperationKWArgs
+from builders.typedicts import OperationKWArgs
 
 TIMEOUT = 90000
 

@@ -14,9 +14,9 @@ from typing import List, Tuple
 import z3
 from z3 import sat
 
-from dynamic_solvers.utils import convert_text_to_html
-from dynamic_solvers.TPMCSolver import TPMCSolver
-from dynamic_solvers.builders.TPMCFactory import TPMCFactory, variant_from_string, puzzle_from_string
+from utils import convert_text_to_html
+from TPMCSolver import TPMCSolver
+from builders.TPMCFactory import TPMCFactory, variant_from_string, puzzle_from_string
 
 VARIANT_CHOICES = ['ssp', 'pop']
 PUZZLE_CHOICES = ['line', 'grid', 'maze']
