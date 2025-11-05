@@ -7,7 +7,7 @@ from z3 import *
 
 def compute_placements(num_states: int, goal_state: int, budget: int) -> list[tuple[int, ...]]:
     placements = []
-    combinations = list(combine([i for i in range(num_states) if i < goal_state], min(budget, goal_state)))
+    combinations = list(combine([i for i in range(num_states) if i != goal_state], min(budget, goal_state)))
     # Only add unique placements (ignore symmetric ones)
     for combination in combinations:
         last_sensor = combination[-1]
