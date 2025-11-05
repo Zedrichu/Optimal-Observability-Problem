@@ -3,14 +3,14 @@ from placements.State import State
 
 class Heuristic:
     def h(self, state: State):
-        return state.g + self.f(state)
+        return self.f(state)
+        # return state.g + self.f(state)
 
     def f(self, state: State):
-        # return sum(state.bits)
         coverage = 0
         distance = self._sum_sensor_dist(state)
         proximity = self._dist_to_goal(state)
-        print(state, distance, proximity)
+
         return coverage + distance + proximity
 
     def _sum_sensor_dist(self, state: State) -> int:
@@ -23,7 +23,7 @@ class Heuristic:
             elif state.bits[i] == 1:
                 # TODO: count distance between sensors or number of sensor offs between sensors?
                 # i.e. i - last_found_pos vs i - last_found_pos - 1
-                sum += i - last_found_pos
+                sum += i - last_found_pos - 1
                 last_found_pos = i
         return sum
 
