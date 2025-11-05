@@ -1,5 +1,4 @@
-from abc import ABC, abstractmethod
-
+import random
 
 class State:
     def __init__(self, n: int, goal: int, bits: bytearray, g: int, parent = None):
@@ -24,6 +23,10 @@ class State:
             next_state = State(n=self.n, goal=self.goal, bits=next_bits, g=self.g + 1, parent=self)
             next_states.append(next_state)
         return next_states
+
+    def is_goal_state(self) -> bool:
+        # TODO: Solve POMDP here
+        return random.randint(1, 100) < 5
 
     def __str__(self):
         if self._str:
