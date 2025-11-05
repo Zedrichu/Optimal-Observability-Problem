@@ -1,6 +1,7 @@
 import heapq
 
 from placements.Heuristic import Heuristic
+from placements.State import State
 
 
 class Frontier:
