@@ -1,28 +1,12 @@
 from abc import ABC, abstractmethod
 
 
-class State(ABC):
-    def __init__(self):
-        pass
-
-    @abstractmethod
-    def get_next_states(self):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def __eq__(self, other) -> bool:
-        raise NotImplementedError()
-
-    @abstractmethod
-    def __hash__(self) -> int:
-        raise NotImplementedError()
-
-
-class Placement(State):
-    def __init__(self, n: int, bits: bytearray, g: int, parent: State | None = None):
+class State:
+    def __init__(self, n: int, goal: int, bits: bytearray, g: int, parent = None):
         super().__init__()
         self.n = n
         self.bits = bits
+        self.goal = goal
 
         self.parent = parent
         self.g = g
@@ -30,12 +14,14 @@ class Placement(State):
         self._str = ""
         self._hash = None
 
-    def get_next_states(self) -> list[State]:
+    def get_next_states(self) -> list:
         next_states = []
         for i in range(self.n):
+            if i == self.goal:
+                continue
             next_bits = self.bits[:]
             next_bits[i] ^= 1
-            next_state = Placement(n=self.n, bits=next_bits, g=self.g + 1, parent=self)
+            next_state = State(n=self.n, goal=self.goal, bits=next_bits, g=self.g + 1, parent=self)
             next_states.append(next_state)
         return next_states
 
@@ -47,7 +33,7 @@ class Placement(State):
         return self._str
 
     def __eq__(self, other):
-        if not isinstance(other, Placement):
+        if not isinstance(other, State):
             return False
         if self.n != other.n:
             return False
@@ -60,5 +46,8 @@ class Placement(State):
         if self._hash:
             return self._hash
         else:
-            self._hash = int(self.bits, 2)
+            self._hash = int(''.join(str(bit) for bit in self.bits), 2)
         return self._hash
+
+    def __lt__(self, other):
+        return self.__hash__() < other.__hash__()
