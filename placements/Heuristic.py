@@ -3,16 +3,17 @@ from placements.State import State
 
 class Heuristic:
     def h(self, state: State):
-        return self.f(state)
-        # return state.g + self.f(state)
+        return self.f(self, state)
 
+    @staticmethod
     def f(self, state: State):
-        coverage = 0
-        distance = self._sum_sensor_dist(state)
-        proximity = self._dist_to_goal(state)
+        coverage = -sum(state.bits)
+        distance = self._sum_sensor_dist(self, state)
+        proximity = self._dist_to_goal(self, state)
 
         return coverage + distance + proximity
 
+    @staticmethod
     def _sum_sensor_dist(self, state: State) -> int:
         sum = 0
         last_found_pos = -1
@@ -27,6 +28,7 @@ class Heuristic:
                 last_found_pos = i
         return sum
 
+    @staticmethod
     def _dist_to_goal(self, state: State) -> int:
         left, right = state.goal - 1, state.goal + 1
         while left >= 0 or right < state.n:

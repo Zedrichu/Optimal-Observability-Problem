@@ -1,5 +1,3 @@
-import random
-
 class State:
     def __init__(self, n: int, goal: int, bits: bytearray, g: int, parent = None):
         super().__init__()
@@ -25,8 +23,8 @@ class State:
         return next_states
 
     def is_goal_state(self) -> bool:
-        # TODO: Solve POMDP here
-        return random.randint(1, 100) < 5
+        # TODO: Add POMDP Solver here
+        return False
 
     def __str__(self):
         if self._str:
