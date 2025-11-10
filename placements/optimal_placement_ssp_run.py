@@ -2,7 +2,7 @@ import re
 import time
 
 from z3 import *
-from optimal_placement_ssp.optimal_placement_ssp_benchmark import GOAL_STATE, NUM_STATES, build_constraints, \
+from optimal_placement_ssp_benchmark import GOAL_STATE, NUM_STATES, build_constraints, \
      instance, BIN_SEARCH_LOW, BIN_SEARCH_HIGH
 
 if __name__ == "__main__":
