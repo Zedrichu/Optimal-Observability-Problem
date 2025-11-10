@@ -1,9 +1,9 @@
 from typing import Unpack
 
-from dynamic_solvers.builders.ssp.SSPSpec import SSPSpec
-from dynamic_solvers.builders.worlds import Maze
-from dynamic_solvers.utils import get_observation_marker
-from dynamic_solvers.builders.types import OperationKWArgs
+from builders.ssp.SSPSpec import SSPSpec
+from builders.worlds import Maze
+from utils import get_observation_marker
+from builders.typedicts import OperationKWArgs
 
 
 class MazeTPMC(Maze, SSPSpec):

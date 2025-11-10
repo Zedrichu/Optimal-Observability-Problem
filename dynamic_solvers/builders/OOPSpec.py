@@ -4,8 +4,8 @@ from typing import List, Optional, Literal, Callable
 from rich.console import Console
 from z3 import (Context, z3, Real, Q, Or, Sum, And, Not, Implies, PbEq)
 
-from dynamic_solvers.builders.worlds import World
-from dynamic_solvers.utils import parse_threshold
+from builders.worlds import World
+from utils import parse_threshold
 
 
 class OOPSpec(World, ABC):

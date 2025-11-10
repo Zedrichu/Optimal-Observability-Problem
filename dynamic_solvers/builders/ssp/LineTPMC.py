@@ -1,9 +1,9 @@
 from typing import Unpack
 
-from dynamic_solvers.builders.ssp.SSPSpec import SSPSpec
-from dynamic_solvers.builders.worlds import Line
-from dynamic_solvers.builders.types import OperationKWArgs
-from dynamic_solvers.utils import get_observation_marker
+from builders.ssp.SSPSpec import SSPSpec
+from builders.worlds import Line
+from builders.typedicts import OperationKWArgs
+from utils import get_observation_marker
 
 
 class LineTPMC(Line, SSPSpec):

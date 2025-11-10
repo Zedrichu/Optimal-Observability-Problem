@@ -1,15 +1,10 @@
 from enum import Enum, auto
 from typing import Unpack
 
-from dynamic_solvers.builders.types import DimensionKWArgs, OperationKWArgs, TPMCParams
-from dynamic_solvers.builders.OOPSpec import OOPSpec
-from dynamic_solvers.builders.pop.GridTPMC import GridTPMC as GridTPMCPOP
-from dynamic_solvers.builders.pop.LineTPMC import LineTPMC as LineTPMCPOP
-from dynamic_solvers.builders.pop.MazeTPMC import MazeTPMC as MazeTPMCPOP
-from dynamic_solvers.builders.ssp.GridTPMC import GridTPMC as GridTPMCSSP
-from dynamic_solvers.builders.ssp.LineTPMC import LineTPMC as LineTPMCSSP
-from dynamic_solvers.builders.ssp.MazeTPMC import MazeTPMC as MazeTPMCSSP
-
+from builders.typedicts import DimensionKWArgs, OperationKWArgs, TPMCParams
+from builders.OOPSpec import OOPSpec
+import builders.pop as pop
+import builders.ssp as ssp
 
 class OOPVariant(Enum):
     POP = auto(),
@@ -88,14 +83,14 @@ class TPMCFactory:
         # Dispatch to appropriate constructor based on problem variant and then puzzle type
         constructors = {
             OOPVariant.POP: {
-                PuzzleType.LINE: LineTPMCPOP,
-                PuzzleType.GRID: GridTPMCPOP,
-                PuzzleType.MAZE: MazeTPMCPOP
+                PuzzleType.LINE: pop.LineTPMC,
+                PuzzleType.GRID: pop.GridTPMC,
+                PuzzleType.MAZE: pop.MazeTPMC,
             },
             OOPVariant.SSP: {
-                PuzzleType.LINE: LineTPMCSSP,
-                PuzzleType.GRID: GridTPMCSSP,
-                PuzzleType.MAZE: MazeTPMCSSP
+                PuzzleType.LINE: ssp.LineTPMC,
+                PuzzleType.GRID: ssp.GridTPMC,
+                PuzzleType.MAZE: ssp.MazeTPMC,
             },
         }
         return constructors[oop_variant][puzzle_type](
