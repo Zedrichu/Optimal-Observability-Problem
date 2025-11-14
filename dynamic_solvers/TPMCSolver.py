@@ -6,6 +6,7 @@ from z3 import (set_option, Solver, Context,
 
 from ResultOOP import ResultOOP
 from builders.OOPSpec import OOPSpec
+from builders.POMDPSpec import POMDPAdapter
 
 
 class TPMCSolver:
@@ -15,6 +16,7 @@ class TPMCSolver:
     def __init__(self, ctx: Context, verbose: bool):
         self.verbose = verbose
         self.solver = Solver(ctx=ctx)
+        self.exp_rew_formula = None
         # Set global Z3 options (call once per solver instance)
         set_option(max_args=1000000, max_lines=100000000)
 
@@ -49,10 +51,58 @@ class TPMCSolver:
 
         return result[0] if len(result) > 0 else unknown
 
-    def solve(self, tpmc: OOPSpec, threshold: str, timeout_ms: int) -> ResultOOP:
-        tpmc.declare_variables()
-        tpmc_constraints = tpmc.collect_constraints(threshold)
-        self.solver.add(tpmc_constraints)
+    def prepare_constraints(self, spec: OOPSpec | POMDPAdapter, threshold: str):
+        """
+        Prepare constraints for either tpMC synthesis or POMDP evaluation.
+
+        Args:
+            spec: Either an OOPSpec (tpMC) or POMDPAdapter (POMDP)
+            threshold: Threshold constraint string (e.g., "<= 10")
+        """
+        if isinstance(spec, POMDPAdapter):
+            # POMDP mode: only add observation-independent constraints
+            # Bellman equations will be added per observation function via add_pomdp_observation()
+
+            base_constraints = spec.build_y_independent_constraints(threshold)
+        else:
+            # tpMC mode: add all constraints (including observation synthesis)
+            spec.declare_variables()
+            base_constraints = spec.collect_constraints(threshold)
+        self.exp_rew_formula = spec.exp_rew_evaluator
+        self.solver.add(base_constraints)
+
+    def evaluate_pomdp(self, pomdp: POMDPAdapter, obs_function: list[int], timeout_ms: int) -> ResultOOP:
+        """
+        Evaluate a POMDP with a specific observation function using push/pop.
+
+        This is more efficient than creating a new solver for each observation function.
+
+        Args:
+            pomdp: The POMDPAdapter instance (must have had prepare_constraints called)
+            obs_function: The observation function to evaluate
+            timeout_ms: Solver timeout in milliseconds
+
+        Returns:
+            ResultOOP with solve time, result, reward, and model
+        """
+        # Push a new scope
+        self.solver.push()
+
+        try:
+            # Add Bellman constraints for this observation function
+            bellman_constraints = pomdp.collect_bellman_constraints(obs_function)
+            self.solver.add(bellman_constraints)
+
+            # Solve
+            result = self.solve(timeout_ms)
+
+            return result
+
+        finally:
+            # Pop the scope (removes observation-specific constraints)
+            self.solver.pop()
+
+    def solve(self, timeout_ms: int) -> ResultOOP:
 
         if self.verbose:
             print(" ⚡  Solving...")
@@ -70,15 +120,13 @@ class TPMCSolver:
             if self.verbose:
                 print(' ✅  Solution found!')
             model = self.solver.model()
-            reward = model.eval(tpmc.exp_rew_evaluator)
+            reward = model.eval(self.exp_rew_formula)
         elif result == unsat:
             if self.verbose:
                 print(' ❌  No solution!')
         else:
             if self.verbose:
                 print(' ❔  Unknown!')
-
-        self.cleanup()
 
         return ResultOOP(
             solve_time=solve_time,

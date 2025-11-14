@@ -14,6 +14,7 @@ from typing import List, Tuple
 import z3
 from z3 import sat
 
+from builders.POMDPSpec import POMDPAdapter
 from utils import convert_text_to_html
 from TPMCSolver import TPMCSolver
 from builders.TPMCFactory import TPMCFactory, variant_from_string, puzzle_from_string
@@ -136,6 +137,13 @@ Examples:
         help='Solver timeout in milliseconds (default: 30000)'
     )
 
+    solver_group.add_argument(
+        '--pomdp',
+        type=int,
+        nargs='+',
+        help='Observation function as space-separated integers (e.g., --pomdp 1 0 1 -1 0 1)'
+    )
+
     # Output options
     output_group = parser.add_argument_group('Output Options')
     output_group.add_argument(
@@ -250,7 +258,14 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
     solver.set_timeout(args.timeout)
 
     # Solve and get results
-    result = solver.solve(tpmc_instance, args.threshold, args.timeout)
+    if args.pomdp is not None:
+        adapter = POMDPAdapter(tpmc_instance)
+        solver.prepare_constraints(adapter, args.threshold)
+        result = solver.evaluate_pomdp(adapter, args.pomdp, args.timeout)
+    else:
+        solver.prepare_constraints(tpmc_instance, args.threshold)
+        result = solver.solve(args.timeout)
+        solver.cleanup()
 
     if not benchmark:
         # Report results
