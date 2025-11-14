@@ -71,11 +71,7 @@ class TPMCSolver:
         self.exp_rew_formula = spec.exp_rew_evaluator
         self.solver.add(base_constraints)
 
-<<<<<<< HEAD
     def evaluate_pomdp(self, pomdp: POMDPAdapter, obs_function: list[int], timeout_ms: int) -> Z3SolverResult:
-=======
-    def evaluate_pomdp(self, pomdp: POMDPAdapter, obs_function: list[int], timeout_ms: int) -> ResultOOP:
->>>>>>> c22e103 (Reorganized runner/solver to allow evaluating POMDP instances)
         """
         Evaluate a POMDP with a specific observation function using push/pop.
 
@@ -91,10 +87,7 @@ class TPMCSolver:
         """
         # Push a new scope
         self.solver.push()
-<<<<<<< HEAD
         assert len(obs_function) == pomdp.size
-=======
->>>>>>> c22e103 (Reorganized runner/solver to allow evaluating POMDP instances)
 
         try:
             # Add Bellman constraints for this observation function
@@ -110,12 +103,7 @@ class TPMCSolver:
             # Pop the scope (removes observation-specific constraints)
             self.solver.pop()
 
-<<<<<<< HEAD
     def solve(self, timeout_ms: int) -> Z3SolverResult:
-=======
-    def solve(self, timeout_ms: int) -> ResultOOP:
->>>>>>> c22e103 (Reorganized runner/solver to allow evaluating POMDP instances)
-
         if self.verbose:
             print(" ⚡  Solving...")
             print()
@@ -140,11 +128,7 @@ class TPMCSolver:
             if self.verbose:
                 print(' ❔  Unknown!')
 
-<<<<<<< HEAD
         return Z3SolverResult(
-=======
-        return ResultOOP(
->>>>>>> c22e103 (Reorganized runner/solver to allow evaluating POMDP instances)
             solve_time=solve_time,
             result=result,
             reward=reward,
