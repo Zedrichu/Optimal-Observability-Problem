@@ -87,6 +87,7 @@ class TPMCSolver:
         """
         # Push a new scope
         self.solver.push()
+        assert len(obs_function) == pomdp.size
 
         try:
             # Add Bellman constraints for this observation function

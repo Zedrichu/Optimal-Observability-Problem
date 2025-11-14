@@ -261,6 +261,9 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
     if args.pomdp is not None:
         adapter = POMDPAdapter(tpmc_instance)
         solver.prepare_constraints(adapter, args.threshold)
+
+        # Play with large POMDP assignments here
+        # vector_y = ([0] * (args.width - 1) + [1]) * (args.height - 1) + ([0] * (args.width - 1) + [-1])
         result = solver.evaluate_pomdp(adapter, args.pomdp, args.timeout)
     else:
         solver.prepare_constraints(tpmc_instance, args.threshold)
