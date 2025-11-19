@@ -1,0 +1,177 @@
+import numpy as np
+from z3 import sat, unsat, unknown
+
+from dynamic_solvers.TPMCSolver import TPMCSolver
+from dynamic_solvers.builders.POMDPSpec import POMDPAdapter
+
+
+class CEMAgent:
+    """Cross-Entropy Method agent for POP observation assignment learning."""
+
+    def __init__(self, goal: int, n_states: int, n_classes: int,
+                 elite_frac: float = 0.2, smoothing: float = 0.1):
+        """
+        Args:
+            goal: Goal state index
+            n_states: Number of states
+            n_classes: Number of observation classes (budget)
+            elite_frac: Fraction of samples to use as elites (top performers)
+            smoothing: Exponential smoothing factor for theta updates (0=no smoothing, 1=no update)
+        """
+        self.n = n_states
+        self.goal = goal
+        self.k = n_classes
+        self.elite_frac = elite_frac
+        self.smoothing = smoothing
+
+        # theta[i, c] = logit for observation class c at state i
+        # Initialize uniform
+        self.theta = np.zeros((n_states, n_classes), dtype=float)
+
+    def softmax(self, logits):
+        """Numerically stable softmax."""
+        e = np.exp(logits - np.max(logits))
+        return e / np.sum(e)
+
+    def get_probs(self):
+        """Get current probability distribution for all states."""
+        probs = np.zeros((self.n, self.k))
+        for i in range(self.n):
+            if i != self.goal:
+                probs[i] = self.softmax(self.theta[i])
+        return probs
+
+    def sample(self):
+        """Sample single observation assignment Y."""
+        Y = []
+        for i in range(self.n):
+            if i == self.goal:
+                Y.append(-1)
+            else:
+                probs = self.softmax(self.theta[i])
+                Y.append(np.random.choice(self.k, p=probs))
+        return Y
+
+    def sample_batch(self, batch_size: int):
+        """Sample batch of observation assignments."""
+        return [self.sample() for _ in range(batch_size)]
+
+    def update_from_elites(self, elite_samples: list[list[int]]):
+        """
+        Update theta to maximize likelihood of elite samples.
+
+        Args:
+            elite_samples: List of Y assignments that performed best
+        """
+        # Count observations per state in elite samples
+        counts = np.zeros((self.n, self.k))
+
+        for Y in elite_samples:
+            for i in range(self.n):
+                if i != self.goal:
+                    counts[i, Y[i]] += 1
+
+        # Convert counts to probabilities (MLE)
+        new_probs = np.zeros((self.n, self.k))
+        for i in range(self.n):
+            if i != self.goal:
+                total = counts[i].sum()
+                if total > 0:
+                    new_probs[i] = counts[i] / total
+                else:
+                    # No elite samples for this state, keep uniform
+                    new_probs[i] = np.ones(self.k) / self.k
+
+        # Convert probabilities back to logits (inverse softmax)
+        # Use log probabilities as logits (up to constant)
+        new_theta = np.log(new_probs + 1e-10)  # Add small epsilon for numerical stability
+
+        # Smooth update: theta_new = (1-α)*theta_new + α*theta_old
+        self.theta = (1 - self.smoothing) * new_theta + self.smoothing * self.theta
+
+
+def train_cem(agent: CEMAgent, oracle: TPMCSolver, pomdp: POMDPAdapter,
+              iterations: int = 50, batch_size: int = 20, timeout: int = 10000,
+              penalty_unsat: float = -50, penalty_timeout: float = -100):
+    """
+    Train CEM agent with batched oracle evaluation.
+
+    Args:
+        agent: CEMAgent instance
+        oracle: TPMCSolver instance
+        pomdp: POMDPAdapter instance
+        iterations: Number of CEM iterations
+        batch_size: Number of samples per iteration
+        timeout: Oracle timeout in milliseconds
+        penalty_unsat: Penalty for UNSAT
+        penalty_timeout: Penalty for timeout
+
+    Returns:
+        Trained agent and statistics
+    """
+    n_elites = max(1, int(batch_size * agent.elite_frac))
+
+    stats = {
+        'sat': 0, 'unsat': 0, 'timeout': 0,
+        'best_reward': float('-inf'), 'best_Y': None,
+        'history': []
+    }
+
+    for iteration in range(iterations):
+        # Sample batch
+        samples = agent.sample_batch(batch_size)
+        rewards = []
+
+        # Evaluate all samples
+        for Y in samples:
+            result = oracle.evaluate_pomdp(pomdp, Y, timeout)
+
+            if result.result == sat:
+                reward = float(result.reward.as_fraction())
+                stats['sat'] += 1
+                if reward > stats['best_reward']:
+                    stats['best_reward'] = reward
+                    stats['best_Y'] = Y.copy()
+            elif result.result == unsat:
+                reward = penalty_unsat
+                stats['unsat'] += 1
+            else:
+                reward = penalty_timeout
+                stats['timeout'] += 1
+
+            rewards.append(reward)
+
+        # Select elite samples (top performers)
+        elite_indices = np.argsort(rewards)[-n_elites:]
+        elite_samples = [samples[i] for i in elite_indices]
+        elite_rewards = [rewards[i] for i in elite_indices]
+
+        # Update distribution based on elites
+        agent.update_from_elites(elite_samples)
+
+        # Logging
+        mean_reward = np.mean(rewards)
+        elite_mean = np.mean(elite_rewards)
+
+        stats['history'].append({
+            'iteration': iteration,
+            'mean_reward': mean_reward,
+            'elite_mean': elite_mean,
+            'best_reward': max(rewards)
+        })
+
+        print(f"Iter {iteration:03d} | Mean={mean_reward:7.2f} Elite={elite_mean:7.2f} "
+              f"Best={max(rewards):7.2f} | SAT={stats['sat']:3d} UNSAT={stats['unsat']:2d} "
+              f"TO={stats['timeout']:2d}")
+
+    # Final summary
+    print("\n" + "="*80)
+    print("CEM Training Complete")
+    print(f"Total evaluations: {iterations * batch_size}")
+    print(f"SAT:     {stats['sat']:4d} ({stats['sat']/(iterations*batch_size)*100:.1f}%)")
+    print(f"UNSAT:   {stats['unsat']:4d} ({stats['unsat']/(iterations*batch_size)*100:.1f}%)")
+    print(f"TIMEOUT: {stats['timeout']:4d} ({stats['timeout']/(iterations*batch_size)*100:.1f}%)")
+    print(f"Best reward: {stats['best_reward']:.3f}")
+    print("="*80)
+
+    return agent, stats
