@@ -69,7 +69,7 @@ class IndexStorage:
                 # Goal state constraint
                 constraints.append(self.storage[state])
             else:
-                # Non-goal state: retrieve constraints for this observation
+                # Non-goal state: retrieve constraints focusing on observations
                 state_constraints = self.storage[state][obs]
 
                 # Handle both single constraint and list of constraints
