@@ -7,7 +7,7 @@ from z3 import *
 
 # Hyperparameters
 NUM_STATES = 15
-GOAL_STATE = (NUM_STATES - 1)//2 - 1
+GOAL_STATE = (NUM_STATES - 1)//2
 BUDGET = min(GOAL_STATE, NUM_STATES - 1 - GOAL_STATE)
 
 BIN_SEARCH_LOW = BUDGET//2
@@ -113,7 +113,7 @@ def benchmark():
         if i == 0:
             if len(sats) == 0:
                 print("No solutions found in first search. Try again with a larger BIN_SEARCH_LOW value.")
-                exit(1)
+                return
             else:
                 placements_to_ignore = set(unsats)
         else:
