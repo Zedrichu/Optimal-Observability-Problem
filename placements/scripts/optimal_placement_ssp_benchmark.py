@@ -1,38 +1,19 @@
 import time
 from enum import Enum
-from itertools import combinations as combine
+from itertools import combinations
 
 from z3 import *
 
 
-def compute_placements(num_states: int, goal_state: int, budget: int) -> list[tuple[int, ...]]:
-    placements = []
-    combinations = list(combine([i for i in range(num_states) if i != goal_state], min(budget, goal_state)))
-    # Only add unique placements (ignore symmetric ones)
-    for combination in combinations:
-        last_sensor = combination[-1]
-        dist_to_end = num_states - last_sensor - 1
-        first_sensor = combination[0]
-        if last_sensor < goal_state or first_sensor <= dist_to_end:
-            placements.append(combination)
-    return placements
-
 # Hyperparameters
 NUM_STATES = 15
-GOAL_STATE = (NUM_STATES - 1)//2
-N = (NUM_STATES - 1)//2
-BUDGET = N - 1
+GOAL_STATE = (NUM_STATES - 1)//2 - 1
+BUDGET = min(GOAL_STATE, NUM_STATES - 1 - GOAL_STATE)
 
-if BUDGET < 1:
-    print("ERROR: BUDGET must be greater than 1")
-    print(f"NUM_STATES={NUM_STATES}, GOAL_STATE={GOAL_STATE}, N={N}, BUDGET={BUDGET}")
+BIN_SEARCH_LOW = BUDGET//2
+BIN_SEARCH_HIGH = NUM_STATES
 
-    exit(1)
-
-BIN_SEARCH_LOW = N*(N+1)/2/N + (N - BUDGET)
-BIN_SEARCH_HIGH = 2*BIN_SEARCH_LOW + (N - BUDGET)
-
-PLACEMENTS = compute_placements(NUM_STATES, GOAL_STATE, BUDGET)
+PLACEMENTS = list(combinations([i for i in range(NUM_STATES) if i != GOAL_STATE], BUDGET))
 
 actions = ['l', 'r']
 
@@ -88,32 +69,6 @@ def build_constraints(states_on: list[int], threshold: ArithRef | float):
 
     return constraints
 
-def wrap_timeout_check(solver: Solver, timeout_ms: int):
-    import threading
-    result = []
-
-    def check_wrapper():
-        try:
-            result.append(solver.check())
-        except:
-            result.append(unknown)
-
-    thread = threading.Thread(target=check_wrapper, daemon=True)
-    thread.start()
-    thread.join(timeout_ms / 1000.0)
-
-    if thread.is_alive():
-        # Signal Z3 to interrupt its computation
-        try:
-            solver.interrupt()
-            thread.join(timeout=2.0)  # Give Z3 time to cleanup gracefully
-        except:
-            del thread
-            pass  # If interrupt fails, daemon thread won't block process exit
-        return unknown
-
-    return result[0] if len(result) > 0 else unknown
-
 def solve(states_on: list[int], threshold: ArithRef) -> Result:
     print(f"Solving for {instance(states_on, threshold)}")
     constraints = build_constraints(states_on, threshold)
@@ -131,8 +86,6 @@ def solve(states_on: list[int], threshold: ArithRef) -> Result:
     return result
 
 def benchmark():
-    print()
-
     placements_to_ignore = set()
 
     max_iterations = 100
@@ -141,6 +94,7 @@ def benchmark():
     high = BIN_SEARCH_HIGH
 
     for i in range(max_iterations):
+        print()
         threshold = (low + high) / 2
         print(f"Iteration {i + 1}: \u03C4 = {threshold} (low = {low}, high = {high})")
 
@@ -166,13 +120,13 @@ def benchmark():
             if len(sats) > 0:
                 [placements_to_ignore.add(r) for r in unsats]
         if len(sats) == 0:
-            print("No SATs, increasing threshold")
+            print("No SATs, increasing threshold.")
             low = threshold
         elif len(sats) == 1:
             print(f"The optimal sensor placement is ({", ".join([f"@s{s}" for s in PLACEMENTS[sats[0]]])})")
             break
         elif len(sats) > 1:
-            print(f"{len(sats)} SAT(s) found, decreasing threshold")
+            print(f"{len(sats)} SAT(s) found, decreasing threshold.")
             high = threshold
         if high - low < tolerance:
             print(f"The search bounds of the binary search have converged.")
@@ -180,7 +134,7 @@ def benchmark():
 
 if __name__ == "__main__":
     print("Running benchmark with the following hyperparameters:")
-    print(f"NUM_STATES={NUM_STATES}, GOAL_STATE={GOAL_STATE}, N={N}, BUDGET={BUDGET}")
+    print(f"NUM_STATES={NUM_STATES}, GOAL_STATE={GOAL_STATE}, BUDGET={BUDGET}")
     print(f"BIN_SEARCH_LOW={BIN_SEARCH_LOW}, BIN_SEARCH_HIGH={BIN_SEARCH_HIGH}")
     print(f"PLACEMENTS={len(PLACEMENTS)}")
 
@@ -191,6 +145,6 @@ if __name__ == "__main__":
 
     print(f"Benchmarked in {(end_tme - start_time):.2f}s")
     print("Ran benchmark with the following hyperparameters:")
-    print(f"NUM_STATES={NUM_STATES}, GOAL_STATE={GOAL_STATE}, N={N}, BUDGET={BUDGET}")
+    print(f"NUM_STATES={NUM_STATES}, GOAL_STATE={GOAL_STATE}, BUDGET={BUDGET}")
     print(f"BIN_SEARCH_LOW={BIN_SEARCH_LOW}, BIN_SEARCH_HIGH={BIN_SEARCH_HIGH}")
     print(f"PLACEMENTS={len(PLACEMENTS)}")
