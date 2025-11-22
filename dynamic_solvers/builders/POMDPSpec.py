@@ -2,7 +2,6 @@ from typing import List
 
 from z3 import z3, Implies, Sum
 
-from builders import OOPSpec
 from builders.IndexStorage import IndexStorage
 from builders.TPMCFactory import OOPVariant
 from builders.pop.POPSpec import POPSpec

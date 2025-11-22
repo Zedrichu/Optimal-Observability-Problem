@@ -17,7 +17,7 @@ from z3 import sat
 from builders.POMDPSpec import POMDPAdapter
 from utils import convert_text_to_html
 from TPMCSolver import TPMCSolver
-from builders.TPMCFactory import TPMCFactory, variant_from_string, puzzle_from_string
+from builders.TPMCFactory import TPMCFactory
 
 VARIANT_CHOICES = ['ssp', 'pop']
 PUZZLE_CHOICES = ['line', 'grid', 'maze']
@@ -235,14 +235,11 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
               f"\n"
         )
 
-    # Convert strings to enums, after which all comparisons are integer-based
-    variant = variant_from_string(args.variant)
-    world = puzzle_from_string(args.world)
-    order_constraints = list(map(int, args.order_constraints.split(","))) if args.order_constraints else args.order_constraints
+    args.order_constraints = list(map(int, args.order_constraints.split(","))) if args.order_constraints else args.order_constraints
 
     # Create a problem instance in location tpMC representation
-    # Factory handles parameter selection - client runner just passes everything
-    tpmc_instance = TPMCFactory.create(variant, world,
+    # Factory handles parameter selection - client runner just passes everything (now with enum types)
+    tpmc_instance = TPMCFactory.create(args.variant, args.world,
                                        length=args.length,
                                        width=args.width,
                                        height=args.height,
@@ -251,7 +248,7 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
                                        determinism=args.deterministic,
                                        bellman_format=args.bellman_format,
                                        bool_encoding=not args.real_encoding,
-                                       order_constraints=order_constraints,
+                                       order_constraints=args.order_constraints,
                                        verbose=args.verbose)
     solver = TPMCSolver(tpmc_instance.ctx, verbose=not benchmark)
     # Configure solver timeout

@@ -17,7 +17,7 @@ from typing import List, Dict, Any, Unpack
 from alive_progress import alive_bar
 from halo import Halo
 
-from builders.typedicts import OperationKWArgs
+from builders.typedicts import ExtOperationParams
 
 TIMEOUT = 90000
 
@@ -36,7 +36,7 @@ class BenchmarkConfig(argparse.Namespace):
     timeout: int = TIMEOUT
 
 
-def _instance_worker(config: BenchmarkConfig, result_queue: Queue, hyperparams: OperationKWArgs):
+def _instance_worker(config: BenchmarkConfig, result_queue: Queue, hyperparams: ExtOperationParams):
     """Worker function to run a single instance loaded from the configuration.
      The solver runs in an isolated process, publishing results to the queue.
      Process-specific code with multiprocessing patterns for fresh state and proper cleanup.
@@ -44,15 +44,12 @@ def _instance_worker(config: BenchmarkConfig, result_queue: Queue, hyperparams: 
     try:
         # Import here to ensure fresh imports in a new process
         from TPMCSolver import TPMCSolver
-        from builders.TPMCFactory import TPMCFactory, variant_from_string, puzzle_from_string
-
-        # Convert strings to enums
-        variant = variant_from_string(config.variant)
-        world = puzzle_from_string(config.world)
+        from builders.TPMCFactory import TPMCFactory
 
         # Create TPMC instance based on configuration & operational hyperparameters
+        # Factory handles string-to-enum conversion at the API boundary
         tpmc_instance = TPMCFactory.create(
-            variant, world,
+            config.variant, config.world,
             length=config.length,
             width=config.width,
             height=config.height,
@@ -231,7 +228,7 @@ class BenchmarkRunner:
     """Benchmarking unit using existing dynamic_solvers infrastructure."""
 
     def __init__(self, output_csv: str = "benchmark_results.csv", benchmark_verbose: bool = False,
-                 trials: int = 1, **hyperparams: Unpack[OperationKWArgs]):
+                 trials: int = 1, **hyperparams: Unpack[ExtOperationParams]):
         self.output_csv = output_csv
         self.results: List[Dict[str, Any]] = []
         self.verbose = benchmark_verbose

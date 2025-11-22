@@ -5,6 +5,7 @@ from typing import List, override
 from z3 import z3, Real, Or, Sum, And, Implies, Not, PbEq
 
 from builders.OOPSpec import OOPSpec
+from builders.enums import Precision, BellmanFormat
 from utils import init_var_type
 
 
@@ -48,6 +49,7 @@ class SSPSpec(OOPSpec, ABC):
         self.console.print(sensor_to_action)
         return sensor_to_action
 
+    @override
     def _compute_state_bellman_bool_det(self, state: int, sensor: int) -> List[z3.BoolRef]:
         equations = []
         for a in range(len(self.actions)):
@@ -66,6 +68,7 @@ class SSPSpec(OOPSpec, ABC):
             equations.append(Implies(activation, reward_relation, self.ctx))
         return equations
 
+    @override
     def _compute_state_bellman_bool_rand(self, state: int, sensor: int) -> List[z3.BoolRef]:
         equations = []
 
@@ -88,7 +91,7 @@ class SSPSpec(OOPSpec, ABC):
     @override
     def initialize_terms(self) -> list[int]:
         """For SSP instances w/o determinism use adapted Bellman equation format."""
-        if self.bellman_format == 'default':
+        if self.bellman_format is BellmanFormat.DEFAULT:
             return [] if not self.determinism else [1]
         return super().initialize_terms()
 
@@ -96,7 +99,7 @@ class SSPSpec(OOPSpec, ABC):
     def build_destination_rew(self, next_state: int) -> z3.ArithRef:
         """For SSP instances w/o determinism adapt Bellman equations.
         Add reward of single transition (1) to the next state's expected reward towards the goal."""
-        if self.bellman_format == 'default':
+        if self.bellman_format is BellmanFormat.DEFAULT:
             return 1 + self.ExpRew[next_state] if not self.determinism else self.ExpRew[next_state]
         return super().build_destination_rew(next_state)
 
