@@ -4,6 +4,8 @@ import builders.pop as pop
 import builders.ssp as ssp
 from builders.OOPSpec import OOPSpec
 from builders.enums import OOPVariant, PuzzleType
+from builders.ssp.SSPSpec import SSPSpec
+from builders.pop.POPSpec import POPSpec
 from builders.typedicts import DimensionKWArgs, OperationKWArgs, TPMCParams
 
 
@@ -34,7 +36,7 @@ class TPMCFactory:
     The creational method accepts keyword arguments declared by `TPMCParams`."""
 
     @staticmethod
-    def create(oop_variant: OOPVariant, puzzle_type: PuzzleType, **kwargs: Unpack[TPMCParams]) -> OOPSpec:
+    def create(oop_variant: OOPVariant, puzzle_type: PuzzleType, **kwargs: Unpack[TPMCParams]) -> SSPSpec | POPSpec:
         """
         Factory method that handles parameter selection and object creation based on variant and world.
         Client only needs to pass all available parameters; factory filters what's needed.

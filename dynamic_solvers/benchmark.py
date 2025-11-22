@@ -43,8 +43,8 @@ def _instance_worker(config: BenchmarkConfig, result_queue: Queue, hyperparams: 
      """
     try:
         # Import here to ensure fresh imports in a new process
-        from dynamic_solvers.TPMCSolver import TPMCSolver
-        from dynamic_solvers.builders.TPMCFactory import TPMCFactory, variant_from_string, puzzle_from_string
+        from TPMCSolver import TPMCSolver
+        from builders.TPMCFactory import TPMCFactory, variant_from_string, puzzle_from_string
 
         # Convert strings to enums
         variant = variant_from_string(config.variant)
@@ -67,7 +67,9 @@ def _instance_worker(config: BenchmarkConfig, result_queue: Queue, hyperparams: 
         solver.set_timeout(config.timeout)
 
         # Solve the tpMC instance with a given threshold, determinism flag and timeout
-        result = solver.solve(tpmc_instance, config.threshold, config.timeout)
+        solver.prepare_constraints(tpmc_instance, config.threshold)
+        result = solver.solve(config.timeout)
+        solver.cleanup()
 
         # Determine status
         result_status = str(result.result).upper()
