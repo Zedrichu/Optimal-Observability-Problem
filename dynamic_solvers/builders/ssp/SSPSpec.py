@@ -132,12 +132,12 @@ class SSPSpec(OOPSpec, ABC):
         is_relaxed = (self.precision is Precision.RELAXED)
 
         if self.bool_encoding:
-            if is_relaxed:
-                # Cardinality constraint <= B w/ pseudo-booleans
-                constraint = PbLe([(y, 1) for y in self.Y], self.budget)
-            else:
-                # Cardinality constraint equal B w/ pseudo-booleans (more performant than If(y,1,0) summation)
-                constraint = PbEq([(y, 1) for y in self.Y], self.budget, self.ctx)
+            # When working with the pseudo-boolean dedicated solver, we should enforce reward monotonicity
+            # Take full benefit in the distinguishability power of the full observation budget
+            # constraint = PbLe([(y, 1) for y in self.Y], self.budget) # ❌ worse performance
+
+            # Cardinality constraint equal B w/ pseudo-booleans (more performant than If(y,1,0) summation)
+            constraint = PbEq([(y, 1) for y in self.Y], self.budget, self.ctx)
         else:
             if is_relaxed:
                 # Relax budget in combination with Bellman-Invariance relaxation
