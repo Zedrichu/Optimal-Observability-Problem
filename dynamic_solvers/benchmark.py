@@ -409,6 +409,9 @@ def main():
     parser.add_argument('--bellman-format', '-bf', type=str, choices=['default', 'common', 'adapted'], default='default',
         help='Bellman equation format: "default" (variant-specific), "common" (with stay-in-place), "adapted" (without stay-in-place)'
     )
+    parser.add_argument('--precision', '-p', type=str, choices=['strict', 'relaxed'], default='relaxed',
+        help='Constraint precision mode: "strict" (equality == for optimal solutions), "relaxed" (inequality >= for Bellman, <= for budget, finding invariants)'
+    )
     parser.add_argument('--real-encoding', '-re', action='store_true', help='Encoding of TPMC parameters as real variables (slow performance)')
     parser.add_argument('--order-constraints', '-order', type=str,
         help='Comma-separated order of assertion of HL constraint groups for OOP instances. Should be a permutation of 0,1,2,3'
@@ -425,11 +428,12 @@ def main():
             sys.exit(1)
 
         print(f"\nHyperparameters:\n"
-              f"   Bellman format -> {args.bellman_format}\n"
-              f"   Encoding       -> {"Real" if args.real_encoding else "Boolean"}\n"
-              f"   Trials no.     -> {args.trials}\n"
-              f"   Verbose output -> {"✅" if args.verbose else "❌"}\n"
-              f"   Ordering       -> {args.order_constraints if args.order_constraints else "default"}")
+              f"   Bellman format       -> {args.bellman_format}\n"
+              f"   Optimality Precision -> {args.precision}\n"
+              f"   Encoding             -> {"Real" if args.real_encoding else "Boolean"}\n"
+              f"   Trials no.           -> {args.trials}\n"
+              f"   Verbose output       -> {"✅" if args.verbose else "❌"}\n"
+              f"   Ordering             -> {args.order_constraints if args.order_constraints else "default"}")
 
         # Check that all config files exist
         for config_file in args.config_csv:
@@ -453,6 +457,7 @@ def main():
             args.output, args.verbose, args.trials,
             verbose=False,
             bellman_format=args.bellman_format,
+            precision=args.precision,
             bool_encoding=not args.real_encoding,
             order_constraints=order_constraints,
         )

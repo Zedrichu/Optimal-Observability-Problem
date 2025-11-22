@@ -2,7 +2,7 @@ from abc import ABC
 from itertools import chain
 from typing import List, override
 
-from z3 import z3, Real, Or, Sum, And, Implies, Not, PbEq
+from z3 import z3, Or, Sum, And, Implies, Not, PbEq, PbLe
 
 from builders.OOPSpec import OOPSpec
 from builders.enums import Precision, BellmanFormat
@@ -51,10 +51,13 @@ class SSPSpec(OOPSpec, ABC):
 
     @override
     def _compute_state_bellman_bool_det(self, state: int, sensor: int) -> List[z3.BoolRef]:
+        is_relaxed = (self.precision is Precision.RELAXED)
         equations = []
+
         for a in range(len(self.actions)):
             next_state = self.navigate(state, a)
-            reward_relation = self.ExpRew[state] == 1 + self.ExpRew[next_state]
+            reward_relation = (self.ExpRew[state] >= 1 + self.ExpRew[next_state] if is_relaxed
+                                else self.ExpRew[state] == 1 + self.ExpRew[next_state])
 
             # Next state activation -> reward computation with next state expected reward
             # TODO!: Disjunction of activations in implication lhs. for streamlining
@@ -70,17 +73,24 @@ class SSPSpec(OOPSpec, ABC):
 
     @override
     def _compute_state_bellman_bool_rand(self, state: int, sensor: int) -> List[z3.BoolRef]:
+        is_relaxed = (self.precision is Precision.RELAXED)
         equations = []
 
         # Weighted next-state rewards for activated sensor
-        weighted_rewards = Sum([self.X[sensor][a] * self.ExpRew[self.navigate(state, a)]
-                                for a in range(len(self.actions))])
-        equations.append(Implies(self.Y[sensor], self.ExpRew[state] == 1 + weighted_rewards, self.ctx))
+        weighted_rewards_on = Sum([self.X[sensor][a] * self.ExpRew[self.navigate(state, a)]
+                                   for a in range(len(self.actions))])
+        equations.append(Implies(self.Y[sensor],
+                                self.ExpRew[state] >= 1 + weighted_rewards_on if is_relaxed
+                                else self.ExpRew[state] == 1 + weighted_rewards_on,
+                                self.ctx))
 
         # Weighted next-state rewards for deactivated sensor (default observation)
-        weighted_rewards = Sum([self.X[-1][a] * self.ExpRew[self.navigate(state, a)]
-                                for a in range(len(self.actions))])
-        equations.append(Implies(Not(self.Y[sensor], self.ctx), self.ExpRew[state] == 1 + weighted_rewards, self.ctx))
+        weighted_rewards_off = Sum([self.X[-1][a] * self.ExpRew[self.navigate(state, a)]
+                                    for a in range(len(self.actions))])
+        equations.append(Implies(Not(self.Y[sensor], self.ctx),
+                                self.ExpRew[state] >= 1 + weighted_rewards_off if is_relaxed
+                                else self.ExpRew[state] == 1 + weighted_rewards_off,
+                                self.ctx))
 
         return equations
 
@@ -119,11 +129,22 @@ class SSPSpec(OOPSpec, ABC):
         # Budget constraint - total sensors used <= budget
         self.console.print("\n# Budget constraint - total no. of sensors activated <= budget")
 
+        is_relaxed = (self.precision is Precision.RELAXED)
+
         if self.bool_encoding:
-            # Cardinality constraint equal B w/ pseudo-booleans (more performant than If(y,1,0) summation)
-            constraint = PbEq([(y, 1) for y in self.Y], self.budget, self.ctx)
+            if is_relaxed:
+                # Cardinality constraint <= B w/ pseudo-booleans
+                constraint = PbLe([(y, 1) for y in self.Y], self.budget)
+            else:
+                # Cardinality constraint equal B w/ pseudo-booleans (more performant than If(y,1,0) summation)
+                constraint = PbEq([(y, 1) for y in self.Y], self.budget, self.ctx)
         else:
-            constraint = Sum(self.Y) == self.budget # TODO!: Check whether == or <= works better ? original mentions == budget
+            if is_relaxed:
+                # Relax budget in combination with Bellman-Invariance relaxation
+                # Not enforcing information monotonicity for rewards - ignore the distinguishability power of obs. functions
+                constraint = Sum(self.Y) <= self.budget
+            else:
+                constraint = Sum(self.Y) == self.budget
 
         self.console.print(constraint)
         return constraint

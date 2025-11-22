@@ -87,3 +87,31 @@ class BellmanFormat(Enum):
         if s_lower not in mapping:
             raise ValueError(f"Invalid bellman_format: {s}. Must be one of {list(mapping.keys())}")
         return mapping[s_lower]
+
+
+class Precision(Enum):
+    """Constraint precision mode."""
+    STRICT = auto()   # Use equality constraints (==) for precise optimal solutions
+    RELAXED = auto()  # Use inequality constraints (>= for Bellman, <= for budget) for approximate solutions (invariant)
+
+    @classmethod
+    def from_string(cls, s: str) -> 'Precision':
+        """Convert string to Precision enum.
+
+        Args:
+            s: String representation ('strict', 'relaxed')
+
+        Returns:
+            Corresponding Precision enum value
+
+        Raises:
+            ValueError: If string doesn't match any precision mode
+        """
+        mapping = {
+            'strict': cls.STRICT,
+            'relaxed': cls.RELAXED
+        }
+        s_lower = s.lower().strip()
+        if s_lower not in mapping:
+            raise ValueError(f"Invalid precision: {s}. Must be one of {list(mapping.keys())}")
+        return mapping[s_lower]

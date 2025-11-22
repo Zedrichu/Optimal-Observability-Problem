@@ -18,6 +18,7 @@ class OOPSpec(World, ABC):
                  ctx: Optional[Context] = None, verbose: bool = False,
                  bool_encoding: bool = True,
                  bellman_format: BellmanFormat | None = None,
+                 precision: Precision | None = None,
                  order_constraints: Optional[List[int]] = None):
         self.ctx = ctx or Context()  # Use provided context or create fresh one
         self.budget = budget
@@ -26,6 +27,7 @@ class OOPSpec(World, ABC):
         self.bool_encoding = bool_encoding
         self.verbose = verbose
         self.bellman_format = bellman_format or BellmanFormat.DEFAULT
+        self.precision = precision or Precision.RELAXED
         self.order_constraints = order_constraints
 
         self.exp_rew_evaluator = None
@@ -111,7 +113,15 @@ class OOPSpec(World, ABC):
             next_state = self.navigate(state, a)
             destination_rew = self.build_destination_rew(next_state)
             terms.append(action_term * destination_rew)
-        return [self.ExpRew[state] == Sum(terms)]
+
+        # Bellman constraint formulation: relaxed (>= inequality for invariance) or strict (== equality)
+        if self.precision is Precision.RELAXED:
+            # Relaxation (≥ Invariance): identify an invariant upper bound on expected rewards (thresholded)
+            # actual ExpRew <= relaxed ExpRew <= threshold
+            return [self.ExpRew[state] >= Sum(terms)]
+        else:
+            # Strict rewards: aim search towards optimal rewards from each state (-> optimal expected reward)
+            return [self.ExpRew[state] == Sum(terms)]
 
     def initialize_terms(self):
         """ Initial term in Bellman sum for current state - reward of staying in place.

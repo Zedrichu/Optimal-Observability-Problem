@@ -5,6 +5,7 @@ from typing import List, override
 from z3 import z3, Or, Sum, Implies, And, Not, PbEq
 
 from builders.OOPSpec import OOPSpec
+from builders.enums import Precision
 from utils import init_var_type
 
 
@@ -46,10 +47,13 @@ class POPSpec(OOPSpec, ABC):
 
     @override
     def _compute_state_bellman_bool_det(self, state: int, state_idx: int) -> List[z3.BoolRef]:
+        is_relaxed = (self.precision is Precision.RELAXED)
         return [
             Implies(
                 And(self.Y[state_idx][o], self.X[o][a], self.ctx),
-                self.ExpRew[state] == 1 + self.ExpRew[self.navigate(state, a)],
+                # Bellman relaxation (≥ Invariance): identify an invariant upper bound on expected rewards (original ==)
+                self.ExpRew[state] >= 1 + self.ExpRew[self.navigate(state, a)] if is_relaxed
+                else self.ExpRew[state] == 1 + self.ExpRew[self.navigate(state, a)],
                 self.ctx)
             for o in range(self.budget)
             for a in range(len(self.actions))
@@ -57,11 +61,16 @@ class POPSpec(OOPSpec, ABC):
 
     @override
     def _compute_state_bellman_bool_rand(self, state: int, state_idx: int) -> List[z3.BoolRef]:
+        is_relaxed = (self.precision is Precision.RELAXED)
+
         return [
             Implies(
                 self.Y[state_idx][o],
-                self.ExpRew[state] == 1 + Sum([self.ExpRew[self.navigate(state, a)] * self.X[o][a]
-                                           for a in range(len(self.actions))]),
+                # Bellman relaxation (≥ Invariance): identify an invariant upper bound on expected rewards (original ==)
+                self.ExpRew[state] >= 1 + Sum([self.ExpRew[self.navigate(state, a)] * self.X[o][a]
+                                                for a in range(len(self.actions))]) if is_relaxed
+                else self.ExpRew[state] == 1 + Sum([self.ExpRew[self.navigate(state, a)] * self.X[o][a]
+                                                    for a in range(len(self.actions))]),
                 self.ctx)
             for o in range(self.budget)
         ]

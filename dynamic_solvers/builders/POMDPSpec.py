@@ -4,6 +4,7 @@ from z3 import z3, Implies, Sum
 
 from builders.IndexStorage import IndexStorage
 from builders.TPMCFactory import OOPVariant
+from builders.enums import Precision
 from builders.pop.POPSpec import POPSpec
 from builders.ssp.SSPSpec import SSPSpec
 
@@ -64,6 +65,8 @@ class POMDPAdapter:
         Returns:
             Dict mapping observation value -> list of Bellman equation constraints
         """
+        is_relaxed = (self._spec.precision is Precision.RELAXED)
+
         equations = {}
         if self.mode == OOPVariant.SSP:
             iterator = [0, 1]
@@ -80,7 +83,8 @@ class POMDPAdapter:
             obs_constraints = []
             for a in range(len(self._spec.actions)):
                 next_state = self._spec.navigate(state, a)
-                reward_relation = self.ExpRew[state] == 1 + self.ExpRew[next_state]
+                reward_relation = (self.ExpRew[state] >= 1 + self.ExpRew[next_state] if is_relaxed
+                                  else self.ExpRew[state] == 1 + self.ExpRew[next_state])
                 obs_constraints.append(
                     Implies(self.X[strat_idx][a], reward_relation, self._spec.ctx)
                 )
@@ -102,6 +106,8 @@ class POMDPAdapter:
         Returns:
             Dict mapping observation value -> list of Bellman equation constraints
         """
+        is_relaxed = (self._spec.precision is Precision.RELAXED)
+
         equations = {}
         if self.mode == OOPVariant.SSP:
             iterator = [0, 1]
@@ -122,7 +128,8 @@ class POMDPAdapter:
             ])
 
             # For randomized strategies, there's typically one constraint per observation
-            equations[obs] = [self.ExpRew[state] == 1 + weighted_rewards]
+            equations[obs] = ([self.ExpRew[state] >= 1 + weighted_rewards] if is_relaxed
+                                else [self.ExpRew[state] == 1 + weighted_rewards])
 
         return equations
 

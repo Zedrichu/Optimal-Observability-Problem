@@ -119,6 +119,15 @@ Examples:
     )
 
     solver_group.add_argument(
+        '--precision', '-p',
+        type=str,
+        choices=['strict', 'relaxed'],
+        required=False,
+        default='relaxed',
+        help='Constraint precision mode: "strict" (equality == for optimal solutions), "relaxed" (inequality >= for Bellman, <= for budget, finding invariants)'
+    )
+
+    solver_group.add_argument(
         '--real-encoding', '-re',
         action='store_true',
         help='Encoding of TPMC parameters as real variables (slow performance)'
@@ -228,10 +237,11 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
         print(f"    Budget: {args.budget}, Goal: {args.goal}, {dim_print}")
         print(f"    Strategy: {'Deterministic' if args.deterministic else 'Randomized'}, Threshold: {args.threshold}")
         print(f"    Operation mode (add-ons): \n"
-              f"        Bellman format -> {args.bellman_format}\n"
-              f"        Encoding       -> {"Real" if args.real_encoding else "Boolean"}\n"
-              f"        Verbose output -> {"✅" if args.verbose else "❌"}\n"
-              f"        Ordering       -> {args.order_constraints if args.order_constraints else "default"}"
+              f"        Bellman format       -> {args.bellman_format}\n"
+              f"        Optimality Precision -> {args.precision}\n"
+              f"        Encoding             -> {"Real" if args.real_encoding else "Boolean"}\n"
+              f"        Verbose output       -> {"✅" if args.verbose else "❌"}\n"
+              f"        Ordering             -> {args.order_constraints if args.order_constraints else "default"}"
               f"\n"
         )
 
@@ -247,6 +257,7 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
                                        budget=args.budget,
                                        determinism=args.deterministic,
                                        bellman_format=args.bellman_format,
+                                       precision=args.precision,
                                        bool_encoding=not args.real_encoding,
                                        order_constraints=args.order_constraints,
                                        verbose=args.verbose)
