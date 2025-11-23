@@ -22,12 +22,12 @@ class IndexStorage:
         self.storage: dict[int, dict[int, List[z3.BoolRef]] | z3.BoolRef] = {}
         self._is_precomputed = False
 
-    def precompute(self, size: int, goal_rew: tuple[int, z3.BoolRef]) -> None:
+    def precompute(self, size: int, goal_rew: tuple[int, z3.BoolRef | bool]) -> None:
         """
         Pre-compute Bellman equations for all states and all possible observations.
 
         Args:
-            obs_function: The observation function (used to determine world size)
+            size: The number of states in the world
             goal_rew: Tuple of (goal_state, goal_constraint)
         """
         goal, exp_rew = goal_rew
