@@ -1,20 +1,10 @@
-from enum import Enum, auto
 from typing import Unpack
 
-from builders.typedicts import DimensionKWArgs, OperationKWArgs, TPMCParams
-from builders.OOPSpec import OOPSpec
 import builders.pop as pop
 import builders.ssp as ssp
-
-class OOPVariant(Enum):
-    POP = auto(),
-    SSP = auto()
-
-
-class PuzzleType(Enum):
-    LINE = auto(),
-    GRID = auto(),
-    MAZE = auto()
+from builders.OOPSpec import OOPSpec
+from builders.enums import OOPVariant, PuzzleType
+from builders.typedicts import DimensionKWArgs, OperationKWArgs, TPMCParams
 
 
 def variant_from_string(s: str) -> OOPVariant:
