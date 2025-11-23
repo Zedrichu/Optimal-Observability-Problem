@@ -4,9 +4,11 @@ from itertools import combinations
 
 from z3 import *
 
+import sys
+sys.stdout = open("output.txt", "a")
 
 # Hyperparameters
-NUM_STATES = 15
+NUM_STATES = 19
 GOAL_STATE = (NUM_STATES - 1)//2
 BUDGET = min(GOAL_STATE, NUM_STATES - 1 - GOAL_STATE)
 
@@ -70,7 +72,7 @@ def build_constraints(states_on: list[int], threshold: ArithRef | float):
     return constraints
 
 def solve(states_on: list[int], threshold: ArithRef) -> Result:
-    print(f"Solving for {instance(states_on, threshold)}")
+    # print(f"Solving for {instance(states_on, threshold)}")
     constraints = build_constraints(states_on, threshold)
 
     solver = Solver()
@@ -80,8 +82,8 @@ def solve(states_on: list[int], threshold: ArithRef) -> Result:
         else Result.UNSAT if result == unsat \
         else Result.UNKNOWN
 
-    if result == Result.SAT:
-        print(f"\tSAT for {instance(states_on, threshold)}")
+    # if result == Result.SAT:
+        # print(f"\tSAT for {instance(states_on, threshold)}")
 
     return result
 
@@ -120,31 +122,62 @@ def benchmark():
             if len(sats) > 0:
                 [placements_to_ignore.add(r) for r in unsats]
         if len(sats) == 0:
-            print("No SATs, increasing threshold.")
+            # print("No SATs, increasing threshold.")
             low = threshold
         elif len(sats) == 1:
             print(f"The optimal sensor placement is ({", ".join([f"@s{s}" for s in PLACEMENTS[sats[0]]])})")
             break
+        elif len(sats) == 2 and GOAL_STATE == (NUM_STATES - 1)//2:
+            print(f"The optimal sensor placement is ({", ".join([f"@s{s}" for s in PLACEMENTS[sats[0]]])})")
+            print(f"The optimal sensor placement is ({", ".join([f"@s{s}" for s in PLACEMENTS[sats[1]]])})")
+            return
         elif len(sats) > 1:
-            print(f"{len(sats)} SAT(s) found, decreasing threshold.")
+            # print(f"{len(sats)} SAT(s) found, decreasing threshold.")
             high = threshold
         if high - low < tolerance:
             print(f"The search bounds of the binary search have converged.")
             return
 
 if __name__ == "__main__":
-    print("Running benchmark with the following hyperparameters:")
-    print(f"NUM_STATES={NUM_STATES}, GOAL_STATE={GOAL_STATE}, BUDGET={BUDGET}")
-    print(f"BIN_SEARCH_LOW={BIN_SEARCH_LOW}, BIN_SEARCH_HIGH={BIN_SEARCH_HIGH}")
-    print(f"PLACEMENTS={len(PLACEMENTS)}")
+    for GOAL_STATE in range((NUM_STATES - 1)//2, 1, -1):
+        for BUDGET in range(GOAL_STATE, 0, -1):
+            PLACEMENTS = list(combinations([i for i in range(NUM_STATES) if i != GOAL_STATE], BUDGET))
+            BIN_SEARCH_LOW = 1
+            BIN_SEARCH_HIGH = 100
 
-    start_time = time.process_time()
-    benchmark()
-    end_tme = time.process_time()
-    print()
+            print(f"NUM_STATES={NUM_STATES} | GOAL_STATE={GOAL_STATE} | BUDGET={BUDGET} | PLACEMENTS={len(PLACEMENTS)}", file=sys.stderr)
 
-    print(f"Benchmarked in {(end_tme - start_time):.2f}s")
-    print("Ran benchmark with the following hyperparameters:")
-    print(f"NUM_STATES={NUM_STATES}, GOAL_STATE={GOAL_STATE}, BUDGET={BUDGET}")
-    print(f"BIN_SEARCH_LOW={BIN_SEARCH_LOW}, BIN_SEARCH_HIGH={BIN_SEARCH_HIGH}")
-    print(f"PLACEMENTS={len(PLACEMENTS)}")
+            print("#####################################################")
+            print("Running benchmark with the following hyperparameters:")
+            print(f"NUM_STATES={NUM_STATES}, GOAL_STATE={GOAL_STATE}, BUDGET={BUDGET}")
+            print(f"BIN_SEARCH_LOW={BIN_SEARCH_LOW}, BIN_SEARCH_HIGH={BIN_SEARCH_HIGH}")
+            print(f"PLACEMENTS={len(PLACEMENTS)}")
+
+            start_time = time.process_time()
+            benchmark()
+            end_tme = time.process_time()
+            print()
+
+            print(f"Benchmarked in {(end_tme - start_time):.2f}s")
+            print("Ran benchmark with the following hyperparameters:")
+            print(f"NUM_STATES={NUM_STATES}, GOAL_STATE={GOAL_STATE}, BUDGET={BUDGET}")
+            print(f"BIN_SEARCH_LOW={BIN_SEARCH_LOW}, BIN_SEARCH_HIGH={BIN_SEARCH_HIGH}")
+            print(f"PLACEMENTS={len(PLACEMENTS)}")
+            print()
+
+# if __name__ == "__main__":
+#     print("Running benchmark with the following hyperparameters:")
+#     print(f"NUM_STATES={NUM_STATES}, GOAL_STATE={GOAL_STATE}, BUDGET={BUDGET}")
+#     print(f"BIN_SEARCH_LOW={BIN_SEARCH_LOW}, BIN_SEARCH_HIGH={BIN_SEARCH_HIGH}")
+#     print(f"PLACEMENTS={len(PLACEMENTS)}")
+#
+#     start_time = time.process_time()
+#     benchmark()
+#     end_tme = time.process_time()
+#     print()
+#
+#     print(f"Benchmarked in {(end_tme - start_time):.2f}s")
+#     print("Ran benchmark with the following hyperparameters:")
+#     print(f"NUM_STATES={NUM_STATES}, GOAL_STATE={GOAL_STATE}, BUDGET={BUDGET}")
+#     print(f"BIN_SEARCH_LOW={BIN_SEARCH_LOW}, BIN_SEARCH_HIGH={BIN_SEARCH_HIGH}")
+#     print(f"PLACEMENTS={len(PLACEMENTS)}")
