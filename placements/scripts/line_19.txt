@@ -1,0 +1,1370 @@
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=9, BUDGET=9
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=48620
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 48620, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 48618, UNSATs: 2, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 38342, UNSATs: 10276, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 32, UNSATs: 38310, UNKNOWNs: 0
+
+Iteration 5: τ = 4.09375 (low = 1, high = 7.1875)
+SATs: 0, UNSATs: 32, UNKNOWNs: 0
+
+Iteration 6: τ = 5.640625 (low = 4.09375, high = 7.1875)
+SATs: 2, UNSATs: 30, UNKNOWNs: 0
+The optimal sensor placement is (@s0, @s1, @s2, @s3, @s4, @s5, @s6, @s7, @s8)
+The optimal sensor placement is (@s10, @s11, @s12, @s13, @s14, @s15, @s16, @s17, @s18)
+
+Benchmarked in 2108.18s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=9, BUDGET=9
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=48620
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=9, BUDGET=8
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=43758
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 43758, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 43732, UNSATs: 26, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 23059, UNSATs: 20673, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 2, UNSATs: 23057, UNKNOWNs: 0
+The optimal sensor placement is (@s1, @s2, @s3, @s4, @s5, @s6, @s7, @s8)
+The optimal sensor placement is (@s10, @s11, @s12, @s13, @s14, @s15, @s16, @s17)
+
+Benchmarked in 1764.29s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=9, BUDGET=8
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=43758
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=9, BUDGET=7
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=31824
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 31824, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 31662, UNSATs: 162, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 7444, UNSATs: 24218, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 0, UNSATs: 7444, UNKNOWNs: 0
+
+Iteration 5: τ = 10.28125 (low = 7.1875, high = 13.375)
+SATs: 80, UNSATs: 7364, UNKNOWNs: 0
+
+Iteration 6: τ = 8.734375 (low = 7.1875, high = 10.28125)
+SATs: 4, UNSATs: 76, UNKNOWNs: 0
+
+Iteration 7: τ = 7.9609375 (low = 7.1875, high = 8.734375)
+SATs: 0, UNSATs: 4, UNKNOWNs: 0
+
+Iteration 8: τ = 8.34765625 (low = 7.9609375, high = 8.734375)
+SATs: 2, UNSATs: 2, UNKNOWNs: 0
+The optimal sensor placement is (@s1, @s3, @s4, @s5, @s6, @s7, @s8)
+The optimal sensor placement is (@s10, @s11, @s12, @s13, @s14, @s15, @s17)
+
+Benchmarked in 1271.19s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=9, BUDGET=7
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=31824
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=9, BUDGET=6
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=18564
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 18564, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 18041, UNSATs: 523, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 907, UNSATs: 17134, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 0, UNSATs: 907, UNKNOWNs: 0
+
+Iteration 5: τ = 10.28125 (low = 7.1875, high = 13.375)
+SATs: 2, UNSATs: 905, UNKNOWNs: 0
+The optimal sensor placement is (@s1, @s3, @s5, @s6, @s7, @s8)
+The optimal sensor placement is (@s10, @s11, @s12, @s13, @s15, @s17)
+
+Benchmarked in 656.45s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=9, BUDGET=6
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=18564
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=9, BUDGET=5
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=8568
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 8568, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 7632, UNSATs: 936, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 30, UNSATs: 7602, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 0, UNSATs: 30, UNKNOWNs: 0
+
+Iteration 5: τ = 10.28125 (low = 7.1875, high = 13.375)
+SATs: 0, UNSATs: 30, UNKNOWNs: 0
+
+Iteration 6: τ = 11.828125 (low = 10.28125, high = 13.375)
+SATs: 0, UNSATs: 30, UNKNOWNs: 0
+
+Iteration 7: τ = 12.6015625 (low = 11.828125, high = 13.375)
+SATs: 4, UNSATs: 26, UNKNOWNs: 0
+
+Iteration 8: τ = 12.21484375 (low = 11.828125, high = 12.6015625)
+SATs: 0, UNSATs: 4, UNKNOWNs: 0
+
+Iteration 9: τ = 12.408203125 (low = 12.21484375, high = 12.6015625)
+SATs: 2, UNSATs: 2, UNKNOWNs: 0
+The optimal sensor placement is (@s2, @s4, @s6, @s7, @s8)
+The optimal sensor placement is (@s10, @s11, @s12, @s14, @s16)
+
+Benchmarked in 289.08s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=9, BUDGET=5
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=8568
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=9, BUDGET=4
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=3060
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 3060, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 2068, UNSATs: 992, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 0, UNSATs: 2068, UNKNOWNs: 0
+
+Iteration 4: τ = 19.5625 (low = 13.375, high = 25.75)
+SATs: 462, UNSATs: 1606, UNKNOWNs: 0
+
+Iteration 5: τ = 16.46875 (low = 13.375, high = 19.5625)
+SATs: 30, UNSATs: 432, UNKNOWNs: 0
+
+Iteration 6: τ = 14.921875 (low = 13.375, high = 16.46875)
+SATs: 6, UNSATs: 24, UNKNOWNs: 0
+
+Iteration 7: τ = 14.1484375 (low = 13.375, high = 14.921875)
+SATs: 0, UNSATs: 6, UNKNOWNs: 0
+
+Iteration 8: τ = 14.53515625 (low = 14.1484375, high = 14.921875)
+SATs: 2, UNSATs: 4, UNKNOWNs: 0
+The optimal sensor placement is (@s2, @s4, @s6, @s8)
+The optimal sensor placement is (@s10, @s12, @s14, @s16)
+
+Benchmarked in 127.78s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=9, BUDGET=4
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=3060
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=9, BUDGET=3
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=816
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 814, UNSATs: 2, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 252, UNSATs: 562, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 0, UNSATs: 252, UNKNOWNs: 0
+
+Iteration 4: τ = 19.5625 (low = 13.375, high = 25.75)
+SATs: 6, UNSATs: 246, UNKNOWNs: 0
+
+Iteration 5: τ = 16.46875 (low = 13.375, high = 19.5625)
+SATs: 0, UNSATs: 6, UNKNOWNs: 0
+
+Iteration 6: τ = 18.015625 (low = 16.46875, high = 19.5625)
+SATs: 0, UNSATs: 6, UNKNOWNs: 0
+
+Iteration 7: τ = 18.7890625 (low = 18.015625, high = 19.5625)
+SATs: 4, UNSATs: 2, UNKNOWNs: 0
+
+Iteration 8: τ = 18.40234375 (low = 18.015625, high = 18.7890625)
+SATs: 2, UNSATs: 2, UNKNOWNs: 0
+The optimal sensor placement is (@s2, @s5, @s7)
+The optimal sensor placement is (@s11, @s13, @s16)
+
+Benchmarked in 25.94s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=9, BUDGET=3
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=816
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=9, BUDGET=2
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=153
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 144, UNSATs: 9, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 4, UNSATs: 140, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 0, UNSATs: 4, UNKNOWNs: 0
+
+Iteration 4: τ = 19.5625 (low = 13.375, high = 25.75)
+SATs: 0, UNSATs: 4, UNKNOWNs: 0
+
+Iteration 5: τ = 22.65625 (low = 19.5625, high = 25.75)
+SATs: 0, UNSATs: 4, UNKNOWNs: 0
+
+Iteration 6: τ = 24.203125 (low = 22.65625, high = 25.75)
+SATs: 0, UNSATs: 4, UNKNOWNs: 0
+
+Iteration 7: τ = 24.9765625 (low = 24.203125, high = 25.75)
+SATs: 2, UNSATs: 2, UNKNOWNs: 0
+The optimal sensor placement is (@s3, @s6)
+The optimal sensor placement is (@s12, @s15)
+
+Benchmarked in 3.88s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=9, BUDGET=2
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=153
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=9, BUDGET=1
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=18
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 12, UNSATs: 6, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 0, UNSATs: 12, UNKNOWNs: 0
+
+Iteration 3: τ = 38.125 (low = 25.75, high = 50.5)
+SATs: 4, UNSATs: 8, UNKNOWNs: 0
+
+Iteration 4: τ = 31.9375 (low = 25.75, high = 38.125)
+SATs: 0, UNSATs: 4, UNKNOWNs: 0
+
+Iteration 5: τ = 35.03125 (low = 31.9375, high = 38.125)
+SATs: 0, UNSATs: 4, UNKNOWNs: 0
+
+Iteration 6: τ = 36.578125 (low = 35.03125, high = 38.125)
+SATs: 2, UNSATs: 2, UNKNOWNs: 0
+The optimal sensor placement is (@s5)
+The optimal sensor placement is (@s13)
+
+Benchmarked in 0.70s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=9, BUDGET=1
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=18
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=8, BUDGET=8
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=43758
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 43758, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 43732, UNSATs: 26, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 23272, UNSATs: 20460, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 11, UNSATs: 23261, UNKNOWNs: 0
+
+Iteration 5: τ = 4.09375 (low = 1, high = 7.1875)
+SATs: 0, UNSATs: 11, UNKNOWNs: 0
+
+Iteration 6: τ = 5.640625 (low = 4.09375, high = 7.1875)
+SATs: 1, UNSATs: 10, UNKNOWNs: 0
+The optimal sensor placement is (@s0, @s1, @s2, @s3, @s4, @s5, @s6, @s7)
+
+Benchmarked in 1767.18s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=8, BUDGET=8
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=43758
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=8, BUDGET=7
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=31824
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 31824, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 31666, UNSATs: 158, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 7776, UNSATs: 23890, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 1, UNSATs: 7775, UNKNOWNs: 0
+The optimal sensor placement is (@s1, @s2, @s3, @s4, @s5, @s6, @s7)
+
+Benchmarked in 1182.70s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=8, BUDGET=7
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=31824
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=8, BUDGET=6
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=18564
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 18564, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 18060, UNSATs: 504, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 1183, UNSATs: 16877, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 0, UNSATs: 1183, UNKNOWNs: 0
+
+Iteration 5: τ = 10.28125 (low = 7.1875, high = 13.375)
+SATs: 11, UNSATs: 1172, UNKNOWNs: 0
+
+Iteration 6: τ = 8.734375 (low = 7.1875, high = 10.28125)
+SATs: 1, UNSATs: 10, UNKNOWNs: 0
+The optimal sensor placement is (@s1, @s3, @s4, @s5, @s6, @s7)
+
+Benchmarked in 664.36s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=8, BUDGET=6
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=18564
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=8, BUDGET=5
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=8568
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 8568, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 7647, UNSATs: 921, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 109, UNSATs: 7538, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 0, UNSATs: 109, UNKNOWNs: 0
+
+Iteration 5: τ = 10.28125 (low = 7.1875, high = 13.375)
+SATs: 0, UNSATs: 109, UNKNOWNs: 0
+
+Iteration 6: τ = 11.828125 (low = 10.28125, high = 13.375)
+SATs: 6, UNSATs: 103, UNKNOWNs: 0
+
+Iteration 7: τ = 11.0546875 (low = 10.28125, high = 11.828125)
+SATs: 1, UNSATs: 5, UNKNOWNs: 0
+The optimal sensor placement is (@s1, @s3, @s5, @s6, @s7)
+
+Benchmarked in 292.32s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=8, BUDGET=5
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=8568
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=8, BUDGET=4
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=3060
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 3060, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 2089, UNSATs: 971, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 2, UNSATs: 2087, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 0, UNSATs: 2, UNKNOWNs: 0
+
+Iteration 5: τ = 10.28125 (low = 7.1875, high = 13.375)
+SATs: 0, UNSATs: 2, UNKNOWNs: 0
+
+Iteration 6: τ = 11.828125 (low = 10.28125, high = 13.375)
+SATs: 0, UNSATs: 2, UNKNOWNs: 0
+
+Iteration 7: τ = 12.6015625 (low = 11.828125, high = 13.375)
+SATs: 0, UNSATs: 2, UNKNOWNs: 0
+
+Iteration 8: τ = 12.98828125 (low = 12.6015625, high = 13.375)
+SATs: 0, UNSATs: 2, UNKNOWNs: 0
+
+Iteration 9: τ = 13.181640625 (low = 12.98828125, high = 13.375)
+SATs: 2, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 10: τ = 13.0849609375 (low = 12.98828125, high = 13.181640625)
+SATs: 0, UNSATs: 2, UNKNOWNs: 0
+
+Iteration 11: τ = 13.13330078125 (low = 13.0849609375, high = 13.181640625)
+SATs: 1, UNSATs: 1, UNKNOWNs: 0
+The optimal sensor placement is (@s2, @s4, @s6, @s7)
+
+Benchmarked in 97.21s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=8, BUDGET=4
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=3060
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=8, BUDGET=3
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=816
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 814, UNSATs: 2, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 271, UNSATs: 543, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 0, UNSATs: 271, UNKNOWNs: 0
+
+Iteration 4: τ = 19.5625 (low = 13.375, high = 25.75)
+SATs: 15, UNSATs: 256, UNKNOWNs: 0
+
+Iteration 5: τ = 16.46875 (low = 13.375, high = 19.5625)
+SATs: 1, UNSATs: 14, UNKNOWNs: 0
+The optimal sensor placement is (@s2, @s4, @s6)
+
+Benchmarked in 26.42s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=8, BUDGET=3
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=816
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=8, BUDGET=2
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=153
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 145, UNSATs: 8, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 5, UNSATs: 140, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 0, UNSATs: 5, UNKNOWNs: 0
+
+Iteration 4: τ = 19.5625 (low = 13.375, high = 25.75)
+SATs: 0, UNSATs: 5, UNKNOWNs: 0
+
+Iteration 5: τ = 22.65625 (low = 19.5625, high = 25.75)
+SATs: 3, UNSATs: 2, UNKNOWNs: 0
+
+Iteration 6: τ = 21.109375 (low = 19.5625, high = 22.65625)
+SATs: 0, UNSATs: 3, UNKNOWNs: 0
+
+Iteration 7: τ = 21.8828125 (low = 21.109375, high = 22.65625)
+SATs: 1, UNSATs: 2, UNKNOWNs: 0
+The optimal sensor placement is (@s3, @s6)
+
+Benchmarked in 3.98s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=8, BUDGET=2
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=153
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=8, BUDGET=1
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=18
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 11, UNSATs: 7, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 0, UNSATs: 11, UNKNOWNs: 0
+
+Iteration 3: τ = 38.125 (low = 25.75, high = 50.5)
+SATs: 3, UNSATs: 8, UNKNOWNs: 0
+
+Iteration 4: τ = 31.9375 (low = 25.75, high = 38.125)
+SATs: 0, UNSATs: 3, UNKNOWNs: 0
+
+Iteration 5: τ = 35.03125 (low = 31.9375, high = 38.125)
+SATs: 2, UNSATs: 1, UNKNOWNs: 0
+
+Iteration 6: τ = 33.484375 (low = 31.9375, high = 35.03125)
+SATs: 1, UNSATs: 1, UNKNOWNs: 0
+The optimal sensor placement is (@s4)
+
+Benchmarked in 0.64s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=8, BUDGET=1
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=18
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=7, BUDGET=7
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=31824
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 31824, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 31681, UNSATs: 143, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 8892, UNSATs: 22789, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 12, UNSATs: 8880, UNKNOWNs: 0
+
+Iteration 5: τ = 4.09375 (low = 1, high = 7.1875)
+SATs: 0, UNSATs: 12, UNKNOWNs: 0
+
+Iteration 6: τ = 5.640625 (low = 4.09375, high = 7.1875)
+SATs: 1, UNSATs: 11, UNKNOWNs: 0
+The optimal sensor placement is (@s0, @s1, @s2, @s3, @s4, @s5, @s6)
+
+Benchmarked in 1198.25s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=7, BUDGET=7
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=31824
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=7, BUDGET=6
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=18564
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 18564, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 18115, UNSATs: 449, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 1954, UNSATs: 16161, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 1, UNSATs: 1953, UNKNOWNs: 0
+The optimal sensor placement is (@s1, @s2, @s3, @s4, @s5, @s6)
+
+Benchmarked in 661.21s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=7, BUDGET=6
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=18564
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=7, BUDGET=5
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=8568
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 8568, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 7725, UNSATs: 843, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 336, UNSATs: 7389, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 0, UNSATs: 336, UNKNOWNs: 0
+
+Iteration 5: τ = 10.28125 (low = 7.1875, high = 13.375)
+SATs: 4, UNSATs: 332, UNKNOWNs: 0
+
+Iteration 6: τ = 8.734375 (low = 7.1875, high = 10.28125)
+SATs: 0, UNSATs: 4, UNKNOWNs: 0
+
+Iteration 7: τ = 9.5078125 (low = 8.734375, high = 10.28125)
+SATs: 1, UNSATs: 3, UNKNOWNs: 0
+The optimal sensor placement is (@s1, @s3, @s4, @s5, @s6)
+
+Benchmarked in 298.38s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=7, BUDGET=5
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=8568
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=7, BUDGET=4
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=3060
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 3060, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 2175, UNSATs: 885, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 25, UNSATs: 2150, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 0, UNSATs: 25, UNKNOWNs: 0
+
+Iteration 5: τ = 10.28125 (low = 7.1875, high = 13.375)
+SATs: 0, UNSATs: 25, UNKNOWNs: 0
+
+Iteration 6: τ = 11.828125 (low = 10.28125, high = 13.375)
+SATs: 2, UNSATs: 23, UNKNOWNs: 0
+
+Iteration 7: τ = 11.0546875 (low = 10.28125, high = 11.828125)
+SATs: 0, UNSATs: 2, UNKNOWNs: 0
+
+Iteration 8: τ = 11.44140625 (low = 11.0546875, high = 11.828125)
+SATs: 1, UNSATs: 1, UNKNOWNs: 0
+The optimal sensor placement is (@s1, @s3, @s5, @s6)
+
+Benchmarked in 99.36s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=7, BUDGET=4
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=3060
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=7, BUDGET=3
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=816
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 816, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 326, UNSATs: 490, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 0, UNSATs: 326, UNKNOWNs: 0
+
+Iteration 4: τ = 19.5625 (low = 13.375, high = 25.75)
+SATs: 56, UNSATs: 270, UNKNOWNs: 0
+
+Iteration 5: τ = 16.46875 (low = 13.375, high = 19.5625)
+SATs: 5, UNSATs: 51, UNKNOWNs: 0
+
+Iteration 6: τ = 14.921875 (low = 13.375, high = 16.46875)
+SATs: 4, UNSATs: 1, UNKNOWNs: 0
+
+Iteration 7: τ = 14.1484375 (low = 13.375, high = 14.921875)
+SATs: 2, UNSATs: 2, UNKNOWNs: 0
+
+Iteration 8: τ = 13.76171875 (low = 13.375, high = 14.1484375)
+SATs: 0, UNSATs: 2, UNKNOWNs: 0
+
+Iteration 9: τ = 13.955078125 (low = 13.76171875, high = 14.1484375)
+SATs: 1, UNSATs: 1, UNKNOWNs: 0
+The optimal sensor placement is (@s2, @s4, @s6)
+
+Benchmarked in 28.63s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=7, BUDGET=3
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=816
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=7, BUDGET=2
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=153
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 151, UNSATs: 2, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 20, UNSATs: 131, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 0, UNSATs: 20, UNKNOWNs: 0
+
+Iteration 4: τ = 19.5625 (low = 13.375, high = 25.75)
+SATs: 2, UNSATs: 18, UNKNOWNs: 0
+
+Iteration 5: τ = 16.46875 (low = 13.375, high = 19.5625)
+SATs: 0, UNSATs: 2, UNKNOWNs: 0
+
+Iteration 6: τ = 18.015625 (low = 16.46875, high = 19.5625)
+SATs: 0, UNSATs: 2, UNKNOWNs: 0
+
+Iteration 7: τ = 18.7890625 (low = 18.015625, high = 19.5625)
+SATs: 0, UNSATs: 2, UNKNOWNs: 0
+
+Iteration 8: τ = 19.17578125 (low = 18.7890625, high = 19.5625)
+SATs: 1, UNSATs: 1, UNKNOWNs: 0
+The optimal sensor placement is (@s2, @s5)
+
+Benchmarked in 4.41s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=7, BUDGET=2
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=153
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=7, BUDGET=1
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=18
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 14, UNSATs: 4, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 0, UNSATs: 14, UNKNOWNs: 0
+
+Iteration 3: τ = 38.125 (low = 25.75, high = 50.5)
+SATs: 4, UNSATs: 10, UNKNOWNs: 0
+
+Iteration 4: τ = 31.9375 (low = 25.75, high = 38.125)
+SATs: 2, UNSATs: 2, UNKNOWNs: 0
+
+Iteration 5: τ = 28.84375 (low = 25.75, high = 31.9375)
+SATs: 1, UNSATs: 1, UNKNOWNs: 0
+The optimal sensor placement is (@s4)
+
+Benchmarked in 0.69s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=7, BUDGET=1
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=18
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=6, BUDGET=6
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=18564
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 18564, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 18196, UNSATs: 368, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 3122, UNSATs: 15074, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 13, UNSATs: 3109, UNKNOWNs: 0
+
+Iteration 5: τ = 4.09375 (low = 1, high = 7.1875)
+SATs: 0, UNSATs: 13, UNKNOWNs: 0
+
+Iteration 6: τ = 5.640625 (low = 4.09375, high = 7.1875)
+SATs: 1, UNSATs: 12, UNKNOWNs: 0
+The optimal sensor placement is (@s0, @s1, @s2, @s3, @s4, @s5)
+
+Benchmarked in 678.48s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=6, BUDGET=6
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=18564
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=6, BUDGET=5
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=8568
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 8568, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 7884, UNSATs: 684, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 739, UNSATs: 7145, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 1, UNSATs: 738, UNKNOWNs: 0
+The optimal sensor placement is (@s1, @s2, @s3, @s4, @s5)
+
+Benchmarked in 302.48s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=6, BUDGET=5
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=8568
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=6, BUDGET=4
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=3060
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 3060, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 2309, UNSATs: 751, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 101, UNSATs: 2208, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 0, UNSATs: 101, UNKNOWNs: 0
+
+Iteration 5: τ = 10.28125 (low = 7.1875, high = 13.375)
+SATs: 2, UNSATs: 99, UNKNOWNs: 0
+
+Iteration 6: τ = 8.734375 (low = 7.1875, high = 10.28125)
+SATs: 0, UNSATs: 2, UNKNOWNs: 0
+
+Iteration 7: τ = 9.5078125 (low = 8.734375, high = 10.28125)
+SATs: 0, UNSATs: 2, UNKNOWNs: 0
+
+Iteration 8: τ = 9.89453125 (low = 9.5078125, high = 10.28125)
+SATs: 1, UNSATs: 1, UNKNOWNs: 0
+The optimal sensor placement is (@s1, @s3, @s4, @s5)
+
+Benchmarked in 103.47s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=6, BUDGET=4
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=3060
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=6, BUDGET=3
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=816
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 816, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 393, UNSATs: 423, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 5, UNSATs: 388, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 0, UNSATs: 5, UNKNOWNs: 0
+
+Iteration 5: τ = 10.28125 (low = 7.1875, high = 13.375)
+SATs: 0, UNSATs: 5, UNKNOWNs: 0
+
+Iteration 6: τ = 11.828125 (low = 10.28125, high = 13.375)
+SATs: 0, UNSATs: 5, UNKNOWNs: 0
+
+Iteration 7: τ = 12.6015625 (low = 11.828125, high = 13.375)
+SATs: 2, UNSATs: 3, UNKNOWNs: 0
+
+Iteration 8: τ = 12.21484375 (low = 11.828125, high = 12.6015625)
+SATs: 1, UNSATs: 1, UNKNOWNs: 0
+The optimal sensor placement is (@s1, @s3, @s5)
+
+Benchmarked in 25.09s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=6, BUDGET=3
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=816
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=6, BUDGET=2
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=153
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 153, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 39, UNSATs: 114, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 0, UNSATs: 39, UNKNOWNs: 0
+
+Iteration 4: τ = 19.5625 (low = 13.375, high = 25.75)
+SATs: 7, UNSATs: 32, UNKNOWNs: 0
+
+Iteration 5: τ = 16.46875 (low = 13.375, high = 19.5625)
+SATs: 1, UNSATs: 6, UNKNOWNs: 0
+The optimal sensor placement is (@s2, @s4)
+
+Benchmarked in 4.97s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=6, BUDGET=2
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=153
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=6, BUDGET=1
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=18
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 18, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 1, UNSATs: 17, UNKNOWNs: 0
+The optimal sensor placement is (@s3)
+
+Benchmarked in 0.48s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=6, BUDGET=1
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=18
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=5, BUDGET=5
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=8568
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 8568, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 8183, UNSATs: 385, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 1450, UNSATs: 6733, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 1, UNSATs: 1449, UNKNOWNs: 0
+The optimal sensor placement is (@s0, @s1, @s2, @s3, @s4)
+
+Benchmarked in 316.81s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=5, BUDGET=5
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=8568
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=5, BUDGET=4
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=3060
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 3060, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 2558, UNSATs: 502, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 299, UNSATs: 2259, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 0, UNSATs: 299, UNKNOWNs: 0
+
+Iteration 5: τ = 10.28125 (low = 7.1875, high = 13.375)
+SATs: 16, UNSATs: 283, UNKNOWNs: 0
+
+Iteration 6: τ = 8.734375 (low = 7.1875, high = 10.28125)
+SATs: 1, UNSATs: 15, UNKNOWNs: 0
+The optimal sensor placement is (@s1, @s2, @s3, @s4)
+
+Benchmarked in 112.66s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=5, BUDGET=4
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=3060
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=5, BUDGET=3
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=816
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 816, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 479, UNSATs: 337, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 28, UNSATs: 451, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 0, UNSATs: 28, UNKNOWNs: 0
+
+Iteration 5: τ = 10.28125 (low = 7.1875, high = 13.375)
+SATs: 1, UNSATs: 27, UNKNOWNs: 0
+The optimal sensor placement is (@s1, @s3, @s4)
+
+Benchmarked in 27.03s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=5, BUDGET=3
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=816
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=5, BUDGET=2
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=153
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 153, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 50, UNSATs: 103, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 1, UNSATs: 49, UNKNOWNs: 0
+The optimal sensor placement is (@s1, @s3)
+
+Benchmarked in 4.64s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=5, BUDGET=2
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=153
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=5, BUDGET=1
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=18
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 18, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 2, UNSATs: 16, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 0, UNSATs: 2, UNKNOWNs: 0
+
+Iteration 4: τ = 19.5625 (low = 13.375, high = 25.75)
+SATs: 0, UNSATs: 2, UNKNOWNs: 0
+
+Iteration 5: τ = 22.65625 (low = 19.5625, high = 25.75)
+SATs: 2, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 6: τ = 21.109375 (low = 19.5625, high = 22.65625)
+SATs: 2, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 7: τ = 20.3359375 (low = 19.5625, high = 21.109375)
+SATs: 1, UNSATs: 1, UNKNOWNs: 0
+The optimal sensor placement is (@s2)
+
+Benchmarked in 0.65s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=5, BUDGET=1
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=18
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=4, BUDGET=4
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=3060
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 3060, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 2989, UNSATs: 71, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 547, UNSATs: 2442, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 1, UNSATs: 546, UNKNOWNs: 0
+The optimal sensor placement is (@s0, @s1, @s2, @s3)
+
+Benchmarked in 117.34s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=4, BUDGET=4
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=3060
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=4, BUDGET=3
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=816
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 816, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 718, UNSATs: 98, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 60, UNSATs: 658, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 0, UNSATs: 60, UNKNOWNs: 0
+
+Iteration 5: τ = 10.28125 (low = 7.1875, high = 13.375)
+SATs: 2, UNSATs: 58, UNKNOWNs: 0
+
+Iteration 6: τ = 8.734375 (low = 7.1875, high = 10.28125)
+SATs: 1, UNSATs: 1, UNKNOWNs: 0
+The optimal sensor placement is (@s1, @s2, @s3)
+
+Benchmarked in 30.94s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=4, BUDGET=3
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=816
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=4, BUDGET=2
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=153
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 153, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 86, UNSATs: 67, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 4, UNSATs: 82, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 0, UNSATs: 4, UNKNOWNs: 0
+
+Iteration 5: τ = 10.28125 (low = 7.1875, high = 13.375)
+SATs: 0, UNSATs: 4, UNKNOWNs: 0
+
+Iteration 6: τ = 11.828125 (low = 10.28125, high = 13.375)
+SATs: 2, UNSATs: 2, UNKNOWNs: 0
+
+Iteration 7: τ = 11.0546875 (low = 10.28125, high = 11.828125)
+SATs: 1, UNSATs: 1, UNKNOWNs: 0
+The optimal sensor placement is (@s1, @s3)
+
+Benchmarked in 5.31s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=4, BUDGET=2
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=153
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=4, BUDGET=1
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=18
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 18, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 3, UNSATs: 15, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 0, UNSATs: 3, UNKNOWNs: 0
+
+Iteration 4: τ = 19.5625 (low = 13.375, high = 25.75)
+SATs: 2, UNSATs: 1, UNKNOWNs: 0
+
+Iteration 5: τ = 16.46875 (low = 13.375, high = 19.5625)
+SATs: 1, UNSATs: 1, UNKNOWNs: 0
+The optimal sensor placement is (@s2)
+
+Benchmarked in 0.61s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=4, BUDGET=1
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=18
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=3, BUDGET=3
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=816
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 816, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 816, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 185, UNSATs: 631, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 1, UNSATs: 184, UNKNOWNs: 0
+The optimal sensor placement is (@s0, @s1, @s2)
+
+Benchmarked in 33.49s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=3, BUDGET=3
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=816
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=3, BUDGET=2
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=153
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 153, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 153, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 18, UNSATs: 135, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 0, UNSATs: 18, UNKNOWNs: 0
+
+Iteration 5: τ = 10.28125 (low = 7.1875, high = 13.375)
+SATs: 1, UNSATs: 17, UNKNOWNs: 0
+The optimal sensor placement is (@s1, @s2)
+
+Benchmarked in 6.61s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=3, BUDGET=2
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=153
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=3, BUDGET=1
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=18
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 18, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 18, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 1, UNSATs: 17, UNKNOWNs: 0
+The optimal sensor placement is (@s1)
+
+Benchmarked in 0.77s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=3, BUDGET=1
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=18
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=2, BUDGET=2
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=153
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 153, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 153, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 33, UNSATs: 120, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 0, UNSATs: 33, UNKNOWNs: 0
+
+Iteration 5: τ = 10.28125 (low = 7.1875, high = 13.375)
+SATs: 17, UNSATs: 16, UNKNOWNs: 0
+
+Iteration 6: τ = 8.734375 (low = 7.1875, high = 10.28125)
+SATs: 1, UNSATs: 16, UNKNOWNs: 0
+The optimal sensor placement is (@s0, @s1)
+
+Benchmarked in 7.38s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=2, BUDGET=2
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=153
+
+#####################################################
+Running benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=2, BUDGET=1
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=18
+
+Iteration 1: τ = 50.5 (low = 1, high = 100)
+SATs: 18, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 2: τ = 25.75 (low = 1, high = 50.5)
+SATs: 18, UNSATs: 0, UNKNOWNs: 0
+
+Iteration 3: τ = 13.375 (low = 1, high = 25.75)
+SATs: 2, UNSATs: 16, UNKNOWNs: 0
+
+Iteration 4: τ = 7.1875 (low = 1, high = 13.375)
+SATs: 0, UNSATs: 2, UNKNOWNs: 0
+
+Iteration 5: τ = 10.28125 (low = 7.1875, high = 13.375)
+SATs: 1, UNSATs: 1, UNKNOWNs: 0
+The optimal sensor placement is (@s1)
+
+Benchmarked in 0.83s
+Ran benchmark with the following hyperparameters:
+NUM_STATES=19, GOAL_STATE=2, BUDGET=1
+BIN_SEARCH_LOW=1, BIN_SEARCH_HIGH=100
+PLACEMENTS=18
+
