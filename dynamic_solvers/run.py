@@ -17,7 +17,7 @@ from z3 import sat
 from builders.POMDPSpec import POMDPAdapter
 from utils import convert_text_to_html
 from TPMCSolver import TPMCSolver
-from builders.TPMCFactory import TPMCFactory, variant_from_string, puzzle_from_string
+from builders.TPMCFactory import TPMCFactory
 
 VARIANT_CHOICES = ['ssp', 'pop']
 PUZZLE_CHOICES = ['line', 'grid', 'maze']
@@ -116,6 +116,15 @@ Examples:
         required=False,
         default='default',
         help='Bellman equation format: "default" (variant-specific), "common" (with stay-in-place), "adapted" (without stay-in-place)'
+    )
+
+    solver_group.add_argument(
+        '--precision', '-p',
+        type=str,
+        choices=['strict', 'relaxed'],
+        required=False,
+        default='relaxed',
+        help='Constraint precision mode: "strict" (equality == for optimal solutions), "relaxed" (inequality >= for Bellman, <= for budget, finding invariants)'
     )
 
     solver_group.add_argument(
@@ -228,21 +237,19 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
         print(f"    Budget: {args.budget}, Goal: {args.goal}, {dim_print}")
         print(f"    Strategy: {'Deterministic' if args.deterministic else 'Randomized'}, Threshold: {args.threshold}")
         print(f"    Operation mode (add-ons): \n"
-              f"        Bellman format -> {args.bellman_format}\n"
-              f"        Encoding       -> {"Real" if args.real_encoding else "Boolean"}\n"
-              f"        Verbose output -> {"✅" if args.verbose else "❌"}\n"
-              f"        Ordering       -> {args.order_constraints if args.order_constraints else "default"}"
+              f"        Bellman format       -> {args.bellman_format}\n"
+              f"        Optimality Precision -> {args.precision}\n"
+              f"        Encoding             -> {"Real" if args.real_encoding else "Boolean"}\n"
+              f"        Verbose output       -> {"✅" if args.verbose else "❌"}\n"
+              f"        Ordering             -> {args.order_constraints if args.order_constraints else "default"}"
               f"\n"
         )
 
-    # Convert strings to enums, after which all comparisons are integer-based
-    variant = variant_from_string(args.variant)
-    world = puzzle_from_string(args.world)
-    order_constraints = list(map(int, args.order_constraints.split(","))) if args.order_constraints else args.order_constraints
+    args.order_constraints = list(map(int, args.order_constraints.split(","))) if args.order_constraints else args.order_constraints
 
     # Create a problem instance in location tpMC representation
-    # Factory handles parameter selection - client runner just passes everything
-    tpmc_instance = TPMCFactory.create(variant, world,
+    # Factory handles parameter selection - client runner just passes everything (now with enum types)
+    tpmc_instance = TPMCFactory.create(args.variant, args.world,
                                        length=args.length,
                                        width=args.width,
                                        height=args.height,
@@ -250,8 +257,9 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
                                        budget=args.budget,
                                        determinism=args.deterministic,
                                        bellman_format=args.bellman_format,
+                                       precision=args.precision,
                                        bool_encoding=not args.real_encoding,
-                                       order_constraints=order_constraints,
+                                       order_constraints=args.order_constraints,
                                        verbose=args.verbose)
     solver = TPMCSolver(tpmc_instance.ctx, verbose=not benchmark)
     # Configure solver timeout

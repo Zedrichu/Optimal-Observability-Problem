@@ -17,7 +17,7 @@ from typing import List, Dict, Any, Unpack
 from alive_progress import alive_bar
 from halo import Halo
 
-from builders.typedicts import OperationKWArgs
+from builders.typedicts import ExtOperationParams
 
 TIMEOUT = 90000
 
@@ -36,23 +36,20 @@ class BenchmarkConfig(argparse.Namespace):
     timeout: int = TIMEOUT
 
 
-def _instance_worker(config: BenchmarkConfig, result_queue: Queue, hyperparams: OperationKWArgs):
+def _instance_worker(config: BenchmarkConfig, result_queue: Queue, hyperparams: ExtOperationParams):
     """Worker function to run a single instance loaded from the configuration.
      The solver runs in an isolated process, publishing results to the queue.
      Process-specific code with multiprocessing patterns for fresh state and proper cleanup.
      """
     try:
         # Import here to ensure fresh imports in a new process
-        from dynamic_solvers.TPMCSolver import TPMCSolver
-        from dynamic_solvers.builders.TPMCFactory import TPMCFactory, variant_from_string, puzzle_from_string
-
-        # Convert strings to enums
-        variant = variant_from_string(config.variant)
-        world = puzzle_from_string(config.world)
+        from TPMCSolver import TPMCSolver
+        from builders.TPMCFactory import TPMCFactory
 
         # Create TPMC instance based on configuration & operational hyperparameters
+        # Factory handles string-to-enum conversion at the API boundary
         tpmc_instance = TPMCFactory.create(
-            variant, world,
+            config.variant, config.world,
             length=config.length,
             width=config.width,
             height=config.height,
@@ -67,7 +64,9 @@ def _instance_worker(config: BenchmarkConfig, result_queue: Queue, hyperparams: 
         solver.set_timeout(config.timeout)
 
         # Solve the tpMC instance with a given threshold, determinism flag and timeout
-        result = solver.solve(tpmc_instance, config.threshold, config.timeout)
+        solver.prepare_constraints(tpmc_instance, config.threshold)
+        result = solver.solve(config.timeout)
+        solver.cleanup()
 
         # Determine status
         result_status = str(result.result).upper()
@@ -229,7 +228,7 @@ class BenchmarkRunner:
     """Benchmarking unit using existing dynamic_solvers infrastructure."""
 
     def __init__(self, output_csv: str = "benchmark_results.csv", benchmark_verbose: bool = False,
-                 trials: int = 1, **hyperparams: Unpack[OperationKWArgs]):
+                 trials: int = 1, **hyperparams: Unpack[ExtOperationParams]):
         self.output_csv = output_csv
         self.results: List[Dict[str, Any]] = []
         self.verbose = benchmark_verbose
@@ -410,6 +409,9 @@ def main():
     parser.add_argument('--bellman-format', '-bf', type=str, choices=['default', 'common', 'adapted'], default='default',
         help='Bellman equation format: "default" (variant-specific), "common" (with stay-in-place), "adapted" (without stay-in-place)'
     )
+    parser.add_argument('--precision', '-p', type=str, choices=['strict', 'relaxed'], default='relaxed',
+        help='Constraint precision mode: "strict" (equality == for optimal solutions), "relaxed" (inequality >= for Bellman, <= for budget, finding invariants)'
+    )
     parser.add_argument('--real-encoding', '-re', action='store_true', help='Encoding of TPMC parameters as real variables (slow performance)')
     parser.add_argument('--order-constraints', '-order', type=str,
         help='Comma-separated order of assertion of HL constraint groups for OOP instances. Should be a permutation of 0,1,2,3'
@@ -426,11 +428,12 @@ def main():
             sys.exit(1)
 
         print(f"\nHyperparameters:\n"
-              f"   Bellman format -> {args.bellman_format}\n"
-              f"   Encoding       -> {"Real" if args.real_encoding else "Boolean"}\n"
-              f"   Trials no.     -> {args.trials}\n"
-              f"   Verbose output -> {"✅" if args.verbose else "❌"}\n"
-              f"   Ordering       -> {args.order_constraints if args.order_constraints else "default"}")
+              f"   Bellman format       -> {args.bellman_format}\n"
+              f"   Optimality Precision -> {args.precision}\n"
+              f"   Encoding             -> {"Real" if args.real_encoding else "Boolean"}\n"
+              f"   Trials no.           -> {args.trials}\n"
+              f"   Verbose output       -> {"✅" if args.verbose else "❌"}\n"
+              f"   Ordering             -> {args.order_constraints if args.order_constraints else "default"}")
 
         # Check that all config files exist
         for config_file in args.config_csv:
@@ -454,6 +457,7 @@ def main():
             args.output, args.verbose, args.trials,
             verbose=False,
             bellman_format=args.bellman_format,
+            precision=args.precision,
             bool_encoding=not args.real_encoding,
             order_constraints=order_constraints,
         )

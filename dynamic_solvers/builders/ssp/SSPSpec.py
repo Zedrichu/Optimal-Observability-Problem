@@ -2,9 +2,10 @@ from abc import ABC
 from itertools import chain
 from typing import List, override
 
-from z3 import z3, Real, Or, Sum, And, Implies, Not, PbEq
+from z3 import z3, Or, Sum, And, Implies, Not, PbEq, PbLe
 
 from builders.OOPSpec import OOPSpec
+from builders.enums import Precision, BellmanFormat
 from utils import init_var_type
 
 
@@ -48,11 +49,15 @@ class SSPSpec(OOPSpec, ABC):
         self.console.print(sensor_to_action)
         return sensor_to_action
 
+    @override
     def _compute_state_bellman_bool_det(self, state: int, sensor: int) -> List[z3.BoolRef]:
+        is_relaxed = (self.precision is Precision.RELAXED)
         equations = []
+
         for a in range(len(self.actions)):
             next_state = self.navigate(state, a)
-            reward_relation = self.ExpRew[state] == 1 + self.ExpRew[next_state]
+            reward_relation = (self.ExpRew[state] >= 1 + self.ExpRew[next_state] if is_relaxed
+                                else self.ExpRew[state] == 1 + self.ExpRew[next_state])
 
             # Next state activation -> reward computation with next state expected reward
             # TODO!: Disjunction of activations in implication lhs. for streamlining
@@ -66,18 +71,26 @@ class SSPSpec(OOPSpec, ABC):
             equations.append(Implies(activation, reward_relation, self.ctx))
         return equations
 
+    @override
     def _compute_state_bellman_bool_rand(self, state: int, sensor: int) -> List[z3.BoolRef]:
+        is_relaxed = (self.precision is Precision.RELAXED)
         equations = []
 
         # Weighted next-state rewards for activated sensor
-        weighted_rewards = Sum([self.X[sensor][a] * self.ExpRew[self.navigate(state, a)]
-                                for a in range(len(self.actions))])
-        equations.append(Implies(self.Y[sensor], self.ExpRew[state] == 1 + weighted_rewards, self.ctx))
+        weighted_rewards_on = Sum([self.X[sensor][a] * self.ExpRew[self.navigate(state, a)]
+                                   for a in range(len(self.actions))])
+        equations.append(Implies(self.Y[sensor],
+                                self.ExpRew[state] >= 1 + weighted_rewards_on if is_relaxed
+                                else self.ExpRew[state] == 1 + weighted_rewards_on,
+                                self.ctx))
 
         # Weighted next-state rewards for deactivated sensor (default observation)
-        weighted_rewards = Sum([self.X[-1][a] * self.ExpRew[self.navigate(state, a)]
-                                for a in range(len(self.actions))])
-        equations.append(Implies(Not(self.Y[sensor], self.ctx), self.ExpRew[state] == 1 + weighted_rewards, self.ctx))
+        weighted_rewards_off = Sum([self.X[-1][a] * self.ExpRew[self.navigate(state, a)]
+                                    for a in range(len(self.actions))])
+        equations.append(Implies(Not(self.Y[sensor], self.ctx),
+                                self.ExpRew[state] >= 1 + weighted_rewards_off if is_relaxed
+                                else self.ExpRew[state] == 1 + weighted_rewards_off,
+                                self.ctx))
 
         return equations
 
@@ -88,7 +101,7 @@ class SSPSpec(OOPSpec, ABC):
     @override
     def initialize_terms(self) -> list[int]:
         """For SSP instances w/o determinism use adapted Bellman equation format."""
-        if self.bellman_format == 'default':
+        if self.bellman_format is BellmanFormat.DEFAULT:
             return [] if not self.determinism else [1]
         return super().initialize_terms()
 
@@ -96,7 +109,7 @@ class SSPSpec(OOPSpec, ABC):
     def build_destination_rew(self, next_state: int) -> z3.ArithRef:
         """For SSP instances w/o determinism adapt Bellman equations.
         Add reward of single transition (1) to the next state's expected reward towards the goal."""
-        if self.bellman_format == 'default':
+        if self.bellman_format is BellmanFormat.DEFAULT:
             return 1 + self.ExpRew[next_state] if not self.determinism else self.ExpRew[next_state]
         return super().build_destination_rew(next_state)
 
@@ -116,11 +129,22 @@ class SSPSpec(OOPSpec, ABC):
         # Budget constraint - total sensors used <= budget
         self.console.print("\n# Budget constraint - total no. of sensors activated <= budget")
 
+        is_relaxed = (self.precision is Precision.RELAXED)
+
         if self.bool_encoding:
+            # When working with the pseudo-boolean dedicated solver, we should enforce reward monotonicity
+            # Take full benefit in the distinguishability power of the full observation budget
+            # constraint = PbLe([(y, 1) for y in self.Y], self.budget) # ❌ worse performance
+
             # Cardinality constraint equal B w/ pseudo-booleans (more performant than If(y,1,0) summation)
             constraint = PbEq([(y, 1) for y in self.Y], self.budget, self.ctx)
         else:
-            constraint = Sum(self.Y) == self.budget # TODO!: Check whether == or <= works better ? original mentions == budget
+            if is_relaxed:
+                # Relax budget in combination with Bellman-Invariance relaxation
+                # Not enforcing information monotonicity for rewards - ignore the distinguishability power of obs. functions
+                constraint = Sum(self.Y) <= self.budget
+            else:
+                constraint = Sum(self.Y) == self.budget
 
         self.console.print(constraint)
         return constraint

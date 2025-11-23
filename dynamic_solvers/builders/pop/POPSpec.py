@@ -1,10 +1,11 @@
 from abc import ABC
 from itertools import chain
-from typing import List
+from typing import List, override
 
-from z3 import z3, Or, Sum, Implies, And, Not, PbEq, Real
+from z3 import z3, Or, Sum, Implies, And, Not, PbEq
 
 from builders.OOPSpec import OOPSpec
+from builders.enums import Precision
 from utils import init_var_type
 
 
@@ -44,22 +45,32 @@ class POPSpec(OOPSpec, ABC):
         self.console.print(observation_to_action)
         return observation_to_action
 
+    @override
     def _compute_state_bellman_bool_det(self, state: int, state_idx: int) -> List[z3.BoolRef]:
+        is_relaxed = (self.precision is Precision.RELAXED)
         return [
             Implies(
                 And(self.Y[state_idx][o], self.X[o][a], self.ctx),
-                self.ExpRew[state] == 1 + self.ExpRew[self.navigate(state, a)],
+                # Bellman relaxation (≥ Invariance): identify an invariant upper bound on expected rewards (original ==)
+                self.ExpRew[state] >= 1 + self.ExpRew[self.navigate(state, a)] if is_relaxed
+                else self.ExpRew[state] == 1 + self.ExpRew[self.navigate(state, a)],
                 self.ctx)
             for o in range(self.budget)
             for a in range(len(self.actions))
         ]
 
+    @override
     def _compute_state_bellman_bool_rand(self, state: int, state_idx: int) -> List[z3.BoolRef]:
+        is_relaxed = (self.precision is Precision.RELAXED)
+
         return [
             Implies(
                 self.Y[state_idx][o],
-                self.ExpRew[state] == 1 + Sum([self.ExpRew[self.navigate(state, a)] * self.X[o][a]
-                                           for a in range(len(self.actions))]),
+                # Bellman relaxation (≥ Invariance): identify an invariant upper bound on expected rewards (original ==)
+                self.ExpRew[state] >= 1 + Sum([self.ExpRew[self.navigate(state, a)] * self.X[o][a]
+                                                for a in range(len(self.actions))]) if is_relaxed
+                else self.ExpRew[state] == 1 + Sum([self.ExpRew[self.navigate(state, a)] * self.X[o][a]
+                                                    for a in range(len(self.actions))]),
                 self.ctx)
             for o in range(self.budget)
         ]
@@ -107,7 +118,7 @@ class POPSpec(OOPSpec, ABC):
 
     def collect_constraints(self, threshold: str) -> List[z3.BoolRef]:
         self.console.print("\n  🛠️  Building constraints...", justify="center")
-        
+
         if self.order_constraints is not None:
             builders = [
                 lambda: [*self.build_fully_observable_constraints(), self.build_threshold_constraint(threshold)],
@@ -118,7 +129,7 @@ class POPSpec(OOPSpec, ABC):
             self.console.print("\nApplying order of constraints:")
             self.console.print(", ".join(f"{i} <- {order}" for (i, order) in enumerate(self.order_constraints)))
             constraints = [builders[i]() for i in self.order_constraints]
-            
+
             # Flatten constraints for solver loading
             return list(chain.from_iterable(constraints))
 

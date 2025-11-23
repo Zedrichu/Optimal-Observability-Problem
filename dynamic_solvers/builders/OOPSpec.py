@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional, Literal, Callable
+from typing import List, Optional, Callable
 
 from rich.console import Console
-from z3 import (Context, z3, Real, Q, Or, Sum, And, Not, Implies, PbEq)
+from z3 import (Context, z3, Real, Q, Or, Sum, And, Not, Implies)
 
 from builders.worlds import World
+from builders.enums import BellmanFormat, Precision
 from utils import parse_threshold
 
 
@@ -16,7 +17,8 @@ class OOPSpec(World, ABC):
     def __init__(self, budget: int, goal: int, determinism: bool,
                  ctx: Optional[Context] = None, verbose: bool = False,
                  bool_encoding: bool = True,
-                 bellman_format: Literal["default", "common", "adapted"] | None = "default",
+                 bellman_format: BellmanFormat | None = None,
+                 precision: Precision | None = None,
                  order_constraints: Optional[List[int]] = None):
         self.ctx = ctx or Context()  # Use provided context or create fresh one
         self.budget = budget
@@ -24,7 +26,8 @@ class OOPSpec(World, ABC):
         self.determinism = determinism
         self.bool_encoding = bool_encoding
         self.verbose = verbose
-        self.bellman_format = bellman_format or "default"
+        self.bellman_format = bellman_format or BellmanFormat.DEFAULT
+        self.precision = precision or Precision.RELAXED
         self.order_constraints = order_constraints
 
         self.exp_rew_evaluator = None
@@ -110,31 +113,39 @@ class OOPSpec(World, ABC):
             next_state = self.navigate(state, a)
             destination_rew = self.build_destination_rew(next_state)
             terms.append(action_term * destination_rew)
-        return [self.ExpRew[state] == Sum(terms)]
+
+        # Bellman constraint formulation: relaxed (>= inequality for invariance) or strict (== equality)
+        if self.precision is Precision.RELAXED:
+            # Relaxation (≥ Invariance): identify an invariant upper bound on expected rewards (thresholded)
+            # actual ExpRew <= relaxed ExpRew <= threshold
+            return [self.ExpRew[state] >= Sum(terms)]
+        else:
+            # Strict rewards: aim search towards optimal rewards from each state (-> optimal expected reward)
+            return [self.ExpRew[state] == Sum(terms)]
 
     def initialize_terms(self):
         """ Initial term in Bellman sum for current state - reward of staying in place.
 
         Three supported formats:
-        - "default": Default configuration for Bellman equation format.
-        - "common": Common format of Bellman equations with stay-in-place cost [1]. [See base paper]
-        - "adapted": Adapted format (used originally in code) without stay-in-place cost [].
+        - DEFAULT: Default configuration for Bellman equation format.
+        - COMMON: Common format of Bellman equations with stay-in-place cost [1]. [See base paper]
+        - ADAPTED: Adapted format (used originally in code) without stay-in-place cost [].
         """
-        if self.bellman_format == "adapted":
+        if self.bellman_format is BellmanFormat.ADAPTED:
             return []
-        return [1]  # "common" format (also "default")
+        return [1]  # COMMON format (also DEFAULT)
 
     def build_destination_rew(self, next_state: int) -> z3.ArithRef:
         """ Expected reward from the state the selected action leads to, to the goal.
 
         Three supported formats:
-        - "default": Default configuration for Bellman equation format.
-        - "common": Common format of Bellman equations with just ExpRew[next_state]. [See base paper]
-        - "adapted": Adapted format (used originally in code) adding transition cost 1 + ExpRew[next_state].
+        - DEFAULT: Default configuration for Bellman equation format.
+        - COMMON: Common format of Bellman equations with just ExpRew[next_state]. [See base paper]
+        - ADAPTED: Adapted format (used originally in code) adding transition cost 1 + ExpRew[next_state].
         """
-        if self.bellman_format == "adapted":
+        if self.bellman_format is BellmanFormat.ADAPTED:
             return 1 + self.ExpRew[next_state]
-        return self.ExpRew[next_state]  # "common" format (also "default")
+        return self.ExpRew[next_state]  # COMMON format (also DEFAULT)
 
     @abstractmethod
     def build_action_term(self, action_idx: int, state_idx: int) -> z3.ArithRef:
