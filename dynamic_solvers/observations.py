@@ -3,7 +3,9 @@ import time
 from TPMCSolver import TPMCSolver
 from builders.TPMCFactory import TPMCFactory
 from builders.POMDPSpec import POMDPAdapter
-from builders.direction import Direction
+from collections.abc import Iterable
+
+from z3 import sat
 
 
 def stirling_partitions(n, k):
@@ -33,10 +35,6 @@ def stirling_partitions(n, k):
     curr = [[] for _ in range(k)]
     yield from backtrack(0, curr, 0)
 
-
-from collections.abc import Iterable
-
-
 def prettify(obj, prefix: str):
     # Base case: if it's an int, prettify it
     if isinstance(obj, int):
@@ -47,13 +45,15 @@ def prettify(obj, prefix: str):
         return container_type(prettify(item, prefix) for item in obj)
     return obj
 
-if __name__ == "__main__":
 
-    width = 5
-    height = 3
-    goal = 6
+if __name__ == "__main__":
+    width = 339
+    height = 170
+    goal = 844
     budget = 3
-    threshold = "<= 10"
+    # threshold = "<= Q(84,15)"
+    # threshold = "<= Q(243191,845)"
+    threshold = "<= Q(243191,1)"
     verbose = False
 
     tpmc_instance = TPMCFactory.create(oop_variant='pop',
@@ -72,42 +72,44 @@ if __name__ == "__main__":
     solver.prepare_constraints(adapter, threshold)
 
     clusters = tpmc_instance.clusters
-    overlapping_clusters = [
-        {Direction.NW, Direction.N, Direction.NE},
-        {Direction.NW, Direction.W, Direction.SW},
-        {Direction.SW, Direction.S, Direction.SE},
-        {Direction.SE, Direction.E, Direction.NE},
-    ]
+    keys = list(clusters.keys())
+    num_clusters = len(keys)
 
     print(f"\nClusters (goal = s{tpmc_instance.goal}):")
-    for c, cluster in enumerate(clusters):
-        print(f"{cluster} (o{c}): {prettify(clusters[cluster], "s")}")
+    for c, cluster_idx in enumerate(clusters):
+        # print(f"{cluster_idx} (o{c}): {prettify(clusters[cluster_idx], "s")}")
+        print(f"{cluster_idx} (o{c}): {len(clusters[cluster_idx])}")
 
-    # Given a budget B:
-    # We generate all possible partitions for clusters into B buckets
-    num_clusters = len(clusters.keys())
+    # Given a budget B, we generate all possible partitions for clusters into B buckets
     partitions = [(p, partition) for p, partition in enumerate(stirling_partitions(n=num_clusters, k=budget))]
 
-    # For each partition, we place all states from each cluster in the specified bucket to form an observation class
-    keys = list(clusters.keys())
+    # For each partition, we place all states from each cluster in the specified bucket to form the observation function
     for p, partition in partitions:
         obs_function = [-1]*tpmc_instance.size
         strategy_constraints = []
         for b, bucket in enumerate(partition):
-            bucket_clusters = set()
-            for cluster in bucket:
+            bucket_actions = set()
+            for cluster_idx in bucket:
+                cluster = keys[cluster_idx]
                 # Assign states in the cluster to the bucket/observation class
-                for state in clusters[keys[cluster]]:
+                for state in clusters[cluster]:
                     obs_function[state] = b
-                bucket_clusters.add(keys[cluster])
 
-        print(f"\nPossible partition {p + 1}")
-        print(f"Buckets/partition: {prettify(partition, "o")}")
+                bucket_actions.update(cluster.actions)
+            # We can add strategy constraints to a certain observation class based on the optimal actions present in it
+            for a, action in enumerate(tpmc_instance.actions):
+                if action not in bucket_actions:
+                    strategy_constraints.append(tpmc_instance.X[b][a] == 0)
+
+
+        print(f"\nPartition {p + 1}")
+        print(f"Strategy constraints: {strategy_constraints}")
+        # print(f"Buckets/partition: {prettify(partition, "o")}")
+        print(f"Buckets/partition: {len(partition)}")
         print(f"POMDP: {obs_function}")
 
-        # TODO: We should use some knowledge of the optimal strategies
-        #       when an observation function composes a single cluster
-        result = solver.evaluate_pomdp(adapter, obs_function=obs_function, timeout_ms=20000)
-        for i in range(5):
-            time.sleep(1)
-            print(f"Slept for {i+1}s...")
+        result = solver.evaluate_pomdp(adapter, obs_function, 10000, strategy_constraints)
+        print(f"Result: {result.solve_time}s | {result.result} | {result.reward}")
+        if result.result == sat:
+            exit(0)
+        time.sleep(1)

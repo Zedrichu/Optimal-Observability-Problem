@@ -2,7 +2,7 @@ import gc
 import time
 
 from z3 import (set_option, Solver, Context,
-                unsat, sat, unknown)
+                unsat, sat, unknown, BoolRef)
 
 from ResultOOP import ResultOOP
 from builders.OOPSpec import OOPSpec
@@ -71,7 +71,7 @@ class TPMCSolver:
         self.exp_rew_formula = spec.exp_rew_evaluator
         self.solver.add(base_constraints)
 
-    def evaluate_pomdp(self, pomdp: POMDPAdapter, obs_function: list[int], timeout_ms: int) -> ResultOOP:
+    def evaluate_pomdp(self, pomdp: POMDPAdapter, obs_function: list[int], timeout_ms: int, extra_constraints: None | list[BoolRef] = None) -> ResultOOP:
         """
         Evaluate a POMDP with a specific observation function using push/pop.
 
@@ -81,6 +81,7 @@ class TPMCSolver:
             pomdp: The POMDPAdapter instance (must have had prepare_constraints called)
             obs_function: The observation function to evaluate
             timeout_ms: Solver timeout in milliseconds
+            extra_constraints: Any other relevant constraint(s) to pass to the solver
 
         Returns:
             ResultOOP with solve time, result, reward, and model
@@ -93,6 +94,8 @@ class TPMCSolver:
             # Add Bellman constraints for this observation function
             bellman_constraints = pomdp.collect_bellman_constraints(obs_function)
             self.solver.add(bellman_constraints)
+            if extra_constraints:
+                self.solver.add(extra_constraints)
 
             # Solve
             result = self.solve(timeout_ms)

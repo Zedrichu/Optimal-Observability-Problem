@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
-import re
 
-from builders.direction import Direction
+from direction import Direction
 
 
 class World(ABC):
