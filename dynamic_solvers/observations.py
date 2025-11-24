@@ -1,6 +1,9 @@
-from typing import List, Iterable
+import time
 
-from builders.worlds import Line, Maze
+from TPMCSolver import TPMCSolver
+from builders.TPMCFactory import TPMCFactory
+from builders.POMDPSpec import POMDPAdapter
+from builders.direction import Direction
 
 
 def stirling_partitions(n, k):
@@ -45,28 +48,66 @@ def prettify(obj, prefix: str):
     return obj
 
 if __name__ == "__main__":
-    maze = Maze(5, 3, 6)
-    print(f"\nMaze Clusters (goal = s{maze.goal}):")
-    for c, cluster in enumerate(maze.clusters):
-        print(f"{cluster} (o{c}): {prettify(maze.clusters[cluster], "s")}")
-    print()
 
-    # Suppose we are given a budget B
-    B = 3
-    num_clusters = len(maze.clusters.keys())
+    width = 5
+    height = 3
+    goal = 6
+    budget = 3
+    threshold = "<= 10"
+    verbose = False
 
+    tpmc_instance = TPMCFactory.create(oop_variant='pop',
+                                       puzzle_type='maze',
+                                       width=width,
+                                       height=height,
+                                       goal=goal,
+                                       budget=budget,
+                                       determinism=False,
+                                       precision='strict',
+                                       bool_encoding=True,
+                                       verbose=verbose)
+
+    solver = TPMCSolver(tpmc_instance.ctx, verbose=verbose)
+    adapter = POMDPAdapter(tpmc_instance)
+    solver.prepare_constraints(adapter, threshold)
+
+    clusters = tpmc_instance.clusters
+    overlapping_clusters = [
+        {Direction.NW, Direction.N, Direction.NE},
+        {Direction.NW, Direction.W, Direction.SW},
+        {Direction.SW, Direction.S, Direction.SE},
+        {Direction.SE, Direction.E, Direction.NE},
+    ]
+
+    print(f"\nClusters (goal = s{tpmc_instance.goal}):")
+    for c, cluster in enumerate(clusters):
+        print(f"{cluster} (o{c}): {prettify(clusters[cluster], "s")}")
+
+    # Given a budget B:
     # We generate all possible partitions for clusters into B buckets
-    partitions = [(p, partition) for p, partition in enumerate(stirling_partitions(n=num_clusters, k=B))]
+    num_clusters = len(clusters.keys())
+    partitions = [(p, partition) for p, partition in enumerate(stirling_partitions(n=num_clusters, k=budget))]
 
     # For each partition, we place all states from each cluster in the specified bucket to form an observation class
-    keys = list(maze.clusters.keys())
-    for _, partition in partitions:
-        obs_function = []
-        for bucket in partition:
-            observation_class = []
+    keys = list(clusters.keys())
+    for p, partition in partitions:
+        obs_function = [-1]*tpmc_instance.size
+        strategy_constraints = []
+        for b, bucket in enumerate(partition):
+            bucket_clusters = set()
             for cluster in bucket:
-                observation_class.extend(maze.clusters[keys[cluster]])
-            obs_function.append(observation_class)
-        print()
-        print(prettify(partition, "o"))
-        print(prettify(obs_function, "s"))
+                # Assign states in the cluster to the bucket/observation class
+                for state in clusters[keys[cluster]]:
+                    obs_function[state] = b
+                bucket_clusters.add(keys[cluster])
+
+        print(f"\nPossible partition {p + 1}")
+        print(f"Buckets/partition: {prettify(partition, "o")}")
+        print(f"POMDP: {obs_function}")
+
+        # TODO: We should use some knowledge of the optimal strategies
+        #       when an observation function composes a single cluster
+        result = solver.evaluate_pomdp(adapter, obs_function=obs_function, timeout_ms=20000)
+        for i in range(5):
+            time.sleep(1)
+            print(f"Slept for {i+1}s...")
