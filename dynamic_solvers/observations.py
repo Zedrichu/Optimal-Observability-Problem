@@ -47,13 +47,12 @@ def prettify(obj, prefix: str):
 
 
 if __name__ == "__main__":
-    width = 339
-    height = 170
-    goal = 844
-    budget = 3
-    # threshold = "<= Q(84,15)"
-    # threshold = "<= Q(243191,845)"
-    threshold = "<= Q(243191,1)"
+    start = time.process_time()
+    width = 3
+    height = 3
+    goal = 4
+    budget = 4
+    threshold = "<= Q(9,4)"
     verbose = False
 
     tpmc_instance = TPMCFactory.create(oop_variant='pop',
@@ -66,10 +65,15 @@ if __name__ == "__main__":
                                        precision='strict',
                                        bool_encoding=True,
                                        verbose=verbose)
+    now = time.process_time()
+    print(f"Initialized TPMC in {(now - start):.4f}s")
 
     solver = TPMCSolver(tpmc_instance.ctx, verbose=verbose)
     adapter = POMDPAdapter(tpmc_instance)
     solver.prepare_constraints(adapter, threshold)
+
+    now = time.process_time()
+    print(f"Initialized Solver, POMDP adapter, and constraints in {(now - start):.4f}s")
 
     clusters = tpmc_instance.clusters
     keys = list(clusters.keys())
@@ -82,8 +86,11 @@ if __name__ == "__main__":
 
     # Given a budget B, we generate all possible partitions for clusters into B buckets
     partitions = [(p, partition) for p, partition in enumerate(stirling_partitions(n=num_clusters, k=budget))]
+    print(f"\nThere are {len(partitions)} partitions to explore")
 
-    # For each partition, we place all states from each cluster in the specified bucket to form the observation function
+    now = time.process_time()
+    print(f"Generated partitions in {(now - start):.4f}s\n")
+
     for p, partition in partitions:
         obs_function = [-1]*tpmc_instance.size
         strategy_constraints = []
@@ -96,6 +103,7 @@ if __name__ == "__main__":
                     obs_function[state] = b
 
                 bucket_actions.update(cluster.actions)
+
             # We can add strategy constraints to a certain observation class based on the optimal actions present in it
             for a, action in enumerate(tpmc_instance.actions):
                 if action not in bucket_actions:
