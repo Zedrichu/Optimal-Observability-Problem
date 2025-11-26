@@ -51,12 +51,12 @@ if __name__ == "__main__":
     width = 3
     height = 3
     goal = 4
-    budget = 4
+    budget = 3
     threshold = "<= Q(9,4)"
     verbose = False
 
     tpmc_instance = TPMCFactory.create(oop_variant='pop',
-                                       puzzle_type='maze',
+                                       puzzle_type='grid',
                                        width=width,
                                        height=height,
                                        goal=goal,
@@ -67,6 +67,7 @@ if __name__ == "__main__":
                                        verbose=verbose)
     now = time.process_time()
     print(f"Initialized TPMC in {(now - start):.4f}s")
+    start = now
 
     solver = TPMCSolver(tpmc_instance.ctx, verbose=verbose)
     adapter = POMDPAdapter(tpmc_instance)
@@ -74,6 +75,7 @@ if __name__ == "__main__":
 
     now = time.process_time()
     print(f"Initialized Solver, POMDP adapter, and constraints in {(now - start):.4f}s")
+    start = now
 
     clusters = tpmc_instance.clusters
     keys = list(clusters.keys())
@@ -81,43 +83,60 @@ if __name__ == "__main__":
 
     print(f"\nClusters (goal = s{tpmc_instance.goal}):")
     for c, cluster_idx in enumerate(clusters):
-        # print(f"{cluster_idx} (o{c}): {prettify(clusters[cluster_idx], "s")}")
-        print(f"{cluster_idx} (o{c}): {len(clusters[cluster_idx])}")
+        print(f"  {cluster_idx} (o{c}): {prettify(clusters[cluster_idx], "s")}")
 
     # Given a budget B, we generate all possible partitions for clusters into B buckets
     partitions = [(p, partition) for p, partition in enumerate(stirling_partitions(n=num_clusters, k=budget))]
-    print(f"\nThere are {len(partitions)} partitions to explore")
-
     now = time.process_time()
-    print(f"Generated partitions in {(now - start):.4f}s\n")
+    print(f"\nThere are S({num_clusters},{budget}) = {len(partitions)} partitions to explore")
+    print(f"Generated partitions in {(now - start):.4f}s")
+    start = now
 
+    # For each partition, we place all states from each cluster in the specified bucket to form an observation function
+    # We rank each observation function based on the number of blocks that follow an equivalence relation and break ties with the number of strategy constraints that it imposes
+    ranked_obs_functions = []
     for p, partition in partitions:
         obs_function = [-1]*tpmc_instance.size
         strategy_constraints = []
         for b, bucket in enumerate(partition):
-            bucket_actions = set()
             for cluster_idx in bucket:
                 cluster = keys[cluster_idx]
                 # Assign states in the cluster to the bucket/observation class
                 for state in clusters[cluster]:
                     obs_function[state] = b
 
-                bucket_actions.update(cluster.actions)
-
-            # We can add strategy constraints to a certain observation class based on the optimal actions present in it
+            # We can impose strategy constraints for an observation class based on its states' optimal action(s)
+            actions_per_cluster = [keys[cluster_idx].actions for cluster_idx in bucket]
+            actions_in_bucket = set.union(*actions_per_cluster)
+            common_actions = set.intersection(*actions_per_cluster)
+            common_action = None
+            if len(common_actions) > 0:
+                # Choose one common action to be executed with 100% rate
+                common_action = common_actions.pop()
+                action_idx = tpmc_instance.actions.index(common_action)
+                strategy_constraints.append(tpmc_instance.X[b][action_idx] == 1)
             for a, action in enumerate(tpmc_instance.actions):
-                if action not in bucket_actions:
+                # If a common action is selected, all other actions should have rate 0
+                if common_action is not None and action != common_action:
+                    strategy_constraints.append(tpmc_instance.X[b][a] == 0)
+                # If no common action can be selected, the actions not in the bucket's set of actions should have rate 0
+                elif common_action is None and action not in actions_in_bucket:
                     strategy_constraints.append(tpmc_instance.X[b][a] == 0)
 
+        ranked_obs_functions.append((partition, obs_function, strategy_constraints, equivalence_score))
+        ranked_obs_functions.append((partition, obs_function, strategy_constraints))
 
-        print(f"\nPartition {p + 1}")
-        print(f"Strategy constraints: {strategy_constraints}")
-        # print(f"Buckets/partition: {prettify(partition, "o")}")
-        print(f"Buckets/partition: {len(partition)}")
-        print(f"POMDP: {obs_function}")
+    now = time.process_time()
+    print(f"\nRanking of observation functions completed in {(now - start):.4f}s")
+    start = now
 
-        result = solver.evaluate_pomdp(adapter, obs_function, 10000, strategy_constraints)
-        print(f"Result: {result.solve_time}s | {result.result} | {result.reward}")
-        if result.result == sat:
-            exit(0)
-        time.sleep(1)
+    print("Ranked Observation Functions:")
+    ranked_obs_functions = sorted(ranked_obs_functions, key=lambda ranked_partition: -len(ranked_partition[2]))
+    for partition, obs_function, strat_constraints in ranked_obs_functions:
+        result = solver.evaluate_pomdp(adapter, obs_function, 30000, strat_constraints)
+        print(f"Result: {result.solve_time:.4f}s | {result.result} | {result.reward}")
+        # if result.result == sat:
+        #     exit(0)
+        # for i in range(3):
+        #     time.sleep(1)
+        #     print(f"Slept for {i+1}s")
