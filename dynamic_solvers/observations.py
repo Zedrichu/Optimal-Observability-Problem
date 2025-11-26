@@ -126,7 +126,7 @@ if __name__ == "__main__":
                 elif common_action is None and action not in actions_in_bucket:
                     strategy_constraints.append(tpmc_instance.X[b][a] == 0)
 
-        ranked_obs_functions.append((partition, obs_function, strategy_constraints))
+        ranked_obs_functions.append((partition, obs_function, strategy_constraints, equivalence_score))
 
     now = time.process_time()
     print(f"\nRanking of observation functions completed in {(now - start):.4f}s")
