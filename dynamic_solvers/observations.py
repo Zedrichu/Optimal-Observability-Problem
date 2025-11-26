@@ -98,6 +98,7 @@ if __name__ == "__main__":
     for p, partition in partitions:
         obs_function = [-1]*tpmc_instance.size
         strategy_constraints = []
+        equivalence_score = 0
         for b, bucket in enumerate(partition):
             for cluster_idx in bucket:
                 cluster = keys[cluster_idx]
@@ -111,6 +112,8 @@ if __name__ == "__main__":
             common_actions = set.intersection(*actions_per_cluster)
             common_action = None
             if len(common_actions) > 0:
+                # All clusters in bucket follow an equivalence relation
+                equivalence_score += 1
                 # Choose one common action to be executed with 100% rate
                 common_action = common_actions.pop()
                 action_idx = tpmc_instance.actions.index(common_action)
@@ -123,7 +126,6 @@ if __name__ == "__main__":
                 elif common_action is None and action not in actions_in_bucket:
                     strategy_constraints.append(tpmc_instance.X[b][a] == 0)
 
-        ranked_obs_functions.append((partition, obs_function, strategy_constraints, equivalence_score))
         ranked_obs_functions.append((partition, obs_function, strategy_constraints))
 
     now = time.process_time()
@@ -131,8 +133,9 @@ if __name__ == "__main__":
     start = now
 
     print("Ranked Observation Functions:")
-    ranked_obs_functions = sorted(ranked_obs_functions, key=lambda ranked_partition: -len(ranked_partition[2]))
-    for partition, obs_function, strat_constraints in ranked_obs_functions:
+    ranked_obs_functions = sorted(ranked_obs_functions, key=lambda ranked_partition: (-ranked_partition[3], -len(ranked_partition[2])))
+    for partition, obs_function, strat_constraints, num_equivalences in ranked_obs_functions:
+        print(f"{[[keys[cluster_idx].symbol for cluster_idx in bucket] for bucket in partition]}: {num_equivalences} equivalences, {len(strat_constraints)} strategy constraints")
         result = solver.evaluate_pomdp(adapter, obs_function, 30000, strat_constraints)
         print(f"Result: {result.solve_time:.4f}s | {result.result} | {result.reward}")
         # if result.result == sat:
