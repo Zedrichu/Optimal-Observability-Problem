@@ -209,19 +209,3 @@ class Maze(World):
             elif (state_x != goal_x and state_y > 0) or (state_x == goal_x and state_y > goal_y):
                 clusters.setdefault(Direction.N, []).append(state)
         return clusters
-
-if __name__ == "__main__":
-    line = Line(21, 10)
-    print(f"\nLine Clusters (goal = {line.goal}):")
-    for cluster in line.clusters:
-        print(f"{cluster}: {line.clusters[cluster]}")
-
-    grid = Grid(3, 3, 4)
-    print(f"\nGrid Clusters (goal = {grid.goal}):")
-    for cluster in grid.clusters:
-        print(f"{cluster}: {grid.clusters[cluster]}")
-
-    maze = Maze(5, 3, 6)
-    print(f"\nMaze Clusters (goal = {maze.goal}):")
-    for cluster in maze.clusters:
-        print(f"{cluster}: {maze.clusters[cluster]}")
