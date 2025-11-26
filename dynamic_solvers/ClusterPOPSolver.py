@@ -3,47 +3,22 @@ import time
 from TPMCSolver import TPMCSolver
 from builders.TPMCFactory import TPMCFactory
 from builders.POMDPSpec import POMDPAdapter
-from collections.abc import Iterable
 
 from z3 import sat
 
+from builders.pop.POPSpec import POPSpec
+from utils import stirling_partitions, prettify
 
-def stirling_partitions(n, k):
-    """Generate all partitions of {0..n-1} into k unlabeled nonempty subsets."""
-    items = list(range(n))
 
-    def backtrack(i, curr, used):
-        if i == n:
-            if used == k:
-                # Yield a sorted normalized form (unlabeled buckets)
-                yield list(sorted(list(sorted(b)) for b in curr[:used]))
-            return
+class ClusterPOPSolver:
+    solver: TPMCSolver
+    tpmc: POPSpec
+    verbose: bool
 
-        # Option 1: put item i into an existing bucket
-        for b in range(used):
-            curr[b].append(items[i])
-            yield from backtrack(i+1, curr, used)
-            curr[b].pop()
-
-        # Option 2: create a new bucket (only if we have room)
-        if used < k:
-            curr[used].append(items[i])
-            yield from backtrack(i+1, curr, used+1)
-            curr[used].pop()
-
-    # start with empty structure
-    curr = [[] for _ in range(k)]
-    yield from backtrack(0, curr, 0)
-
-def prettify(obj, prefix: str):
-    # Base case: if it's an int, prettify it
-    if isinstance(obj, int):
-        return f"{prefix}{obj}"
-    # If it's an iterable (list/tuple/set), recurse into it
-    if isinstance(obj, Iterable):
-        container_type = type(obj)
-        return container_type(prettify(item, prefix) for item in obj)
-    return obj
+    def __init__(self, solver: TPMCSolver, tpmc: POPSpec, verbose: bool) -> None:
+        self.solver = solver
+        self.tpmc = tpmc
+        self.verbose = verbose
 
 
 if __name__ == "__main__":
