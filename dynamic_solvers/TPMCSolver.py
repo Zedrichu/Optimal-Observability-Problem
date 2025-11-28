@@ -118,7 +118,7 @@ class TPMCSolver:
             self.solver.pop()
         return result
 
-    def solve(self, timeout_ms: int) -> ResultOOP:
+    def solve(self, timeout_ms: int) -> Z3SolverResult:
 
         if self.verbose:
             print(" ⚡  Solving...")
