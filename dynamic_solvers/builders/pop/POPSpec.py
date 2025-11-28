@@ -142,3 +142,7 @@ class POPSpec(OOPSpec, ABC):
         ]
 
         return constraints
+
+    @override
+    def repair_constraints(self) -> List[z3.BoolRef]:
+        return []
