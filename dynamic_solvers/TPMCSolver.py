@@ -103,7 +103,22 @@ class TPMCSolver:
             # Pop the scope (removes observation-specific constraints)
             self.solver.pop()
 
-    def solve(self, timeout_ms: int) -> Z3SolverResult:
+    def solve_2_shot_repair(self, tpmc: OOPSpec, timeout_ms: int) -> Z3SolverResult:
+        # First shot without budget constraint
+        result = self.solve(timeout_ms)
+        time_shot = result.solve_time if result.solve_time else timeout_ms
+        # Attempt to repair the relaxed solution from before
+
+        self.solver.push()
+        try:
+            self.solver.add(tpmc.repair_constraints())
+            result = self.solve(timeout_ms)
+            result.solve_time += time_shot
+        finally:
+            self.solver.pop()
+        return result
+
+    def solve(self, timeout_ms: int) -> ResultOOP:
 
         if self.verbose:
             print(" ⚡  Solving...")
