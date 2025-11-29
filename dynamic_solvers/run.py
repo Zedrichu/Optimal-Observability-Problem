@@ -14,7 +14,7 @@ from typing import List, Tuple
 import z3
 from z3 import sat
 
-from builders.POMDPSpec import POMDPAdapter
+from builders.POMDPAdapter import POMDPAdapter
 from utils import convert_text_to_html
 from TPMCSolver import TPMCSolver
 from builders.TPMCFactory import TPMCFactory
