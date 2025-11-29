@@ -3,7 +3,7 @@ from z3 import sat, unsat, unknown
 
 from builders.pop import LineTPMC, GridTPMC
 from dynamic_solvers.TPMCSolver import TPMCSolver
-from dynamic_solvers.builders.POMDPSpec import POMDPAdapter
+from dynamic_solvers.builders.POMDPAdapter import POMDPAdapter
 
 
 class ObservativeAgent:
@@ -89,7 +89,7 @@ class ObservativeAgent:
         return Y, probs_list
 
     def update(self, Y: list[int], probs_list: list, reward: float):
-        """REINFORCE update for Categorical distribution."""
+        """REINFORCE update for Categorical distribution - MINIMIZATION."""
         self.baseline = 0.9 * self.baseline + 0.1 * reward
         advantage = reward - self.baseline
 
@@ -103,15 +103,16 @@ class ObservativeAgent:
 
             # Gradient: (onehot - probs)
             grad = onehot - probs_list[i]
-            self.theta[i] += self.lr * advantage * grad
+            # Negative sign for MINIMIZATION (gradient descent)
+            self.theta[i] -= self.lr * advantage * grad
 
 
 def train(agent: ObservativeAgent, oracle: TPMCSolver, pomdp: POMDPAdapter,
               episodes: int = 200, timeout: int = 10000,
-              penalty_unsat: float = -50, penalty_timeout: float = -100):
+              penalty_unsat: float = 1000, penalty_timeout: float = 500):
     """Train observative agent (POP) with oracle feedback as black-box optimization."""
 
-    stats = {'sat': 0, 'unsat': 0, 'timeout': 0, 'best_reward': float('-inf'), 'best_Y': None}
+    stats = {'sat': 0, 'unsat': 0, 'timeout': 0, 'best_reward': float('inf'), 'best_Y': None}
 
     for ep in range(episodes):
         Y, probs = agent.sample()
@@ -120,7 +121,7 @@ def train(agent: ObservativeAgent, oracle: TPMCSolver, pomdp: POMDPAdapter,
         if result.result == sat:
             reward = float(result.reward.as_fraction())
             stats['sat'] += 1
-            if reward > stats['best_reward']:
+            if reward < stats['best_reward']:  # MINIMIZATION: track lowest reward
                 stats['best_reward'] = reward
                 stats['best_Y'] = Y.copy()
         elif result.result == unsat:
