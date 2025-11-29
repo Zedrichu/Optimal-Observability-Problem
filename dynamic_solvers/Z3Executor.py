@@ -6,7 +6,7 @@ from z3 import (set_option, Solver, Context,
 
 from Z3SolverResult import Z3SolverResult
 from builders.OOPSpec import OOPSpec
-from builders.POMDPSpec import POMDPAdapter
+from builders.POMDPAdapter import POMDPAdapter
 
 
 class Z3Executor:
@@ -62,7 +62,6 @@ class Z3Executor:
         if isinstance(spec, POMDPAdapter):
             # POMDP mode: only add observation-independent constraints
             # Bellman equations will be added per observation function via add_pomdp_observation()
-
             base_constraints = spec.build_y_independent_constraints(threshold)
         else:
             # tpMC mode: add all constraints (including observation synthesis)
@@ -160,3 +159,9 @@ class Z3Executor:
             del self.solver
             self.solver = None
         gc.collect()
+
+    def push(self):
+        self.solver.push()
+
+    def pop(self):
+        self.solver.pop()
