@@ -15,7 +15,7 @@ import z3
 from z3 import sat
 
 from ClusterPOPSolver import ClusterPOPSolver
-from builders.POMDPSpec import POMDPAdapter
+from builders.POMDPAdapter import POMDPAdapter
 from builders.pop.POPSpec import POPSpec
 from utils import convert_text_to_html
 from Z3Executor import Z3Executor
