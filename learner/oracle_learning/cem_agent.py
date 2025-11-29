@@ -1,8 +1,9 @@
 import numpy as np
 from z3 import sat, unsat, unknown
 
+from builders.ssp import LineTPMC
 from dynamic_solvers.TPMCSolver import TPMCSolver
-from dynamic_solvers.builders.POMDPSpec import POMDPAdapter
+from dynamic_solvers.builders.POMDPAdapter import POMDPAdapter
 
 
 class CEMAgent:
@@ -175,3 +176,31 @@ def train_cem(agent: CEMAgent, oracle: TPMCSolver, pomdp: POMDPAdapter,
     print("="*80)
 
     return agent, stats
+
+if __name__ == "__main__":
+    budget = 29
+    size = 61
+    goal = 30
+    tau = 31
+    threshold_q = 3
+    threshold = f"<= Q({tau * threshold_q}, 2)"
+    tpmc = LineTPMC(budget, goal, size, determinism=False, verbose=False)
+    context = tpmc.ctx
+    pomdp = POMDPAdapter(tpmc)
+
+    solver = TPMCSolver(context, verbose=True)
+    solver.prepare_constraints(pomdp, threshold)
+
+    agent = CEMAgent(goal, n_states=size, n_classes=2)
+
+    # Training: soft guidance toward budget
+    trained_agent, stats = train_cem(agent, solver, pomdp, iterations=40, batch_size=10,
+                                     timeout=10000, penalty_timeout=50, penalty_unsat=100)
+
+    # Inference: enforce exact budget via top-k
+    final_Y, _ = trained_agent.sample()
+    n_active_final = sum(1 for y in final_Y if y == 1)
+
+    print(f"\nBest Y: {stats['best_Y']}")
+    print(f"Best reward: {stats['best_reward']}")
+    print(f"Final inference Y has {n_active_final} active sensors (budget={budget})")

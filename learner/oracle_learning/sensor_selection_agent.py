@@ -3,7 +3,7 @@ from z3 import sat, unsat, unknown
 
 from builders.ssp import LineTPMC
 from dynamic_solvers.TPMCSolver import TPMCSolver
-from dynamic_solvers.builders.POMDPSpec import POMDPAdapter
+from dynamic_solvers.builders.POMDPAdapter import POMDPAdapter
 
 
 class SensorSelectionAgent:
@@ -27,7 +27,7 @@ class SensorSelectionAgent:
         self.theta[goal] = 0  # Goal doesn't matter
         self.baseline = 0.0 # prevent random noise from destabilizing the update
 
-    def _initialize_theta(self, strategy: str, init_bias: float) -> np.ndarray:
+    def _initialize_theta(self, strategy: str, init_bias: float, split_power: int = 3) -> np.ndarray:
         """
         Initialize theta with spatial awareness.
 
@@ -47,9 +47,9 @@ class SensorSelectionAgent:
             # This encourages different strategies on each side
             for i in range(self.n):
                 if i < self.goal:
-                    theta[i] = 3  # Bias toward sensors on the left
+                    theta[i] = split_power + 2  # Bias toward sensors on the left
                 elif i > self.goal:
-                    theta[i] = -3  # Bias against sensors on the right
+                    theta[i] = -split_power  # Bias against sensors on the right
                 # Goal gets 0 (will be set outside)
 
         elif strategy == "distance_decay":
@@ -114,7 +114,7 @@ class SensorSelectionAgent:
         return Y, probs
 
     def update(self, Y: list[int], probs: np.ndarray, reward: float):
-        """REINFORCE update for Bernoulli distribution."""
+        """REINFORCE update for Bernoulli distribution - MINIMIZATION."""
         self.baseline = 0.9 * self.baseline + 0.1 * reward
         advantage = reward - self.baseline
 
@@ -122,39 +122,47 @@ class SensorSelectionAgent:
             if i == self.goal:
                 continue
 
-            # Gradient: (y - p) where y ∈ {0,1} is sample, p is probability
+            # Gradient: (y - p) where y ∈ {0,1} is the sample, p is a probability
             grad = Y[i] - probs[i]
-            self.theta[i] += self.lr * advantage * grad
+            # Negative sign for MINIMIZATION (gradient descent)
+            self.theta[i] -= self.lr * advantage * grad
 
 
 def train(agent: SensorSelectionAgent, oracle: TPMCSolver, pomdp: POMDPAdapter,
           episodes: int = 200, budget: int | None = None, timeout: int = 10000,
-            penalty_unsat: float = -50, penalty_timeout: float = -100,
+            penalty_unsat: float = 100, penalty_timeout: float = 50,
           budget_penalty: float = 0.0):
     """
     Train SSP agent with oracle feedback.
 
     Args:
-        budget: Target budget for sensor placement
+        agent (SensorSelectionAgent):
+        oracle (TPMCSolver):
+        pomdp (POMDPAdapter):
+        episodes (int): Number of episodes to train the agent for.
+        penalty_unsat (float): Penalty value for refutations
+        penalty_timeout (float): Penalty value for timeouts
+        budget (int | None): Target budget for sensor placement
         budget_penalty: Penalty per sensor over budget (0 = no penalty)
     """
 
-    stats = {'sat': 0, 'unsat': 0, 'timeout': 0, 'best_reward': float('-inf'), 'best_Y': None}
+    stats = {'sat': 0, 'unsat': 0, 'timeout': 0, 'best_reward': float('inf'), 'best_Y': None}
 
     for ep in range(episodes):
         Y, probs = agent.sample()
+        print(f"Sample: {Y}")
         n_active = sum(1 for y in Y if y == 1)
         result = oracle.evaluate_pomdp(pomdp, Y, timeout)
 
         if result.result == sat:
             reward = float(result.reward.as_fraction())
 
-            # Apply budget penalty if over budget
+            # Apply budget penalty if over budget (increase reward = worse for minimization)
             if budget is not None and n_active > budget:
-                reward -= budget_penalty * (n_active - budget) # Soft Constraint on Budget during Training
+                reward += budget_penalty * (n_active - budget) # Soft Constraint on Budget during Training
 
             stats['sat'] += 1
-            if reward > stats['best_reward']:
+            if reward < stats['best_reward']:  # MINIMIZATION: track lowest reward
                 stats['best_reward'] = reward
                 stats['best_Y'] = Y.copy()
         elif result.result == unsat:
@@ -174,12 +182,12 @@ def train(agent: SensorSelectionAgent, oracle: TPMCSolver, pomdp: POMDPAdapter,
     return agent, stats
 
 if __name__ == "__main__":
-    budget = 29
+    budget = 30
     size = 61
     goal = 30
-    tau = "31 / 2"
-    threshold_q = "4"
-    threshold = f"<= {tau} * {threshold_q}"
+    tau = 31
+    threshold_q = 1
+    threshold = f"<= Q({tau * threshold_q}, 2)"
     tpmc = LineTPMC(budget, goal, size, determinism=False, verbose=False)
     context = tpmc.ctx
     pomdp = POMDPAdapter(tpmc)
