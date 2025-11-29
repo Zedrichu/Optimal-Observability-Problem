@@ -7,7 +7,7 @@ For unit tests of navigation mechanics, see test_env_navigation.py
 """
 
 import numpy as np
-from learner.pomdp_simulation.pomdp_environment import LinePOMDPEnv, GridPOMDPEnv, MazePOMDPEnv
+from pomdp_simulation.pomdp_environment import LinePOMDPEnv, GridPOMDPEnv, MazePOMDPEnv
 from dynamic_solvers.builders.enums import OOPVariant
 
 
