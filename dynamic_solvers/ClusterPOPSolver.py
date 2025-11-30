@@ -1,120 +1,164 @@
 import time
 
+from z3 import sat, BoolRef, unknown
+
+from ResultOOP import ResultOOP
 from TPMCSolver import TPMCSolver
-from builders.TPMCFactory import TPMCFactory
 from builders.POMDPSpec import POMDPAdapter
-
-from z3 import sat
-
 from builders.pop.POPSpec import POPSpec
-from utils import stirling_partitions, prettify
+from direction import Direction
+from utils import stirling_partitions
 
 
 class ClusterPOPSolver:
     solver: TPMCSolver
     tpmc: POPSpec
     verbose: bool
+    adapter: POMDPAdapter
 
-    def __init__(self, solver: TPMCSolver, tpmc: POPSpec, verbose: bool) -> None:
+    def __init__(self, solver: TPMCSolver, tpmc: POPSpec, verbose: bool, threshold: str) -> None:
         self.solver = solver
         self.tpmc = tpmc
         self.verbose = verbose
+        self.adapter = POMDPAdapter(tpmc)
+        self.solver.prepare_constraints(self.adapter, threshold)
 
+    def solve(self, level: int, timeout_ms: int) -> ResultOOP:
+        """
+        Attempts to solve a POP instance by solving and evaluating the underlying POMDPs in it.
 
-if __name__ == "__main__":
-    start = time.process_time()
-    width = 3
-    height = 3
-    goal = 4
-    budget = 3
-    threshold = "<= Q(9,4)"
-    verbose = False
+        The core algorithmic idea is to group states into 'atomic groups' based on their respective
+        optimal action(s) in the underlying MDP, and then explore a constant number of observation
+        functions that combine the atomic groups into observation classes.
 
-    tpmc_instance = TPMCFactory.create(oop_variant='pop',
-                                       puzzle_type='grid',
-                                       width=width,
-                                       height=height,
-                                       goal=goal,
-                                       budget=budget,
-                                       determinism=False,
-                                       precision='strict',
-                                       bool_encoding=True,
-                                       verbose=verbose)
-    now = time.process_time()
-    print(f"Initialized TPMC in {(now - start):.4f}s")
-    start = now
+        The observation functions are solved in an order specified by heuristic scores that estimate
+        1) how close an observation function is to the optimal, and
+        2) how much an observation function constraints its possible strategies.
 
-    solver = TPMCSolver(tpmc_instance.ctx, verbose=verbose)
-    adapter = POMDPAdapter(tpmc_instance)
-    solver.prepare_constraints(adapter, threshold)
+        Args:
+            level (int): The ranking level up to which the search should be performed.
+            timeout_ms (int): The timeout in milliseconds for the solver.
 
-    now = time.process_time()
-    print(f"Initialized Solver, POMDP adapter, and constraints in {(now - start):.4f}s")
-    start = now
+        Returns:
+            ResultOOP with solve time, result, reward, and model (if any was found).
+        """
+        number_atomic_groups = len(self.tpmc.clusters)
+        number_blocks = self.tpmc.budget
 
-    clusters = tpmc_instance.clusters
-    keys = list(clusters.keys())
-    num_clusters = len(keys)
+        # Given a budget B, we generate all possible partitions for atomic groups into B blocks
+        start = time.process_time()
+        partitions = [partition for partition in stirling_partitions(n=number_atomic_groups, k=number_blocks)]
 
-    print(f"\nClusters (goal = s{tpmc_instance.goal}):")
-    for c, cluster_idx in enumerate(clusters):
-        print(f"  {cluster_idx} (o{c}): {prettify(clusters[cluster_idx], "s")}")
+        now = time.process_time()
+        if self.verbose:
+            print(f"\nThere are S({number_atomic_groups},{number_blocks}) = {len(partitions)} partitions to explore")
+            print(f"Generated partitions in {(now - start):.4f}s")
+        start = now
 
-    # Given a budget B, we generate all possible partitions for clusters into B buckets
-    partitions = [(p, partition) for p, partition in enumerate(stirling_partitions(n=num_clusters, k=budget))]
-    now = time.process_time()
-    print(f"\nThere are S({num_clusters},{budget}) = {len(partitions)} partitions to explore")
-    print(f"Generated partitions in {(now - start):.4f}s")
-    start = now
+        ranking_partitions = self.rank_partitions(partitions)
+        now = time.process_time()
+        if self.verbose:
+            print(f"\nRanking of observation functions completed in {(now - start):.4f}s")
+        start = now
 
-    # For each partition, we place all states from each cluster in the specified bucket to form an observation function
-    # We rank each observation function based on the number of blocks that follow an equivalence relation and break ties with the number of strategy constraints that it imposes
-    ranked_obs_functions = []
-    for p, partition in partitions:
-        obs_function = [-1]*tpmc_instance.size
+        result = self.search(partitions, ranking_partitions, level, timeout_ms)
+        now = time.process_time()
+        if self.verbose:
+            print(f"\nSearch completed in {(now - start):.4f}s")
+
+        return result
+
+    def search(self, partitions: list[list[list[int]]], ranking_partitions: list[tuple[int, int, int]], level, timeout_ms) -> ResultOOP:
+        """
+        Solve each POMDP generated by applying each partition up to a ranking level or until the timeout is reached.
+        :param partitions:
+        :param ranking_partitions:
+        :param level:
+        :param timeout_ms:
+        :return:
+        """
+
+        atomic_groups = list(Direction)
+        start = time.process_time()
+        for partition_idx, equivalence_score, constraint_score in ranking_partitions:
+            if self.verbose:
+                partition = [[atomic_groups[atomic_group_idx].name for atomic_group_idx in block] for block in partitions[partition_idx]]
+                print(f"Evaluating partition: {partition} | h_equivalence_score = {equivalence_score}, h_constraint_score = {constraint_score}")
+            observation_function, strategy_constraints = self.apply_partition_to_states(partitions[partition_idx])
+            assert(constraint_score == len(strategy_constraints))
+            result = self.solver.evaluate_pomdp(self.adapter, observation_function, timeout_ms, strategy_constraints)
+            if result.result == sat:
+                print(result)
+                return result
+
+        now = time.process_time()
+        return ResultOOP(
+            solve_time=now - start,
+            result=unknown,
+            reward=None,
+            model=None
+        )
+
+    def apply_partition_to_states(self, partition: list[list[int]]) -> tuple[list[int], list[BoolRef]]:
+        """
+        Applies the given partition to the states, creating an observation function and strategy constraints.
+
+        Args:
+            partition (list[list[int]]): The partition to be applied, containing blocks of atomic group indices.
+
+        Returns:
+            tuple[list[int], list[BoolRef]]: A tuple containing the observation function and strategy constraints.
+        """
+        observation_function = [-1]*self.tpmc.size
         strategy_constraints = []
-        equivalence_score = 0
-        for b, bucket in enumerate(partition):
-            for cluster_idx in bucket:
-                cluster = keys[cluster_idx]
-                # Assign states in the cluster to the bucket/observation class
-                for state in clusters[cluster]:
-                    obs_function[state] = b
+        atomic_groups = list(Direction)
 
-            # We can impose strategy constraints for an observation class based on its states' optimal action(s)
-            actions_per_cluster = [keys[cluster_idx].actions for cluster_idx in bucket]
-            actions_in_bucket = set.union(*actions_per_cluster)
-            common_actions = set.intersection(*actions_per_cluster)
-            common_action = None
-            if len(common_actions) > 0:
-                # All clusters in bucket follow an equivalence relation
-                equivalence_score += 1
-                # Choose one common action to be executed with 100% rate
-                common_action = common_actions.pop()
-                action_idx = tpmc_instance.actions.index(common_action)
-                strategy_constraints.append(tpmc_instance.X[b][action_idx] == 1)
-            for a, action in enumerate(tpmc_instance.actions):
-                # If a common action is selected, all other actions should have rate 0
-                if common_action is not None and action != common_action:
-                    strategy_constraints.append(tpmc_instance.X[b][a] == 0)
-                # If no common action can be selected, the actions not in the bucket's set of actions should have rate 0
-                elif common_action is None and action not in actions_in_bucket:
-                    strategy_constraints.append(tpmc_instance.X[b][a] == 0)
+        for b, block in enumerate(partition):
+            actions_per_atomic_group = [atomic_groups[atomic_group_idx].actions for atomic_group_idx in block]
+            actions_in_block = set.union(*actions_per_atomic_group)
+            common_actions = set.intersection(*actions_per_atomic_group)
+            common_action = None if len(common_actions) == 0 else common_actions.pop()
 
-        ranked_obs_functions.append((partition, obs_function, strategy_constraints, equivalence_score))
+            for a, action in enumerate(self.tpmc.actions):
+                if action == common_action:
+                    strategy_constraints.append(self.tpmc.X[b][a] == 1)
+                elif ((common_action is not None and action != common_action) or
+                      common_action is None and action not in actions_in_block):
+                    strategy_constraints.append(self.tpmc.X[b][a] == 0)
+            for atomic_group_idx in block:
+                atomic_group = atomic_groups[atomic_group_idx]
+                for state in self.tpmc.clusters[atomic_group]:
+                    observation_function[state] = b
 
-    now = time.process_time()
-    print(f"\nRanking of observation functions completed in {(now - start):.4f}s")
-    start = now
+        return observation_function, strategy_constraints
 
-    print("Ranked Observation Functions:")
-    ranked_obs_functions = sorted(ranked_obs_functions, key=lambda ranked_partition: (-ranked_partition[3], -len(ranked_partition[2])))
-    for partition, obs_function, strat_constraints, num_equivalences in ranked_obs_functions:
-        print(f"{[[keys[cluster_idx].symbol for cluster_idx in bucket] for bucket in partition]}: {num_equivalences} equivalences, {len(strat_constraints)} strategy constraints")
-        result = solver.evaluate_pomdp(adapter, obs_function, 30000, strat_constraints)
-        print(f"Result: {result.solve_time:.4f}s | {result.result} | {result.reward}")
-        # if result.result == sat:
-        #     exit(0)
-        # for i in range(3):
-        #     time.sleep(1)
-        #     print(f"Slept for {i+1}s")
+    def rank_partitions(self, partitions: list[list[list[int]]]) -> list[tuple[int, int, int]]:
+        """
+        Ranks partitions based on [some heuristic component?] and returns the index of each partition from the original list in the ranked order.
+
+        :param partitions:
+        :return:
+        """
+
+        atomic_groups = list(Direction)
+        ranking_partitions = []
+        for (p, partition) in enumerate(partitions):
+            equivalence_score = 0
+            constraint_score = 0
+            for block in partition:
+                actions_per_atomic_group = [atomic_groups[atomic_group_idx].actions for atomic_group_idx in block]
+                actions_in_block = set.union(*actions_per_atomic_group)
+                equivalence_relation = True if len(set.intersection(*actions_per_atomic_group)) > 0 else False
+
+                if equivalence_relation:
+                    # All clusters in bucket follow an equivalence relation
+                    equivalence_score += 1
+                    # We can perform an action with 100% rate and all others with 0% rate
+                    constraint_score += len(self.tpmc.actions)
+                else:
+                    for action in self.tpmc.actions:
+                        # We can set the rate to 0% for all actions not present in the block (i.e. not optimal for any of the atomic groups)
+                        if action not in actions_in_block:
+                            constraint_score += 1
+            ranking_partitions.append((p, equivalence_score, constraint_score))
+        return sorted(ranking_partitions, key=lambda ranking: (ranking[1], ranking[2]), reverse=True)
