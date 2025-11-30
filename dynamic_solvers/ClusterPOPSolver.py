@@ -103,43 +103,6 @@ class ClusterPOPSolver:
             model=None
         )
 
-    def apply_partition_to_states(self, partition: list[list[int]]) -> tuple[list[int], list[BoolRef]]:
-        """
-        Applies the given partition to the states, creating an observation function and strategy constraints.
-
-        Args:
-            partition (list[list[int]]): The partition to be applied, containing blocks of atomic group indices.
-
-        Returns:
-            tuple[list[int], list[BoolRef]]: A tuple containing the observation function and strategy constraints.
-        """
-        observation_function = [-1] * self.tpmc.size
-        strategy_constraints = []
-        atomic_groups = list(Direction)
-
-        for b, block in enumerate(partition):
-            actions_per_atomic_group = [atomic_groups[atomic_group_idx].actions for atomic_group_idx in block]
-            actions_in_block = set.union(*actions_per_atomic_group)
-            common_actions = set.intersection(*actions_per_atomic_group)
-            common_action = None if len(common_actions) == 0 else common_actions.pop()
-
-            for a, action in enumerate(self.tpmc.actions):
-                if common_action is not None and action == common_action:
-                    # If there's some common action, we can force it to 1 and others to 0.
-                    strategy_constraints.append(self.tpmc.X[b][a] == 1)
-                elif ((common_action is not None and action != common_action) or
-                      common_action is None and action not in actions_in_block):
-                    # Actions that do not appear in the block can be forced to 0. Any action that is not
-                    # the common action (if any) can also be forced to 0.
-                    strategy_constraints.append(self.tpmc.X[b][a] == 0)
-
-            for atomic_group_idx in block:
-                atomic_group = atomic_groups[atomic_group_idx]
-                for state in self.tpmc.clusters[atomic_group]:
-                    observation_function[state] = b
-
-        return observation_function, strategy_constraints
-
     def rank_partitions(self, partitions: list[list[list[int]]]) -> list[tuple[int, int, int]]:
         """
         Compute heuristic scores for each partition and return a ranking of partition indices.
@@ -179,3 +142,40 @@ class ClusterPOPSolver:
                             constraint_score += 1
             ranking_partitions.append((p, equivalence_score, constraint_score))
         return sorted(ranking_partitions, key=lambda ranking: (ranking[1], ranking[2]), reverse=True)
+
+    def apply_partition_to_states(self, partition: list[list[int]]) -> tuple[list[int], list[BoolRef]]:
+        """
+        Applies the given partition to the states, creating an observation function and strategy constraints.
+
+        Args:
+            partition (list[list[int]]): The partition to be applied, containing blocks of atomic group indices.
+
+        Returns:
+            tuple[list[int], list[BoolRef]]: A tuple containing the observation function and strategy constraints.
+        """
+        observation_function = [-1] * self.tpmc.size
+        strategy_constraints = []
+        atomic_groups = list(Direction)
+
+        for b, block in enumerate(partition):
+            actions_per_atomic_group = [atomic_groups[atomic_group_idx].actions for atomic_group_idx in block]
+            actions_in_block = set.union(*actions_per_atomic_group)
+            common_actions = set.intersection(*actions_per_atomic_group)
+            common_action = None if len(common_actions) == 0 else common_actions.pop()
+
+            for a, action in enumerate(self.tpmc.actions):
+                if common_action is not None and action == common_action:
+                    # If there's some common action, we can force it to 1 and others to 0.
+                    strategy_constraints.append(self.tpmc.X[b][a] == 1)
+                elif ((common_action is not None and action != common_action) or
+                      common_action is None and action not in actions_in_block):
+                    # Actions that do not appear in the block can be forced to 0. Any action that is not
+                    # the common action (if any) can also be forced to 0.
+                    strategy_constraints.append(self.tpmc.X[b][a] == 0)
+
+            for atomic_group_idx in block:
+                atomic_group = atomic_groups[atomic_group_idx]
+                for state in self.tpmc.clusters[atomic_group]:
+                    observation_function[state] = b
+
+        return observation_function, strategy_constraints
