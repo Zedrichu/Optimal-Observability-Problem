@@ -51,10 +51,13 @@ class BasePOMDPEnvironment(World, gymnasium.Env, ABC):
         """
         self.actions = ['up', 'right', 'down', 'left']
         self.obs_function = np.array(obs_function)
+        self.pomdp_variant = pomdp_variant  # Store variant for get_observation
 
         if pomdp_variant is OOPVariant.SSP:
-            self.n_obs = np.sum(obs_function)
-            self.observation_space = spaces.MultiBinary(obs_function.shape)
+            # SSP: Sensors reveal state identity, non-sensors don't
+            # Number of unique observations = n_states (one per sensor location) + 1 (no sensor)
+            self.n_obs = len(obs_function)
+            self.observation_space = spaces.Discrete(self.n_obs)
         else: # OOPVariant.POP
             self.n_obs = len(np.unique(obs_function))
             self.observation_space = spaces.Discrete(self.n_obs)
@@ -127,6 +130,12 @@ class BasePOMDPEnvironment(World, gymnasium.Env, ABC):
         """
         Map true state to observation class using the observation function.
 
+        Semantics:
+            - POP: Returns obs_function[state] (states with same obs are aliased)
+            - SSP: If obs_function[state] == 1 (sensor), returns state_idx + 1 (unique, offset to avoid collision)
+                   If obs_function[state] == 0 (no sensor), returns 0 (aliased "unknown")
+                   If obs_function[state] == -1 (goal), returns -1
+
         Args:
             state: True state (hidden from agent)
 
@@ -134,7 +143,20 @@ class BasePOMDPEnvironment(World, gymnasium.Env, ABC):
             Observation class that agent sees
         """
         state_idx = self._state_to_index(state)
-        return self.obs_function[state_idx]
+        obs_value = self.obs_function[state_idx]
+
+        if self.pomdp_variant == OOPVariant.SSP:
+            # SSP: Sensors reveal state identity, non-sensors are aliased
+            if obs_value == 1:  # Sensor present
+                # Return state_idx + 1 to avoid collision with "no sensor" (0)
+                return state_idx + 1  # Observations 1, 2, 3, ... for states 0, 1, 2, ...
+            elif obs_value == -1:  # Goal
+                return -1  # Goal marker
+            else:  # No sensor (obs_value == 0)
+                return 0  # Unknown observation (all non-sensor states aliased)
+        else:
+            # POP: Direct observation from obs_function (states can be aliased)
+            return obs_value
 
     @abstractmethod
     def _state_to_index(self, state: Any) -> int:
