@@ -140,6 +140,12 @@ Examples:
     )
 
     solver_group.add_argument(
+        '--budget-repair', '-br',
+        action='store_true',
+        help='Budget repair mode for SSP (solve with no budget constraint, then repair the solution to fit the budget)'
+    )
+
+    solver_group.add_argument(
         '--timeout',
         type=int,
         default=30000,
@@ -240,6 +246,7 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
               f"        Bellman format       -> {args.bellman_format}\n"
               f"        Optimality Precision -> {args.precision}\n"
               f"        Encoding             -> {"Real" if args.real_encoding else "Boolean"}\n"
+              f"        Budget Repair        -> {"✅" if args.budget_repair else "❌"}\n"
               f"        Verbose output       -> {"✅" if args.verbose else "❌"}\n"
               f"        Ordering             -> {args.order_constraints if args.order_constraints else "default"}"
               f"\n"
@@ -259,6 +266,7 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
                                        bellman_format=args.bellman_format,
                                        precision=args.precision,
                                        bool_encoding=not args.real_encoding,
+                                       budget_repair=args.budget_repair,
                                        order_constraints=args.order_constraints,
                                        verbose=args.verbose)
     solver = TPMCSolver(tpmc_instance.ctx, verbose=not benchmark)
@@ -273,6 +281,10 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
         # Play with large POMDP assignments here
         # vector_y = ([0] * (args.width - 1) + [1]) * (args.height - 1) + ([0] * (args.width - 1) + [-1])
         result = solver.evaluate_pomdp(adapter, args.pomdp, args.timeout)
+    elif args.budget_repair is not None:
+        solver.prepare_constraints(tpmc_instance, args.threshold)
+        result = solver.solve_2_shot_repair(tpmc_instance, args.timeout)
+        solver.cleanup()
     else:
         solver.prepare_constraints(tpmc_instance, args.threshold)
         result = solver.solve(args.timeout)

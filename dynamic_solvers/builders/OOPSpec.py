@@ -19,12 +19,14 @@ class OOPSpec(World, ABC):
                  bool_encoding: bool = True,
                  bellman_format: BellmanFormat | None = None,
                  precision: Precision | None = None,
+                 budget_repair: bool = False,
                  order_constraints: Optional[List[int]] = None):
         self.ctx = ctx or Context()  # Use provided context or create fresh one
         self.budget = budget
         self.goal = goal
         self.determinism = determinism
         self.bool_encoding = bool_encoding
+        self.budget_repair = budget_repair
         self.verbose = verbose
         self.bellman_format = bellman_format or BellmanFormat.DEFAULT
         self.precision = precision or Precision.RELAXED
@@ -234,6 +236,10 @@ class OOPSpec(World, ABC):
 
     @abstractmethod
     def collect_constraints(self, threshold: str) -> List[z3.BoolRef]:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def repair_constraints(self) -> List[z3.BoolRef]:
         raise NotImplementedError()
 
     def _init_extract_obs_function(self) -> Callable[[dict, str], bool]:

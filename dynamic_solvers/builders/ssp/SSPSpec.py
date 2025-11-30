@@ -174,6 +174,12 @@ class SSPSpec(OOPSpec, ABC):
             self.build_threshold_constraint(threshold),
             * self.build_strategy_constraints(),
             * self.build_observation_constraints(),
-            self.build_budget_constraint(),
+            self.build_budget_constraint() if not self.budget_repair else True,
         ]
         return constraints
+
+    @override
+    def repair_constraints(self) -> List[z3.BoolRef]:
+        if self.budget_repair:
+            return [self.build_budget_constraint()]
+        return []
