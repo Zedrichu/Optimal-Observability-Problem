@@ -89,11 +89,17 @@ class ClusterPOPSolver:
                 partition = [[atomic_groups[atomic_group_idx].name for atomic_group_idx in block] for block in partitions[partition_idx]]
                 print(f"Evaluating partition: {partition} | h_equivalence_score = {equivalence_score}, h_constraint_score = {constraint_score}")
             observation_function, strategy_constraints = self.apply_partition_to_states(partitions[partition_idx])
+
             assert(constraint_score == len(strategy_constraints))
+
             result = self.solver.evaluate_pomdp(self.adapter, observation_function, timeout_ms, strategy_constraints)
             if result.result == sat:
                 print(result)
                 return result
+            else:
+                timeout_ms = timeout_ms - result.solve_time
+                if timeout_ms <= 0:
+                    break
 
         now = time.process_time()
         return ResultOOP(
