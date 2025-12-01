@@ -63,11 +63,8 @@ def _instance_worker(config: BenchmarkConfig, result_queue: Queue, hyperparams: 
         solver = TPMCSolver(tpmc_instance.ctx, verbose=False)
         solver.set_timeout(config.timeout)
 
-        if getattr(hyperparams, "cluster", False) and config.variant.lower() == 'pop':
+        if hyperparams["cluster"] and config.variant.lower() == 'pop':
             from ClusterPOPSolver import ClusterPOPSolver
-            solver = TPMCSolver(tpmc_instance.ctx, verbose=True)
-            solver.set_timeout(config.timeout)
-
             cluster_solver = ClusterPOPSolver(solver, tpmc_instance, verbose=True, threshold=config.threshold)
             result = cluster_solver.solve(level=0, timeout_ms=config.timeout)
         else:
@@ -471,6 +468,7 @@ def main():
             precision=args.precision,
             bool_encoding=not args.real_encoding,
             order_constraints=order_constraints,
+            cluster=args.cluster,
         )
 
         try:
