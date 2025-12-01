@@ -82,7 +82,7 @@ class ClusterPOPSolver:
                 ResultOOP with result=unknown and the elapsed solve_time is returned.
         """
 
-        atomic_groups = list(Direction)
+        atomic_groups = list(self.tpmc.clusters.keys())
         start = time.process_time()
         for partition_idx, equivalence_score, constraint_score in ranking_partitions:
             if self.verbose:
@@ -94,7 +94,6 @@ class ClusterPOPSolver:
 
             result = self.solver.evaluate_pomdp(self.adapter, observation_function, timeout_ms, strategy_constraints)
             if result.result == sat:
-                print(result)
                 return result
             else:
                 timeout_ms = timeout_ms - result.solve_time
@@ -129,7 +128,7 @@ class ClusterPOPSolver:
                 constraint_score), sorted in descending order by (equivalence_score, constraint_score).
         """
 
-        atomic_groups = list(Direction)
+        atomic_groups = list(self.tpmc.clusters.keys())
         ranking_partitions = []
         for (p, partition) in enumerate(partitions):
             equivalence_score = 0
@@ -161,7 +160,7 @@ class ClusterPOPSolver:
         """
         observation_function = [-1] * self.tpmc.size
         strategy_constraints = []
-        atomic_groups = list(Direction)
+        atomic_groups = list(self.tpmc.clusters.keys())
 
         for b, block in enumerate(partition):
             actions_per_atomic_group = [atomic_groups[atomic_group_idx].actions for atomic_group_idx in block]
