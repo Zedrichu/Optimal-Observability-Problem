@@ -63,9 +63,17 @@ def _instance_worker(config: BenchmarkConfig, result_queue: Queue, hyperparams: 
         solver = TPMCSolver(tpmc_instance.ctx, verbose=False)
         solver.set_timeout(config.timeout)
 
-        # Solve the tpMC instance with a given threshold, determinism flag and timeout
-        solver.prepare_constraints(tpmc_instance, config.threshold)
-        result = solver.solve(config.timeout)
+        if getattr(hyperparams, "cluster", False) and config.variant.lower() == 'pop':
+            from ClusterPOPSolver import ClusterPOPSolver
+            solver = TPMCSolver(tpmc_instance.ctx, verbose=True)
+            solver.set_timeout(config.timeout)
+
+            cluster_solver = ClusterPOPSolver(solver, tpmc_instance, verbose=True, threshold=config.threshold)
+            result = cluster_solver.solve(level=0, timeout_ms=config.timeout)
+        else:
+            # Solve the tpMC instance with a given threshold, determinism flag and timeout
+            solver.prepare_constraints(tpmc_instance, config.threshold)
+            result = solver.solve(config.timeout)
         solver.cleanup()
 
         # Determine status
@@ -415,6 +423,9 @@ def main():
     parser.add_argument('--real-encoding', '-re', action='store_true', help='Encoding of TPMC parameters as real variables (slow performance)')
     parser.add_argument('--order-constraints', '-order', type=str,
         help='Comma-separated order of assertion of HL constraint groups for OOP instances. Should be a permutation of 0,1,2,3'
+    )
+    parser.add_argument('--cluster', action='store_true',
+        help='Use a clustering algorithm to attempt to solve all POMDPs for a POP instance. Only applicable for POP variant.'
     )
 
     args = parser.parse_args()

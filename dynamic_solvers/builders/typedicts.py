@@ -57,7 +57,8 @@ class ExtOperationParams(TypedDict, total=False):
         bellman_format (str): Format for Bellman equations ('default', 'common', 'adapted')
         precision (str): Constraint precision mode ('strict', 'relaxed')
         bool_encoding (Optional[bool]): Activate boolean encoding (`bitblast`) rather than real encoding
-        order_constraints (Optional[List[int]]): Order of assertion of constraints for TPMC solver.
+        order_constraints (Optional[List[int]]): Order of assertion of constraints for TPMC solver
+        cluster: (Optional[bool]): Whether to use a clustering algorithm as the solver (only applicable to POP instances)
     """
     ctx: Optional[Context]
     verbose: bool
@@ -65,6 +66,7 @@ class ExtOperationParams(TypedDict, total=False):
     precision: Optional[Literal['strict', 'relaxed']]
     bool_encoding: Optional[bool]
     order_constraints: Optional[List[int]]
+    cluster: Optional[bool]
 
 
 class TPMCParams(DimensionKWArgs, ExtOperationParams):
