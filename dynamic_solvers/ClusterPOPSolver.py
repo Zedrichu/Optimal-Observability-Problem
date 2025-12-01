@@ -46,7 +46,7 @@ class ClusterPOPSolver:
 
         # Given a budget B, we generate all possible partitions for atomic groups into B blocks
         start = time.process_time()
-        partitions = [partition for partition in stirling_partitions(n=number_atomic_groups, k=number_blocks)]
+        partitions = list(stirling_partitions(n=number_atomic_groups, k=number_blocks))
 
         now = time.process_time()
         if self.verbose:
@@ -87,15 +87,15 @@ class ClusterPOPSolver:
             if self.verbose:
                 partition = [[atomic_groups[atomic_group_idx].name for atomic_group_idx in block] for block in partitions[partition_idx]]
                 print(f"Evaluating partition: {partition} | h_equivalence_score = {equivalence_score}, h_constraint_score = {constraint_score}")
-            observation_function, strategy_constraints = self.apply_partition_to_states(partitions[partition_idx])
 
-            assert(constraint_score == len(strategy_constraints))
+            observation_function, strategy_constraints = self.apply_partition_to_states(partitions[partition_idx])
+            assert constraint_score == len(strategy_constraints)
 
             result = self.solver.evaluate_pomdp(self.adapter, observation_function, timeout_ms, strategy_constraints)
             if result.result == sat:
                 return result
             else:
-                timeout_ms = timeout_ms - result.solve_time
+                timeout_ms = timeout_ms - result.solve_time * 1000
                 if timeout_ms <= 0:
                     break
 
@@ -141,9 +141,7 @@ class ClusterPOPSolver:
                     equivalence_score += 1
                     constraint_score += len(self.tpmc.actions)
                 else:
-                    for action in self.tpmc.actions:
-                        if action not in actions_in_block:
-                            constraint_score += 1
+                    constraint_score += sum(1 for a in self.tpmc.actions if a not in actions_in_block)
             ranking_partitions.append((p, equivalence_score, constraint_score))
         return sorted(ranking_partitions, key=lambda ranking: (ranking[1], ranking[2]), reverse=True)
 
