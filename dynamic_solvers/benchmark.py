@@ -65,7 +65,7 @@ def _instance_worker(config: BenchmarkConfig, result_queue: Queue, hyperparams: 
 
         if hyperparams["cluster"] and config.variant.lower() == 'pop':
             from ClusterPOPSolver import ClusterPOPSolver
-            cluster_solver = ClusterPOPSolver(solver, tpmc_instance, verbose=True, threshold=config.threshold)
+            cluster_solver = ClusterPOPSolver(solver, tpmc_instance, verbose=False, threshold=config.threshold)
             result = cluster_solver.solve(level=0, timeout_ms=config.timeout)
         else:
             # Solve the tpMC instance with a given threshold, determinism flag and timeout
