@@ -6,7 +6,6 @@ from ResultOOP import ResultOOP
 from TPMCSolver import TPMCSolver
 from builders.POMDPSpec import POMDPAdapter
 from builders.pop.POPSpec import POPSpec
-from direction import Direction
 from utils import stirling_partitions
 
 
@@ -171,12 +170,12 @@ class ClusterPOPSolver:
             for a, action in enumerate(self.tpmc.actions):
                 if common_action is not None and action == common_action:
                     # If there's some common action, we can force it to 1 and others to 0.
-                    strategy_constraints.append(self.tpmc.X[b][a] == 1)
+                    strategy_constraints.append(self.tpmc.X[b][a] == (True if self.tpmc.determinism else 1))
                 elif ((common_action is not None and action != common_action) or
                       common_action is None and action not in actions_in_block):
                     # Actions that do not appear in the block can be forced to 0. Any action that is not
                     # the common action (if any) can also be forced to 0.
-                    strategy_constraints.append(self.tpmc.X[b][a] == 0)
+                    strategy_constraints.append(self.tpmc.X[b][a] == (False if self.tpmc.determinism else 0))
 
             for atomic_group_idx in block:
                 atomic_group = atomic_groups[atomic_group_idx]
