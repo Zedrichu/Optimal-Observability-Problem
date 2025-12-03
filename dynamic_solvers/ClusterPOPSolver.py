@@ -84,11 +84,12 @@ class ClusterPOPSolver:
         atomic_groups = list(self.tpmc.clusters.keys())
         start = time.process_time()
         for partition_idx, equivalence_score, constraint_score in ranking_partitions:
+            partition = partitions[partition_idx]
             if self.verbose:
-                partition = [[atomic_groups[atomic_group_idx].name for atomic_group_idx in block] for block in partitions[partition_idx]]
-                print(f"Evaluating partition: {partition} | h_equivalence_score = {equivalence_score}, h_constraint_score = {constraint_score}")
+                partition_str = [[atomic_groups[atomic_group_idx].name for atomic_group_idx in block] for block in partition]
+                print(f"Evaluating partition: {partition_str} | h_equivalence_score = {equivalence_score}, h_constraint_score = {constraint_score}")
 
-            observation_function, strategy_constraints = self.apply_partition_to_states(partitions[partition_idx])
+            observation_function, strategy_constraints = self.apply_partition_to_states(partition)
             assert constraint_score == len(strategy_constraints)
 
             result = self.solver.evaluate_pomdp(self.adapter, observation_function, timeout_ms, strategy_constraints)

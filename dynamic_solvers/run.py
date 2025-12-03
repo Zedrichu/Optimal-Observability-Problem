@@ -285,7 +285,7 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
         # vector_y = ([0] * (args.width - 1) + [1]) * (args.height - 1) + ([0] * (args.width - 1) + [-1])
         result = solver.evaluate_pomdp(adapter, args.pomdp, args.timeout)
     elif isinstance(tpmc_instance, POPSpec) and args.cluster:
-        cluster_solver = ClusterPOPSolver(solver, tpmc_instance, args.verbose, args.threshold)
+        cluster_solver = ClusterPOPSolver(solver, tpmc_instance, True, args.threshold)
         result = cluster_solver.solve(0, args.timeout)
     else:
         solver.prepare_constraints(tpmc_instance, args.threshold)
