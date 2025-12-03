@@ -77,7 +77,10 @@ class Grid(World):
         # Grid-specific bounds calculation
         goal_column = target % self.width
         column = source % self.width
-        return abs(goal_column - column) + (abs(target - source) // self.width)
+        goal_row = target // self.width
+        row = source // self.width
+
+        return abs(goal_column - column) + abs(goal_row - row)
 
 
 class Maze(World):
