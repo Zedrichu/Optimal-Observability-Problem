@@ -19,44 +19,44 @@ def main():
     if BUDGET < 0 or BUDGET >= GRID_SIZE:
         raise SystemExit(f"BUDGET must be between 0 and {GRID_SIZE - 1}")
 
-    print("pomdp")
+    print("pomdp\n")
     print("const WIDTH;")
     print("const HEIGHT;")
     print("const GOAL;")
-    print("const BUDGET;")
+    print("const BUDGET;\n")
 
     # Define observation position constants (as linearized indices)
     for i in range(1, BUDGET + 1):
         print(f"const POS{i};")
 
     # Observable declarations
-    print("observable \"goal\" = (position=GOAL);")
-    print("observable \"started\" = (started);")
+    print("\nobservable \"goal\" = (position=GOAL);")
+    print("observable \"started\" = (started);\n")
     for i in range(1, BUDGET + 1):
         print(f"observable \"flag{i}\" = (({i}<=BUDGET)?(position=POS{i}):false);")
 
     # Main grid module with linearized state space
-    print("module GRID")
+    print("\nmodule GRID\n")
+    print("chosen : bool init false;")
     print("started : bool init false;")
     print(f"position : [0..WIDTH*HEIGHT-1];")
 
     # Start action - uniformly distribute initial position across non-goal states
-    print("[start] !started -> ")
+    print("\n[start] !chosen -> ")
     for s in range(GRID_SIZE):
         separator = ";" if s == GRID_SIZE - 1 else ""
-        print(f"  (GOAL={s}?0:1)/(WIDTH*HEIGHT-1):(started'=true & {s}<WIDTH*HEIGHT)&(position'=({s}<WIDTH*HEIGHT?{s}:GOAL)){separator}")
+        print(f"  (({s}>=WIDTH*HEIGHT | GOAL={s})?0:1)/(WIDTH*HEIGHT-1):(started'={s}<WIDTH*HEIGHT)&(position'=({s}<WIDTH*HEIGHT?{s}:GOAL))&(chosen'=true){separator}")
         if s < GRID_SIZE - 1:
             print("+", end=" ")
 
-    # Helper comments for movement logic
-    print("// Movement: up decreases by WIDTH, down increases by WIDTH")
+    print("\n// Movement: up decreases by WIDTH, down increases by WIDTH")
     print("// left decreases by 1, right increases by 1")
     print("// x = position mod WIDTH, y = position div WIDTH")
 
     # Movement actions with boundary checks
     # Up: move to position - WIDTH if not in top row (y > 0)
 
-    print("[up]    started & (position >= WIDTH) -> 1.0:(position'=position-WIDTH);")
+    print("\n[up]    started & (position >= WIDTH) -> 1.0:(position'=position-WIDTH);")
     print("[up]    started & (position < WIDTH) -> 1.0:true;")  # Stay if in top row
 
     # Down: move to position + WIDTH if not in bottom row (y < HEIGHT-1)
@@ -72,10 +72,10 @@ def main():
     print("[right] started & (mod(position,WIDTH) = WIDTH-1) -> 1.0:true;")  # Stay if in right column
 
     print("[stop]  (position = GOAL) -> true;")
-    print("endmodule")
+    print("\nendmodule\n")
 
     # Goal label
-    print("label \"gameover\" = (position=GOAL);")
+    print("label \"gameover\" = (position=GOAL);\n")
 
     # Rewards for each action
     print("rewards")
