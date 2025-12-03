@@ -43,14 +43,15 @@ class ClusterPOPSolver:
         """
         number_atomic_groups = len(self.tpmc.clusters)
         number_blocks = self.tpmc.budget
+        k = min(number_atomic_groups, number_blocks)
 
         # Given a budget B, we generate all possible partitions for atomic groups into B blocks
         start = time.process_time()
-        partitions = list(stirling_partitions(n=number_atomic_groups, k=number_blocks))
+        partitions = list(stirling_partitions(n=number_atomic_groups, k=k))
 
         now = time.process_time()
         if self.verbose:
-            print(f"\nThere are S({number_atomic_groups},{number_blocks}) = {len(partitions)} partitions to explore")
+            print(f"\nThere are S({number_atomic_groups},{k}) = {len(partitions)} partitions to explore")
             print(f"Generated partitions in {(now - start):.4f}s")
         start = now
 
@@ -96,9 +97,17 @@ class ClusterPOPSolver:
             if result.result == sat:
                 return result
             else:
-                timeout_ms = timeout_ms - result.solve_time * 1000
+                remaining_time = timeout_ms - result.solve_time * 1000
+                if self.verbose:
+                    print(f"Time to solve: {result.solve_time:.4f}s | Result = {result.result}")
+                    print(f"Updating timeout: timeout_ms = {timeout_ms} -> {remaining_time}")
+                timeout_ms = remaining_time
                 if timeout_ms <= 0:
                     break
+
+        # TODO: call the TPMC solver as a fallback.
+        # TODO: can we ever return that the problem is unsat? Must prove completeness.
+        # TODO: return timeout_ms instead of now - start?
 
         now = time.process_time()
         return ResultOOP(
