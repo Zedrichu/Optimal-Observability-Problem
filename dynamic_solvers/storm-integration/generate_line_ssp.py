@@ -11,16 +11,18 @@ def main():
     if B < 0 or B >= N:
         raise SystemExit("B must be between 0 and N-1")
 
-    print("pomdp")
+    print("pomdp\n")
     print("const N;")
     print("const GOAL;")
-    print("const BUDGET;")
+    print("const BUDGET;\n")
 
+    # Define observation position constants
     for x in range(1, B+1):
         print(f"const POS{x};");
 
+    # Observable declarations
     print("observable \"goal\" = (position=GOAL);")
-    print("observable \"started\" = (started);")
+    print("observable \"started\" = (started);\n")
     for x in range(1, B+1):
         print(f"observable \"flag{x}\" = (({x}<=BUDGET)?(position=POS{x}):false);");
 
@@ -30,21 +32,25 @@ def main():
     print("started : bool init false;")
     print("position : [0..N-1];")
 
+    # Uniform distribution of initial position across non-goal states
     print("\n[start] !chosen -> ")
     print(f"  ((0>=N | GOAL=0)?0:1)/(N-1):(started'=0<N)&(position'=(0<N?0:GOAL))&(chosen'=true)")
     for x in range(1, N):
         print(f"+ (({x}>=N | GOAL={x})?0:1)/(N-1):(started'={x}<N)&(position'=({x}<N?{x}:GOAL))&(chosen'=true)")
     print(";\n")
+
+    # Navigation actions with boundary checks
     print("[left]  started -> 1.0:(position'=max(0,position-1));")
     print("[right] started -> 1.0:(position'=min(N-1,position+1));")
     print("[stop] (position = GOAL) -> true;")
     print("endmodule\n")
 
+    # Goal label
     print("label \"gameover\" = (position=GOAL);\n")
 
+    # Rewards for each action
     print("rewards")
     print("[left] true : 1 ;")
-
     print("[right] true : 1 ;")
     print("endrewards\n")
 
