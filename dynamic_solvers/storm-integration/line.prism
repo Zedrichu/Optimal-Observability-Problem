@@ -115,7 +115,7 @@ chosen : bool init false;
 started : bool init false;
 position : [0..N-1];
 
-[start] !chosen -> 
+[start] !chosen ->
   ((0>=N | GOAL=0)?0:1)/(N-1):(started'=0<N)&(position'=(0<N?0:GOAL))&(chosen'=true)
 + ((1>=N | GOAL=1)?0:1)/(N-1):(started'=1<N)&(position'=(1<N?1:GOAL))&(chosen'=true)
 + ((2>=N | GOAL=2)?0:1)/(N-1):(started'=2<N)&(position'=(2<N?2:GOAL))&(chosen'=true)
@@ -381,3 +381,4 @@ rewards
 endrewards
 
 // storm-pomdp -const N=7,BUDGET=3,POS1=0,POS2=0,POS3=0,POS4=0,POS5=0,POS6=0,POS7=0,POS8=0,POS9=0,POS10=0,POS11=0,POS12=0,POS13=0,POS14=0,POS15=0,POS16=0,POS17=0,POS18=0,POS19=0,POS20=0,POS21=0,POS22=0,POS23=0,POS24=0,POS25=0,POS26=0,POS27=0,POS28=0,POS29=0,POS30=0,POS31=0,POS32=0,POS33=0,POS34=0,POS35=0,POS36=0,POS37=0,POS38=0,POS39=0,POS40=0,POS41=0,POS42=0,POS43=0,POS44=0,POS45=0,POS46=0,POS47=0,POS48=0,POS49=0,POS50=0,GOAL=3 --prism line.prism --prop "Rmin=?[F \"gameover\"]" --buildfull --belief-exploration --exact --memorybound 1
+// --explchecks --additional-checks

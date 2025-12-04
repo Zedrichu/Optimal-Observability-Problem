@@ -36,7 +36,7 @@ chosen : bool init false;
 started : bool init false;
 position : [0..WIDTH*HEIGHT-1];
 
-[start] !chosen -> 
+[start] !chosen ->
   ((0>=WIDTH*HEIGHT | GOAL=0)?0:1)/(WIDTH*HEIGHT-1):(started'=0<WIDTH*HEIGHT)&(position'=(0<WIDTH*HEIGHT?0:GOAL))&(chosen'=true)
 +   ((1>=WIDTH*HEIGHT | GOAL=1)?0:1)/(WIDTH*HEIGHT-1):(started'=1<WIDTH*HEIGHT)&(position'=(1<WIDTH*HEIGHT?1:GOAL))&(chosen'=true)
 +   ((2>=WIDTH*HEIGHT | GOAL=2)?0:1)/(WIDTH*HEIGHT-1):(started'=2<WIDTH*HEIGHT)&(position'=(2<WIDTH*HEIGHT?2:GOAL))&(chosen'=true)
@@ -163,3 +163,4 @@ rewards
 [right] true : 1;
 endrewards
 // storm-pomdp --prism grid.prism -const WIDTH=10,HEIGHT=10,BUDGET=10,POS1=0,POS2=0,POS3=0,POS4=0,POS5=0,POS6=0,POS7=0,POS8=0,POS9=0,POS10=0,GOAL=50 --prop "Rmin=?[F \"gameover\"]" --buildfull --belief-exploration --exact --memorybound 1
+// --explchecks --additional-checks

@@ -79,7 +79,7 @@ position : [0..WIDTH+3*(HEIGHT-1)-1];
 // Row 0: states 0 to WIDTH-1 (horizontal corridor)
 // Row y>0: states WIDTH+3*(y-1) to WIDTH+3*(y-1)+2 (3 vertical corridors)
 
-[start] !started -> 
+[start] !started ->
   ((0>=WIDTH+3*(HEIGHT-1) | GOAL=0)?0:1)/(WIDTH+3*(HEIGHT-1)-1):(started'=0<WIDTH+3*(HEIGHT-1))&(position'=(0<WIDTH+3*(HEIGHT-1)?0:GOAL))&(chosen'=true)
 +   ((1>=WIDTH+3*(HEIGHT-1) | GOAL=1)?0:1)/(WIDTH+3*(HEIGHT-1)-1):(started'=1<WIDTH+3*(HEIGHT-1))&(position'=(1<WIDTH+3*(HEIGHT-1)?1:GOAL))&(chosen'=true)
 +   ((2>=WIDTH+3*(HEIGHT-1) | GOAL=2)?0:1)/(WIDTH+3*(HEIGHT-1)-1):(started'=2<WIDTH+3*(HEIGHT-1))&(position'=(2<WIDTH+3*(HEIGHT-1)?2:GOAL))&(chosen'=true)
@@ -171,3 +171,4 @@ rewards
 endrewards
 // Example: WIDTH=20, HEIGHT=10, 47 states total
 // storm-pomdp --prism maze.prism -const WIDTH=20,HEIGHT=10,BUDGET=30,POS1=0,POS2=0,POS3=0,POS4=0,POS5=0,POS6=0,POS7=0,POS8=0,POS9=0,POS10=0,POS11=0,POS12=0,POS13=0,POS14=0,POS15=0,POS16=0,POS17=0,POS18=0,POS19=0,POS20=0,POS21=0,POS22=0,POS23=0,POS24=0,POS25=0,POS26=0,POS27=0,POS28=0,POS29=0,POS30=0,GOAL=45 --prop "Rmin=?[F \"gameover\"]" --buildfull --belief-exploration --exact --memorybound 1
+// --explchecks --additional-checks
