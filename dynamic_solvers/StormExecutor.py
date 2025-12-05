@@ -100,3 +100,286 @@ def _build_world_definition_const(pomdp: POMDPAdapter) -> dict[str, int]:
             world_consts.update({"WIDTH": dim1})
             world_consts.update({"HEIGHT": dim2})
     return world_consts
+
+def _build_sensor_selection_const(obs_function: list[int], max_budget: int) -> dict[str, int]:
+    """Build constants mapping for sensor selections based on the observation function."""
+    sensor_positions = [idx for idx, obs_value in enumerate(obs_function) if obs_value == 1]
+
+    # Validate budget constraints based on the observation function
+    if len(sensor_positions) > max_budget:
+        raise ValueError(f"Observation function has {len(sensor_positions)} activated sensors,"
+                         f"but the maximum admissible budget is {max_budget} in the static model.")
+
+    # Build the dictionary of constant parameters for sensor positions
+    constants = {f"POS{i+1}": position for i, position in enumerate(sensor_positions)}
+    unused_sensors = {f"POS{i+1}": 0 for i in range(len(sensor_positions), max_budget)}
+    constants.update(unused_sensors)
+    return constants
+
+@dataclass
+class StormResult:
+    type: str
+    analysis_time: float
+    lower_bound: float = 0.0
+    upper_bound: float = 0.0
+    width: float = 0.0
+    reward: float = 0.0
+    result: Optional[bool] = None
+    raw: Optional[str] = None
+
+
+def _parse_storm_result_from_output(output: str) -> StormResult:
+    """Parse storm-pomdp result from stdout/stderr output into a dictionary."""
+
+    # Extract timing (optional)
+    timing_match = re.search(r'Time for POMDP analysis:\s*([0-9.]+)s', output)
+
+    # Pattern for interval results: [lower, upper] with width
+    # Matches: [31/12, 3] (width=5/12) (approx. [2.583333333, 3] (width=0.4166666667))
+    interval_pattern = (
+        r'Result:\s*'  # "Result: "
+        r'\[([^,]+),\s*([^\]]+)\]'  # [31/12, 3] - captures any content
+        r'\s*\(width=([^)]+)\)'  # (width=5/12)
+        r'\s*\(approx\.\s*'  # (approx. 
+        r'\[([0-9.]+),\s*([0-9.]+)\]'  # [2.583333333, 3]
+        r'(?:\s*\(width=([0-9.]+)\))?'  # optional (width=0.4166666667)
+        r'\)'  # closing )
+    )
+
+    # Pattern for single value results: value (approx. decimal)
+    single_pattern = r'Result:\s*([0-9/]+)\s*\(approx\.\s*([0-9.]+)\)'
+
+    # Try interval pattern first
+    interval_match = re.search(interval_pattern, output)
+    if interval_match:
+        lower_approx = float(interval_match.group(4))
+        upper_approx = float(interval_match.group(5))
+        width_approx = float(interval_match.group(6)) if interval_match.group(6) else None
+
+        return StormResult(
+            type="interval",
+            lower_bound=lower_approx,
+            upper_bound=upper_approx,
+            width=width_approx,
+            result=True,
+            reward= (lower_approx + upper_approx) / 2,
+            analysis_time = float(timing_match.group(1)) if timing_match else None,
+        )
+
+    # Try single value pattern
+    single_match = re.search(single_pattern, output)
+    if single_match:
+        exact_value = single_match.group(1)
+        approx_value = float(single_match.group(2))
+
+        return StormResult(
+            type="exact",
+            lower_bound=approx_value,
+            upper_bound=approx_value,
+            result=True,
+            reward=approx_value,
+            analysis_time=float(timing_match.group(1)) if timing_match else None,
+        )
+
+    # Fallback: try to find any "Result:" line
+    fallback_pattern = r'Result:\s*([^\n]+)'
+    fallback_match = re.search(fallback_pattern, output)
+    if fallback_match:
+        return StormResult(
+            type="fallback",
+            raw=fallback_match.group(1),
+            result=True,
+            analysis_time=float(timing_match.group(1)) if timing_match else None,
+        )
+
+    raise ValueError(f"Could not parse result from storm-pomdp output:\n{output}")
+
+def _configure_buildfull_options() -> BuilderOptions:
+    options = stormpy.BuilderOptions()
+    options.set_build_all_reward_models(True)
+    options.set_build_all_labels(True)
+    return options
+
+def _define_program_constants(program: PrismProgram, constants: dict[str, int]) -> PrismProgram:
+    storm_mappings = {}
+    manager = program.expression_manager
+
+    for const_name, value in constants.items():
+        # Retrieve variable from the parsed program's expression manager
+        variable = manager.get_variable(const_name)
+        expression = manager.create_integer(value)
+        storm_mappings[variable] = expression
+
+    return program.define_constants(storm_mappings)
+
+
+class StormExecutor:
+
+    def __init__(self, verbose: bool, puzzle_type: Optional[PuzzleType] = None):
+        self.puzzle_type = puzzle_type
+        self.verbose = verbose
+        self.model_registry = StormModelRegistry()
+        self.static_program = None
+        self.property = None
+        self.world_config = None
+        if self.puzzle_type is not None:
+            self._start_prism_parsing()
+
+    def _start_prism_parsing(self):
+        self.world_config = self.model_registry.get(self.puzzle_type)
+        self.static_program = stormpy.parse_prism_program(self.world_config.model_path, simplify=True)
+        property_str = f"Rmin=?[ F \"gameover\"]"
+        # self.property = stormpy.parse_properties(property_str, self.static_program)
+        self.property = stormpy.parse_properties_for_prism_program(property_str, self.static_program)
+
+    def _validate_pomdp(self, pomdp: POMDPAdapter):
+        """Validate that POMDP parameters are within static model bounds."""
+        if pomdp.budget > self.world_config.max_budget:
+            raise ValueError(f"Budget {pomdp.budget} exceeds maximum admissible budget in the static model "
+                             f"<{self.world_config.max_budget}>.")
+
+        dim1, dim2 = pomdp.get_dimensions()
+
+        if (dim1 > self.world_config.max_dim1 or
+                (dim2 is not None and dim2 > self.world_config.max_dim2)):
+            raise ValueError(f"Dimensions {dim1}x{dim2} exceeds maximum dimensions in the static model "
+                             f"<{self.world_config.max_dim1}x{self.world_config.max_dim2}>.")
+
+    def _build_constants_string(self, obs_function: list[int], pomdp: POMDPAdapter) -> str:
+        """
+        Build the constants string for storm-pomdp command line.
+
+        Args:
+            obs_function: Observation function (sensor placements)
+            pomdp: POMDP adapter instance
+
+        Returns:
+            Comma-separated string of constants (e.g., "N=10,GOAL=5,BUDGET=3,POS1=0,...")
+        """
+        # Get sensor selections
+        sensor_consts = _build_sensor_selection_const(obs_function, self.world_config.max_budget)
+
+        # Get world definition
+        world_consts = _build_world_definition_const(pomdp)
+
+        # Pad POS constants up to max_budget
+        # Fill unused positions with 0
+        for i in range(1, self.world_config.max_budget + 1):
+            pos_key = f"POS{i}"
+            if pos_key not in sensor_consts:
+                sensor_consts[pos_key] = 0
+
+        # Combine all constants
+        all_constants = {**world_consts, **sensor_consts}
+
+        # Build comma-separated string
+        const_pairs = [f"{key}={value}" for key, value in sorted(all_constants.items())]
+        return ",".join(const_pairs)
+
+    def evaluate_pomdp(self, pomdp: POMDPAdapter, obs_function: list[int], timeout_ms: int):
+        if self.puzzle_type is None:
+            self.puzzle_type = pomdp.puzzle_type
+            self._start_prism_parsing()
+
+        self._validate_pomdp(pomdp)
+
+        constants = {
+            **_build_sensor_selection_const(obs_function, self.world_config.max_budget),
+            **_build_world_definition_const(pomdp),
+        }
+
+        self.static_program = _define_program_constants(self.static_program, constants)
+        build_options = _configure_buildfull_options()
+        # TODO! Require the memorybound for POMDP controllers to 1 === memoryless
+        model = stormpy.build_sparse_model_with_options(self.static_program, build_options)
+        # model = stormpy.build_model(self.static_program, self.property)
+        # model = stormpy.pomdp.make_canonic(model)
+
+        # belief exploration model checker
+        belexpl_options = BeliefExplorationModelCheckerOptionsDouble(False, True)
+        checker = stormpy.pomdp.BeliefExplorationModelCheckerDouble(model, belexpl_options)
+
+        result = checker.check(self.property, 0)
+        status = checker.get_status()
+
+        print(f"{result}")
+        return result
+
+    def evaluate_pomdp_cli(self, pomdp: POMDPAdapter, obs_function: list[int], timeout_ms: int, memory_bound: int = 1):
+        """Evaluate a POMDP using the storm-pomdp command-line tool."""
+        if self.puzzle_type is None:
+            self.puzzle_type = pomdp.puzzle_type
+            self._start_parsing()
+
+        self._validate_pomdp(pomdp)
+
+        if len(obs_function) != pomdp.size:
+            raise ValueError(f"Observation function length {len(obs_function)} "
+                             f"does not match POMDP size {pomdp.size}")
+
+        if self.verbose:
+            print(f" 📊 Evaluating POMDP via storm-pomdp CLI:")
+            print(f"    Puzzle type: {self.puzzle_type.name}")
+            print(f"    Size: {pomdp.size}, Goal: {pomdp.goal}, Budget: {pomdp.budget}")
+            print(f"    Memory bound: {memory_bound}")
+
+        # Build constants string
+        constants_str = self._build_constants_string(obs_function, pomdp)
+
+        try:
+            # Build the storm-pomdp command
+            cmd = [
+                "storm-pomdp",
+                "--prism", self.world_config.model_path,
+                "--constants", constants_str,
+                "--prop", 'Rmin=?[F "gameover"]',
+                "--buildfull",
+                "--belief-exploration",
+                "--exact",
+                "--memorybound", str(memory_bound),
+            ]
+
+            if self.verbose:
+                print(f" 🔨 Running storm-pomdp...")
+                print(f"    Command: {' '.join(cmd)}")
+
+            # Execute storm-pomdp
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=timeout_ms / 1000.0,  # Convert ms to seconds
+                check=True
+            )
+
+            if self.verbose:
+                print(f" ✅ storm-pomdp completed successfully")
+
+            # Parse result from stdout
+            parsed_result = _parse_storm_result_from_output(result.stdout)
+            print(parsed_result)
+            return parsed_result
+
+        except subprocess.TimeoutExpired:
+            if self.verbose:
+                print(f" ⏱️  storm-pomdp timed out after {timeout_ms}ms")
+            raise
+
+        except subprocess.CalledProcessError as e:
+            if self.verbose:
+                print(f" ❌ storm-pomdp failed with exit code {e.returncode}")
+                print(f"    stderr: {e.stderr}")
+            raise
+
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                "storm-pomdp not found in PATH. "
+                "Please ensure Storm is installed and storm-pomdp is accessible."
+            )
+
+
+if __name__ == "__main__":
+    tpmc = LineTPMC(budget=3, goal=3, length=7)
+    pomdp = POMDPAdapter(tpmc)
+    exec = StormExecutor(verbose=True, puzzle_type=pomdp.puzzle_type)
+    exec.evaluate_pomdp_cli(pomdp, [1, 0, 0, -1, 0, 0, 0], 100000)
