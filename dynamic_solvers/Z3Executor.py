@@ -9,7 +9,7 @@ from builders.OOPSpec import OOPSpec
 from builders.POMDPSpec import POMDPAdapter
 
 
-class TPMCSolver:
+class Z3Executor:
     solver: Solver
     verbose: bool
 
@@ -53,7 +53,7 @@ class TPMCSolver:
 
     def prepare_constraints(self, spec: OOPSpec | POMDPAdapter, threshold: str):
         """
-        Prepare constraints for either tpMC synthesis or POMDP evaluation.
+        Prepare static constraints for either tpMC synthesis or POMDP evaluation.
 
         Args:
             spec: Either an OOPSpec (tpMC) or POMDPAdapter (POMDP)

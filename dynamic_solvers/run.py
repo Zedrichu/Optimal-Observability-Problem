@@ -18,7 +18,7 @@ from ClusterPOPSolver import ClusterPOPSolver
 from builders.POMDPSpec import POMDPAdapter
 from builders.pop.POPSpec import POPSpec
 from utils import convert_text_to_html
-from TPMCSolver import TPMCSolver
+from Z3Executor import Z3Executor
 from builders.TPMCFactory import TPMCFactory
 
 VARIANT_CHOICES = ['ssp', 'pop']
@@ -280,7 +280,7 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
                                        budget_repair=args.budget_repair,
                                        order_constraints=args.order_constraints,
                                        verbose=args.verbose)
-    solver = TPMCSolver(tpmc_instance.ctx, verbose=not benchmark)
+    solver = Z3Executor(tpmc_instance.ctx, verbose=not benchmark)
     # Configure solver timeout
     solver.set_timeout(args.timeout)
 
