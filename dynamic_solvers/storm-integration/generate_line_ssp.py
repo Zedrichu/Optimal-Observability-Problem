@@ -12,7 +12,7 @@ def main():
         raise SystemExit("B must be between 0 and N-1")
 
     print("pomdp\n")
-    print("const N;")
+    print("const LENGTH;")
     print("const GOAL;")
     print("const BUDGET;\n")
 
@@ -30,18 +30,18 @@ def main():
 
     print("chosen : bool init false;")
     print("started : bool init false;")
-    print("position : [0..N-1];")
+    print("position : [0..LENGTH-1];")
 
     # Uniform distribution of initial position across non-goal states
     print("\n[start] !chosen -> ")
-    print(f"  ((0>=N | GOAL=0)?0:1)/(N-1):(started'=0<N)&(position'=(0<N?0:GOAL))&(chosen'=true)")
+    print(f"  ((0>=LENGTH | GOAL=0)?0:1)/(LENGTH-1):(started'=0<LENGTH)&(position'=(0<LENGTH?0:GOAL))&(chosen'=true)")
     for x in range(1, N):
-        print(f"+ (({x}>=N | GOAL={x})?0:1)/(N-1):(started'={x}<N)&(position'=({x}<N?{x}:GOAL))&(chosen'=true)")
+        print(f"+ (({x}>=LENGTH | GOAL={x})?0:1)/(LENGTH-1):(started'={x}<LENGTH)&(position'=({x}<LENGTH?{x}:GOAL))&(chosen'=true)")
     print(";\n")
 
     # Navigation actions with boundary checks
     print("[left]  started -> 1.0:(position'=max(0,position-1));")
-    print("[right] started -> 1.0:(position'=min(N-1,position+1));")
+    print("[right] started -> 1.0:(position'=min(LENGTH-1,position+1));")
     print("[stop] (position = GOAL) -> true;")
     print("endmodule\n")
 
@@ -54,7 +54,7 @@ def main():
     print("[right] true : 1 ;")
     print("endrewards\n")
 
-    print(f"// storm-pomdp -const N=7,BUDGET=3,", end='')
+    print(f"// storm-pomdp -const LENGTH=7,BUDGET=3,", end='')
     for x in range(1, B+1):
         print(f"POS{x}=0,", end='')
     print("GOAL=3", end='')
