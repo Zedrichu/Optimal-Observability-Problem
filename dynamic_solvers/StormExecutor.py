@@ -132,7 +132,7 @@ def _parse_storm_result_from_output(output: str) -> StormResult:
     """Parse storm-pomdp result from stdout/stderr output into a dictionary."""
 
     # Extract timing (optional)
-    timing_match = re.search(r'Time for POMDP analysis:\s*([0-9.]+)s', output)
+    timing_match = re.search(r'Time for POMDP analysis:\s*([0-9]+\.[0-9]+)s\.', output)
 
     # Pattern for interval results: [lower, upper] with width
     # Matches: [31/12, 3] (width=5/12) (approx. [2.583333333, 3] (width=0.4166666667))
@@ -245,7 +245,7 @@ class StormExecutor:
             raise ValueError(f"Dimensions {dim1}x{dim2} exceeds maximum dimensions in the static model "
                              f"<{self.world_config.max_dim1}x{self.world_config.max_dim2}>.")
 
-    def _build_constants_string(self, obs_function: list[int], pomdp: POMDPAdapter) -> str:
+    def _build_constants_cli_string(self, obs_function: list[int], pomdp: POMDPAdapter) -> str:
         """
         Build the constants string for storm-pomdp command line.
 
@@ -261,13 +261,6 @@ class StormExecutor:
 
         # Get world definition
         world_consts = _build_world_definition_const(pomdp)
-
-        # Pad POS constants up to max_budget
-        # Fill unused positions with 0
-        for i in range(1, self.world_config.max_budget + 1):
-            pos_key = f"POS{i}"
-            if pos_key not in sensor_consts:
-                sensor_consts[pos_key] = 0
 
         # Combine all constants
         all_constants = {**world_consts, **sensor_consts}
@@ -309,7 +302,7 @@ class StormExecutor:
         """Evaluate a POMDP using the storm-pomdp command-line tool."""
         if self.puzzle_type is None:
             self.puzzle_type = pomdp.puzzle_type
-            self._start_parsing()
+            self._start_prism_parsing()
 
         self._validate_pomdp(pomdp)
 
@@ -324,7 +317,7 @@ class StormExecutor:
             print(f"    Memory bound: {memory_bound}")
 
         # Build constants string
-        constants_str = self._build_constants_string(obs_function, pomdp)
+        constants_str = self._build_constants_cli_string(obs_function, pomdp)
 
         try:
             # Build the storm-pomdp command
@@ -352,12 +345,13 @@ class StormExecutor:
                 check=True
             )
 
+            lines = result.stdout.splitlines()
             if self.verbose:
                 print(f" ✅ storm-pomdp completed successfully")
+                print("\n".join(lines[-3:]))
 
             # Parse result from stdout
-            parsed_result = _parse_storm_result_from_output(result.stdout)
-            print(parsed_result)
+            parsed_result = _parse_storm_result_from_output("\n".join(lines[-3:]))
             return parsed_result
 
         except subprocess.TimeoutExpired:
