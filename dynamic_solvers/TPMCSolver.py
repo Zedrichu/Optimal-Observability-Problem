@@ -4,7 +4,7 @@ import time
 from z3 import (set_option, Solver, Context,
                 unsat, sat, unknown, BoolRef)
 
-from ResultOOP import ResultOOP
+from Z3SolverResult import Z3SolverResult
 from builders.OOPSpec import OOPSpec
 from builders.POMDPSpec import POMDPAdapter
 
@@ -71,7 +71,7 @@ class TPMCSolver:
         self.exp_rew_formula = spec.exp_rew_evaluator
         self.solver.add(base_constraints)
 
-    def evaluate_pomdp(self, pomdp: POMDPAdapter, obs_function: list[int], timeout_ms: int, extra_constraints: None | list[BoolRef] = None) -> ResultOOP:
+    def evaluate_pomdp(self, pomdp: POMDPAdapter, obs_function: list[int], timeout_ms: int, extra_constraints: None | list[BoolRef] = None) -> Z3SolverResult:
         """
         Evaluate a POMDP with a specific observation function using push/pop.
 
@@ -106,7 +106,22 @@ class TPMCSolver:
             # Pop the scope (removes observation-specific constraints)
             self.solver.pop()
 
-    def solve(self, timeout_ms: int) -> ResultOOP:
+    def solve_2_shot_repair(self, tpmc: OOPSpec, timeout_ms: int) -> Z3SolverResult:
+        # First shot without budget constraint
+        result = self.solve(timeout_ms)
+        time_shot = result.solve_time if result.solve_time else timeout_ms
+        # Attempt to repair the relaxed solution from before
+
+        self.solver.push()
+        try:
+            self.solver.add(tpmc.repair_constraints())
+            result = self.solve(timeout_ms)
+            result.solve_time += time_shot
+        finally:
+            self.solver.pop()
+        return result
+
+    def solve(self, timeout_ms: int) -> Z3SolverResult:
 
         if self.verbose:
             print(" ⚡  Solving...")
@@ -132,7 +147,7 @@ class TPMCSolver:
             if self.verbose:
                 print(' ❔  Unknown!')
 
-        return ResultOOP(
+        return Z3SolverResult(
             solve_time=solve_time,
             result=result,
             reward=reward,

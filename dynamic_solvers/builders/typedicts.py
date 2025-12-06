@@ -45,6 +45,7 @@ class OperationKWArgs(TypedDict, total=False):
     precision: Optional[Precision]
     bool_encoding: Optional[bool]
     order_constraints: Optional[List[int]]
+    budget_repair: bool
 
 
 class ExtOperationParams(TypedDict, total=False):
@@ -67,6 +68,7 @@ class ExtOperationParams(TypedDict, total=False):
     bool_encoding: Optional[bool]
     order_constraints: Optional[List[int]]
     cluster: Optional[bool]
+    budget_repair: bool
 
 
 class TPMCParams(DimensionKWArgs, ExtOperationParams):

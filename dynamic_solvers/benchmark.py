@@ -68,9 +68,11 @@ def _instance_worker(config: BenchmarkConfig, result_queue: Queue, hyperparams: 
             cluster_solver = ClusterPOPSolver(solver, tpmc_instance, verbose=True, threshold=config.threshold)
             result = cluster_solver.solve(level=0, timeout_ms=config.timeout)
         else:
-            # Solve the tpMC instance with a given threshold, determinism flag and timeout
             solver.prepare_constraints(tpmc_instance, config.threshold)
-            result = solver.solve(config.timeout)
+            if hyperparams.get('budget_repair', False):
+                result = solver.solve_2_shot_repair(tpmc_instance, config.timeout)
+            else:
+                result = solver.solve(config.timeout)
         solver.cleanup()
 
         # Determine status
@@ -101,7 +103,7 @@ def _instance_worker(config: BenchmarkConfig, result_queue: Queue, hyperparams: 
             'time': None,
             'reward': "N/A",
             'status': "ERROR",
-            'error': str(e)
+            'error': e
         })
 
 
@@ -418,6 +420,7 @@ def main():
         help='Constraint precision mode: "strict" (equality == for optimal solutions), "relaxed" (inequality >= for Bellman, <= for budget, finding invariants)'
     )
     parser.add_argument('--real-encoding', '-re', action='store_true', help='Encoding of TPMC parameters as real variables (slow performance)')
+    parser.add_argument('--budget-repair', '-br', action='store_true', help='Budget repair mode for SSP (first solve with no budget constraint, then repair the solution to fit the budget)')
     parser.add_argument('--order-constraints', '-order', type=str,
         help='Comma-separated order of assertion of HL constraint groups for OOP instances. Should be a permutation of 0,1,2,3'
     )
@@ -439,6 +442,7 @@ def main():
               f"   Bellman format       -> {args.bellman_format}\n"
               f"   Optimality Precision -> {args.precision}\n"
               f"   Encoding             -> {"Real" if args.real_encoding else "Boolean"}\n"
+              f"   Budget Repair        -> {"✅" if args.budget_repair else "❌"}\n"
               f"   Trials no.           -> {args.trials}\n"
               f"   Verbose output       -> {"✅" if args.verbose else "❌"}\n"
               f"   Ordering             -> {args.order_constraints if args.order_constraints else "default"}")
@@ -467,6 +471,7 @@ def main():
             bellman_format=args.bellman_format,
             precision=args.precision,
             bool_encoding=not args.real_encoding,
+            budget_repair=args.budget_repair,
             order_constraints=order_constraints,
             cluster=args.cluster,
         )
