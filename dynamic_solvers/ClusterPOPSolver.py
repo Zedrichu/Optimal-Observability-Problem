@@ -2,7 +2,7 @@ import time
 
 from z3 import sat, BoolRef, unknown
 
-from ResultOOP import ResultOOP
+from Z3SolverResult import Z3SolverResult
 from TPMCSolver import TPMCSolver
 from builders.POMDPSpec import POMDPAdapter
 from builders.pop.POPSpec import POPSpec
@@ -22,7 +22,7 @@ class ClusterPOPSolver:
         self.adapter = POMDPAdapter(tpmc)
         self.solver.prepare_constraints(self.adapter, threshold)
 
-    def solve(self, level: int, timeout_ms: int) -> ResultOOP:
+    def solve(self, level: int, timeout_ms: int) -> Z3SolverResult:
         """
         Attempts to solve a POP instance by solving and evaluating the underlying POMDPs in it.
 
@@ -68,7 +68,7 @@ class ClusterPOPSolver:
 
         return result
 
-    def search(self, partitions: list[list[list[int]]], ranking_partitions: list[tuple[int, int, int]], level, timeout_ms) -> ResultOOP:
+    def search(self, partitions: list[list[list[int]]], ranking_partitions: list[tuple[int, int, int]], level, timeout_ms) -> Z3SolverResult:
         """
         Args:
             partitions (list[list[list[int]]]): The list of partitions (each partition is a list
@@ -109,8 +109,9 @@ class ClusterPOPSolver:
         # TODO: can we ever return that the problem is unsat? Must prove completeness.
         # TODO: return timeout_ms instead of now - start?
 
+
         now = time.process_time()
-        return ResultOOP(
+        return Z3SolverResult(
             solve_time=now - start,
             result=unknown,
             reward=None,
