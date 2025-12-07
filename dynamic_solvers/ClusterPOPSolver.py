@@ -84,6 +84,7 @@ class ClusterPOPSolver:
 
         atomic_groups = list(self.tpmc.clusters.keys())
         start = time.process_time()
+        total_solve_time = 0
         for partition_idx, equivalence_score, constraint_score in ranking_partitions:
             partition = partitions[partition_idx]
             if self.verbose:
@@ -93,30 +94,25 @@ class ClusterPOPSolver:
             observation_function, strategy_constraints = self.apply_partition_to_states(partition)
             assert constraint_score == len(strategy_constraints)
 
-            result = self.solver.evaluate_pomdp(self.adapter, observation_function, timeout_ms, strategy_constraints)
+            # We use a default 30s timeout for each POMDP evaluation
+            result = self.solver.evaluate_pomdp(self.adapter, observation_function, 30000, strategy_constraints)
             if result.result == sat:
+                result.solve_time += total_solve_time
                 return result
             else:
-                remaining_time = timeout_ms - result.solve_time * 1000
+                total_solve_time += result.solve_time
                 if self.verbose:
                     print(f"Time to solve: {result.solve_time:.4f}s | Result = {result.result}")
-                    print(f"Updating timeout: timeout_ms = {timeout_ms} -> {remaining_time}")
-                timeout_ms = remaining_time
-                if timeout_ms <= 0:
-                    break
+                if total_solve_time * 1000 > timeout_ms:
+                    return Z3SolverResult(
+                        solve_time=total_solve_time,
+                        result=unknown,
+                        reward=None,
+                        model=None
+                    )
 
-        # TODO: call the TPMC solver as a fallback.
-        # TODO: can we ever return that the problem is unsat? Must prove completeness.
-        # TODO: return timeout_ms instead of now - start?
-
-
-        now = time.process_time()
-        return Z3SolverResult(
-            solve_time=now - start,
-            result=unknown,
-            reward=None,
-            model=None
-        )
+        # Call the TPMC solver as a fallback
+        return self.solver.solve(timeout_ms=timeout_ms - total_solve_time * 1000)
 
     def rank_partitions(self, partitions: list[list[list[int]]]) -> list[tuple[int, int, int]]:
         """
