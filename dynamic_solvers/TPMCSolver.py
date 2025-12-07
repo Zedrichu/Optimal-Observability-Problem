@@ -42,7 +42,9 @@ class TPMCSolver:
         if thread.is_alive():
             # Signal Z3 to interrupt its computation
             try:
+                # TODO: Choose one of the interrupts?
                 self.solver.interrupt()
+                self.solver.ctx.interrupt()
                 thread.join(timeout=5.0)  # Give Z3 time to cleanup gracefully
             except:
                 del thread
@@ -87,6 +89,8 @@ class TPMCSolver:
             ResultOOP with solve time, result, reward, and model
         """
         # Push a new scope
+        # Modify timeout as a workaround for issue with push()
+        self.solver.set("timeout", 1000*timeout_ms)
         self.solver.push()
         assert len(obs_function) == pomdp.size
 
@@ -98,6 +102,8 @@ class TPMCSolver:
                 self.solver.add(extra_constraints)
 
             # Solve
+            # Revert timeout as a workaround for issue with push()
+            self.solver.set("timeout", timeout_ms)
             result = self.solve(timeout_ms)
 
             return result
