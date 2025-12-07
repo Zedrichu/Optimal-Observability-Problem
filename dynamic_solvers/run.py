@@ -14,7 +14,9 @@ from typing import List, Tuple
 import z3
 from z3 import sat
 
+from ClusterPOPSolver import ClusterPOPSolver
 from builders.POMDPSpec import POMDPAdapter
+from builders.pop.POPSpec import POPSpec
 from utils import convert_text_to_html
 from TPMCSolver import TPMCSolver
 from builders.TPMCFactory import TPMCFactory
@@ -159,6 +161,12 @@ Examples:
         help='Observation function as space-separated integers (e.g., --pomdp 1 0 1 -1 0 1)'
     )
 
+    solver_group.add_argument(
+        '--cluster',
+        action='store_true',
+        help='Use a clustering algorithm to attempt to solve all POMDPs for a POP instance. Only applicable for POP variant.'
+    )
+
     # Output options
     output_group = parser.add_argument_group('Output Options')
     output_group.add_argument(
@@ -232,6 +240,9 @@ def validate_arguments(args: argparse.Namespace) -> None:
         raise ValueError(
             f"Invalid order_constraints format: {args.order_constraints}. Must be a comma-separated permutation of 0,1,2,3.")
 
+    # Validate clustering requirements
+    if args.cluster and args.variant != 'pop':
+        raise ValueError("--cluster is only applicable when the variant is 'pop'")
 
 def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
     """Main solving logic."""
@@ -281,7 +292,10 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
         # Play with large POMDP assignments here
         # vector_y = ([0] * (args.width - 1) + [1]) * (args.height - 1) + ([0] * (args.width - 1) + [-1])
         result = solver.evaluate_pomdp(adapter, args.pomdp, args.timeout)
-    elif args.budget_repair is not None:
+    elif isinstance(tpmc_instance, POPSpec) and args.cluster:
+        cluster_solver = ClusterPOPSolver(solver, tpmc_instance, True, args.threshold)
+        result = cluster_solver.solve(args.timeout)
+    elif args.budget_repair:
         solver.prepare_constraints(tpmc_instance, args.threshold)
         result = solver.solve_2_shot_repair(tpmc_instance, args.timeout)
         solver.cleanup()

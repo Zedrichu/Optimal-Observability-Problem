@@ -20,7 +20,7 @@ class GridTPMC(Grid, POPSpec):
             **kwargs: Additional parameters (ctx, verbose, bellman_format).
                 See OOPSpec.__init__ for details.
         """
-        Grid.__init__(self, width, height)
+        Grid.__init__(self, width, height, goal)
         POPSpec.__init__(self, budget, goal, determinism, **kwargs)
 
     def draw_model(self, model: dict, goal_state: int, budget: int, use_color: bool = True) -> str:
