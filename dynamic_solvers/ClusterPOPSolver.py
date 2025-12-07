@@ -22,7 +22,7 @@ class ClusterPOPSolver:
         self.adapter = POMDPAdapter(tpmc)
         self.solver.prepare_constraints(self.adapter, threshold)
 
-    def solve(self, level: int, timeout_ms: int) -> Z3SolverResult:
+    def solve(self, timeout_ms: int) -> Z3SolverResult:
         """
         Attempts to solve a POP instance by solving and evaluating the underlying POMDPs in it.
 
@@ -35,7 +35,6 @@ class ClusterPOPSolver:
         2) how much an observation function constraints its possible strategies.
 
         Args:
-            level (int): The ranking level up to which the search should be performed.
             timeout_ms (int): The timeout in milliseconds for the solver.
 
         Returns:
@@ -61,20 +60,19 @@ class ClusterPOPSolver:
             print(f"\nRanking of observation functions completed in {(now - start):.4f}s")
         start = now
 
-        result = self.search(partitions, ranking_partitions, level, timeout_ms)
+        result = self.search(partitions, ranking_partitions, timeout_ms)
         now = time.process_time()
         if self.verbose:
             print(f"\nSearch completed in {(now - start):.4f}s")
 
         return result
 
-    def search(self, partitions: list[list[list[int]]], ranking_partitions: list[tuple[int, int, int]], level, timeout_ms) -> Z3SolverResult:
+    def search(self, partitions: list[list[list[int]]], ranking_partitions: list[tuple[int, int, int]], timeout_ms) -> Z3SolverResult:
         """
         Args:
             partitions (list[list[list[int]]]): The list of partitions (each partition is a list
                 of blocks and each block is a list of atomic-group indices).
             ranking_partitions (list[tuple[int,int,int]]): Ranked metadata for partitions.
-            level (int): Reserved. Intended to limit the number of ranked partitions to examine.
             timeout_ms (int): Timeout in milliseconds.
 
         Returns:
@@ -83,7 +81,6 @@ class ClusterPOPSolver:
         """
 
         atomic_groups = list(self.tpmc.clusters.keys())
-        start = time.process_time()
         total_solve_time = 0
         for partition_idx, equivalence_score, constraint_score in ranking_partitions:
             partition = partitions[partition_idx]

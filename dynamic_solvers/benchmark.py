@@ -66,7 +66,7 @@ def _instance_worker(config: BenchmarkConfig, result_queue: Queue, hyperparams: 
         if hyperparams["cluster"] and config.variant.lower() == 'pop':
             from ClusterPOPSolver import ClusterPOPSolver
             cluster_solver = ClusterPOPSolver(solver, tpmc_instance, verbose=True, threshold=config.threshold)
-            result = cluster_solver.solve(level=0, timeout_ms=config.timeout)
+            result = cluster_solver.solve(timeout_ms=config.timeout)
         else:
             solver.prepare_constraints(tpmc_instance, config.threshold)
             if hyperparams.get('budget_repair', False):

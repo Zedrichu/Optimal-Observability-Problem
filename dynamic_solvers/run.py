@@ -294,7 +294,7 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
         result = solver.evaluate_pomdp(adapter, args.pomdp, args.timeout)
     elif isinstance(tpmc_instance, POPSpec) and args.cluster:
         cluster_solver = ClusterPOPSolver(solver, tpmc_instance, True, args.threshold)
-        result = cluster_solver.solve(0, args.timeout)
+        result = cluster_solver.solve(args.timeout)
     elif args.budget_repair:
         solver.prepare_constraints(tpmc_instance, args.threshold)
         result = solver.solve_2_shot_repair(tpmc_instance, args.timeout)
