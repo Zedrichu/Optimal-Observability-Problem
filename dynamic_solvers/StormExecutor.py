@@ -306,23 +306,41 @@ class StormExecutor:
         belexpl_options = BeliefExplorationModelCheckerOptionsDouble(False, True)
         belexpl_options.use_state_elimination_cutoff = False
         belexpl_options.use_clipping = False
+        belexpl_options.exploration_time_limit = timeout_ms // 1000
         # Model check with Belief Exploration (memory-less belief MDP -> finite-state controller)
         checker = stormpy.pomdp.BeliefExplorationModelCheckerDouble(model, belexpl_options)
 
-        # Extract the underlying formula from the PRISM reward property and run the model checker
-        start = time.process_time()
-        result = checker.check(self.property[0].raw_formula, [])
-        end = time.process_time()
+        # Set global timeout before model checking
+        stormpy.set_timeout(timeout_ms // 1000)  # Timeout in seconds
 
-        return StormResult(
-            type='binder',
-            analysis_time=end - start,
-            lower_bound=result.lower_bound,
-            upper_bound=result.upper_bound,
-            width=abs(result.upper_bound - result.lower_bound),
-            reward=result.upper_bound,
-            result = True
-        )
+        try:
+            start = time.process_time()
+            # Extract the underlying formula from the PRISM reward property and run the model checker
+            result = checker.check(self.property[0].raw_formula, [])
+            end = time.process_time()
+            return StormResult(
+                type='binder',
+                analysis_time=end - start,
+                lower_bound=result.lower_bound,
+                upper_bound=result.upper_bound,
+                width=abs(result.upper_bound - result.lower_bound),
+                reward=result.upper_bound,
+                result=True
+            )
+        except Exception as e:
+            print(e)
+            return StormResult(
+                type='unknown',
+                analysis_time=timeout_ms,
+                lower_bound=0,
+                upper_bound=0,
+                width=0,
+                reward=0,
+                result=False
+            )
+        finally:
+            # Reset timeout after completion
+            stormpy.reset_timeout()
 
     def evaluate_pomdp_cli(self, pomdp: POMDPAdapter, obs_function: list[int], timeout_ms: int, memory_bound: int = 1):
         """Evaluate a POMDP using the storm-pomdp command-line tool."""
@@ -399,5 +417,5 @@ if __name__ == "__main__":
     tpmc = LineTPMC(budget=6, goal=7, length=15)
     pomdp = POMDPAdapter(tpmc)
     exec = StormExecutor(verbose=True, puzzle_type=pomdp.puzzle_type)
-    result = exec.evaluate_pomdp_finite_state(pomdp, [0, 1, 1, 1, 1, 1, 1, -1, 0, 0, 0, 0, 0, 0, 0], 100000)
-    print(f"Reward: {result.reward}")
+    result = exec.evaluate_pomdp_finite_state(pomdp, [1, 1, 0, 1, 1, 1, 1, -1, 0, 0, 0, 0, 0, 0, 0], 10000)
+    print(f"Reward: {result.reward} in {result.analysis_time}s")
