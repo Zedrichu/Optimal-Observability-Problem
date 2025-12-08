@@ -199,6 +199,7 @@ def _configure_buildfull_options() -> BuilderOptions:
     options = stormpy.BuilderOptions()
     options.set_build_all_reward_models(True)
     options.set_build_all_labels(True)
+    options.set_build_choice_labels(True)
     return options
 
 def _define_program_constants(program: PrismProgram, constants: dict[str, int]) -> PrismProgram:
@@ -280,7 +281,7 @@ class StormExecutor:
         const_pairs = [f"{key}={value}" for key, value in sorted(all_constants.items())]
         return ",".join(const_pairs)
 
-    def evaluate_pomdp(self, pomdp: POMDPAdapter, obs_function: list[int], timeout_ms: int):
+    def evaluate_pomdp_finite_state(self, pomdp: POMDPAdapter, obs_function: list[int], timeout_ms: int):
         if self.puzzle_type is None:
             self.puzzle_type = pomdp.puzzle_type
             self._start_prism_parsing()
@@ -292,22 +293,36 @@ class StormExecutor:
             **_build_world_definition_const(pomdp),
         }
 
+        # Instantiate all constant parameters in the PRISM model
         self.static_program = _define_program_constants(self.static_program, constants)
-        build_options = _configure_buildfull_options()
-        # TODO! Require the memorybound for POMDP controllers to 1 === memoryless
-        model = stormpy.build_sparse_model_with_options(self.static_program, build_options)
-        # model = stormpy.build_model(self.static_program, self.property)
-        # model = stormpy.pomdp.make_canonic(model)
 
-        # belief exploration model checker
+        # Build the parsed POMDP model with full labels and rewards (make it canonic)
+        build_options = _configure_buildfull_options()
+        model = stormpy.build_sparse_model_with_options(self.static_program, build_options)
+        model = stormpy.pomdp.make_canonic(model)
+
+        # TODO! Require the memorybound for belief-MDP controllers to 1 === memoryless
+        # Setup belief exploration options
         belexpl_options = BeliefExplorationModelCheckerOptionsDouble(False, True)
+        belexpl_options.use_state_elimination_cutoff = False
+        belexpl_options.use_clipping = False
+        # Model check with Belief Exploration (memory-less belief MDP -> finite-state controller)
         checker = stormpy.pomdp.BeliefExplorationModelCheckerDouble(model, belexpl_options)
 
-        result = checker.check(self.property, 0)
-        status = checker.get_status()
+        # Extract the underlying formula from the PRISM reward property and run the model checker
+        start = time.process_time()
+        result = checker.check(self.property[0].raw_formula, [])
+        end = time.process_time()
 
-        print(f"{result}")
-        return result
+        return StormResult(
+            type='binder',
+            analysis_time=end - start,
+            lower_bound=result.lower_bound,
+            upper_bound=result.upper_bound,
+            width=abs(result.upper_bound - result.lower_bound),
+            reward=result.upper_bound,
+            result = True
+        )
 
     def evaluate_pomdp_cli(self, pomdp: POMDPAdapter, obs_function: list[int], timeout_ms: int, memory_bound: int = 1):
         """Evaluate a POMDP using the storm-pomdp command-line tool."""
@@ -381,7 +396,8 @@ class StormExecutor:
 
 
 if __name__ == "__main__":
-    tpmc = LineTPMC(budget=3, goal=3, length=7)
+    tpmc = LineTPMC(budget=6, goal=7, length=15)
     pomdp = POMDPAdapter(tpmc)
     exec = StormExecutor(verbose=True, puzzle_type=pomdp.puzzle_type)
-    exec.evaluate_pomdp_cli(pomdp, [1, 0, 0, -1, 0, 0, 0], 100000)
+    result = exec.evaluate_pomdp_finite_state(pomdp, [0, 1, 1, 1, 1, 1, 1, -1, 0, 0, 0, 0, 0, 0, 0], 100000)
+    print(f"Reward: {result.reward}")
