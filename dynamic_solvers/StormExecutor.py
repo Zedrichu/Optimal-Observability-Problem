@@ -1,5 +1,6 @@
 import re
 import subprocess
+import time
 from dataclasses import dataclass
 from typing import Optional
 
@@ -162,7 +163,7 @@ def _parse_storm_result_from_output(output: str) -> StormResult:
             upper_bound=upper_approx,
             width=width_approx,
             result=True,
-            reward= (lower_approx + upper_approx) / 2,
+            reward= upper_approx,
             analysis_time = float(timing_match.group(1)) if timing_match else None,
         )
 
@@ -226,17 +227,27 @@ class StormExecutor:
             self._start_prism_parsing()
 
     def _start_prism_parsing(self):
+        """Perform parsing of the pre-built PRISM model and reward property for reaching the goal"""
+        # Select the static model according to the world/puzzle type
         self.world_config = self.model_registry.get(self.puzzle_type)
+        # Parse the pre-built PRISM model
         self.static_program = stormpy.parse_prism_program(self.world_config.model_path, simplify=True)
         property_str = f"Rmin=?[ F \"gameover\"]"
-        # self.property = stormpy.parse_properties(property_str, self.static_program)
+        # Construct the PRISM property for the minimum expected reward
         self.property = stormpy.parse_properties_for_prism_program(property_str, self.static_program)
 
-    def _validate_pomdp(self, pomdp: POMDPAdapter):
+    def _validate_pomdp(self, pomdp: POMDPAdapter, obs_function: list[int]):
         """Validate that POMDP parameters are within static model bounds."""
         if pomdp.budget > self.world_config.max_budget:
             raise ValueError(f"Budget {pomdp.budget} exceeds maximum admissible budget in the static model "
                              f"<{self.world_config.max_budget}>.")
+
+        if sum(obs_function) + 1 != pomdp.budget:
+            raise ValueError(f"Observation function exceeds the budget of the declared POMDP {pomdp.budget} ")
+
+        if len(obs_function) != pomdp.size:
+            raise ValueError(f"Observation function length {len(obs_function)} "
+                             f"does not match POMDP size {pomdp.size}")
 
         dim1, dim2 = pomdp.get_dimensions()
 
@@ -274,7 +285,7 @@ class StormExecutor:
             self.puzzle_type = pomdp.puzzle_type
             self._start_prism_parsing()
 
-        self._validate_pomdp(pomdp)
+        self._validate_pomdp(pomdp, obs_function)
 
         constants = {
             **_build_sensor_selection_const(obs_function, self.world_config.max_budget),
@@ -304,16 +315,13 @@ class StormExecutor:
             self.puzzle_type = pomdp.puzzle_type
             self._start_prism_parsing()
 
-        self._validate_pomdp(pomdp)
-
-        if len(obs_function) != pomdp.size:
-            raise ValueError(f"Observation function length {len(obs_function)} "
-                             f"does not match POMDP size {pomdp.size}")
+        self._validate_pomdp(pomdp, obs_function)
 
         if self.verbose:
-            print(f" 📊 Evaluating POMDP via storm-pomdp CLI:")
+            print(f" 🚀 Evaluating POMDP via storm-pomdp CLI:")
             print(f"    Puzzle type: {self.puzzle_type.name}")
             print(f"    Size: {pomdp.size}, Goal: {pomdp.goal}, Budget: {pomdp.budget}")
+            print(f"    Observation function: {obs_function}")
             print(f"    Memory bound: {memory_bound}")
 
         # Build constants string
