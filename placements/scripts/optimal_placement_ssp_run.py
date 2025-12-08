@@ -22,6 +22,9 @@ if __name__ == "__main__":
     tolerance = 1e-15
     low = BIN_SEARCH_LOW
     high = BIN_SEARCH_HIGH
+    print("Running estimation on MinExpRew with the following hyperparameters:")
+    print(f"NUM_STATES={NUM_STATES}, GOAL_STATE={GOAL_STATE}, states_on={states_on}")
+    print(f"BIN_SEARCH_LOW={BIN_SEARCH_LOW}, BIN_SEARCH_HIGH={BIN_SEARCH_HIGH}\n")
 
     strategies = {}
     thresholds = []
@@ -72,3 +75,7 @@ if __name__ == "__main__":
             if d.name().startswith("pi") or d.name().startswith("xo"):
                 terms = list(map(int, re.findall(r"\d+", str(model[d]))))
                 print(f"{d.name().rjust(5)}: {terms[0]/terms[1] if len(terms) > 1 else terms[0]}")
+
+    print("\nRan estimation on MinExpRew with the following hyperparameters:")
+    print(f"NUM_STATES={NUM_STATES}, GOAL_STATE={GOAL_STATE}, states_on={states_on}")
+    print(f"BIN_SEARCH_LOW={BIN_SEARCH_LOW}, BIN_SEARCH_HIGH={BIN_SEARCH_HIGH}")
