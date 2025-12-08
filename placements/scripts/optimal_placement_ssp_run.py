@@ -61,8 +61,7 @@ if __name__ == "__main__":
         strategy_strings = []
         for j, term in enumerate(terms):
             action_rate_var = strategy[j][0]
-            action_rate_strat = terms[j][0]/terms[j][1] if len(terms) > 1 else terms[j][0]
-            strategy_strings += [f"{action_rate_var} = {action_rate_strat}"]
+            action_rate_strat = term[0]/term[1] if len(term) > 1 else term[0]
         print(f"Strategy for iteration {i} (τ <= {thresholds[i]}): {" | ".join(strategy_strings)}")
     print(f"The optimal sensor threshold is approximately {thresholds[max(strategies.keys())]} ± {tolerance}")
 
