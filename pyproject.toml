@@ -17,6 +17,7 @@ dependencies = [
     "pytest>=9.0.1",
     "rich>=14.1.0",
     "setuptools>=80.9.0",
+    "stormpy>=1.11.3",
     "sympy>=1.14.0",
     "z3-solver==4.13.0",
 ]

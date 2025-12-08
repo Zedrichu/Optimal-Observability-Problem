@@ -1,12 +1,14 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Optional
 
+from builders.enums import PuzzleType
 from direction import Direction
 
 
 class World(ABC):
     size: int
     actions: List[str]
+    puzzle_type: PuzzleType
     goal: int
     clusters: dict[Direction, List[int]]
 
@@ -19,6 +21,10 @@ class World(ABC):
         raise NotImplementedError()
 
     @abstractmethod
+    def get_dimensions(self) -> tuple[int, int]:
+        raise NotImplementedError()
+
+    @abstractmethod
     def cluster(self) -> dict[Direction, List[int]]:
         raise NotImplementedError()
 
@@ -26,6 +32,7 @@ class World(ABC):
 class Line(World):
     def __init__(self, length: int, goal: int):
         self.length = length
+        self.puzzle_type = PuzzleType.LINE
 
         self.size = length
         self.actions = ['l', 'r']
@@ -43,6 +50,9 @@ class Line(World):
     def dist(self, source: int, target: int) -> int:
         return abs(source - target)
 
+    def get_dimensions(self) -> tuple[int, Optional[int]]:
+        return self.length, None
+
     def cluster(self) -> dict[Direction, List[int]]:
         clusters = {}
 
@@ -58,6 +68,7 @@ class Grid(World):
     def __init__(self, width: int, height: int, goal: int):
         self.width = width
         self.height = height
+        self.puzzle_type = PuzzleType.GRID
 
         self.size = width * height
         self.actions = ['l', 'r', 'u', 'd']
@@ -105,6 +116,9 @@ class Grid(World):
 
         return abs(goal_column - column) + abs(goal_row - row)
 
+    def get_dimensions(self) -> tuple[int, Optional[int]]:
+        return self.width, self.height
+
     def cluster(self) -> dict[Direction, List[int]]:
         clusters = {}
 
@@ -140,6 +154,7 @@ class Maze(World):
 
         self.width = width
         self.depth = depth
+        self.puzzle_type = PuzzleType.MAZE
 
         self.size = width + 3 * (depth - 1)
         self.actions = ['l', 'r', 'u', 'd']
@@ -188,6 +203,9 @@ class Maze(World):
             row = (source - self.width) // 3 + 1
             diff = int(goal_column != column)
             return abs(column - goal_column) + abs(row - goal_height + 2 * goal_height * diff)
+
+    def get_dimensions(self) -> tuple[int, int]:
+        return self.width, self.depth
 
     def cluster(self) -> dict[Direction, List[int]]:
         clusters = {}

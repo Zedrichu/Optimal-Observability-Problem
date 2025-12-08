@@ -43,7 +43,7 @@ def _instance_worker(config: BenchmarkConfig, result_queue: Queue, hyperparams: 
      """
     try:
         # Import here to ensure fresh imports in a new process
-        from TPMCSolver import TPMCSolver
+        from Z3Executor import Z3Executor
         from builders.TPMCFactory import TPMCFactory
 
         # Create TPMC instance based on configuration & operational hyperparameters
@@ -60,7 +60,7 @@ def _instance_worker(config: BenchmarkConfig, result_queue: Queue, hyperparams: 
         )
 
         # Create a solver and configure it
-        solver = TPMCSolver(tpmc_instance.ctx, verbose=False)
+        solver = Z3Executor(tpmc_instance.ctx, verbose=False)
         solver.set_timeout(config.timeout)
 
         if hyperparams["cluster"] and config.variant.lower() == 'pop':

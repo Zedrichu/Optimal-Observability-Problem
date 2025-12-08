@@ -1,0 +1,382 @@
+pomdp
+
+const LENGTH;
+const GOAL;
+const BUDGET;
+
+const POS1;
+const POS2;
+const POS3;
+const POS4;
+const POS5;
+const POS6;
+const POS7;
+const POS8;
+const POS9;
+const POS10;
+const POS11;
+const POS12;
+const POS13;
+const POS14;
+const POS15;
+const POS16;
+const POS17;
+const POS18;
+const POS19;
+const POS20;
+const POS21;
+const POS22;
+const POS23;
+const POS24;
+const POS25;
+const POS26;
+const POS27;
+const POS28;
+const POS29;
+const POS30;
+const POS31;
+const POS32;
+const POS33;
+const POS34;
+const POS35;
+const POS36;
+const POS37;
+const POS38;
+const POS39;
+const POS40;
+const POS41;
+const POS42;
+const POS43;
+const POS44;
+const POS45;
+const POS46;
+const POS47;
+const POS48;
+const POS49;
+const POS50;
+observable "goal" = (position=GOAL);
+observable "started" = (started);
+
+observable "flag1" = ((1<=BUDGET)?(position=POS1):false);
+observable "flag2" = ((2<=BUDGET)?(position=POS2):false);
+observable "flag3" = ((3<=BUDGET)?(position=POS3):false);
+observable "flag4" = ((4<=BUDGET)?(position=POS4):false);
+observable "flag5" = ((5<=BUDGET)?(position=POS5):false);
+observable "flag6" = ((6<=BUDGET)?(position=POS6):false);
+observable "flag7" = ((7<=BUDGET)?(position=POS7):false);
+observable "flag8" = ((8<=BUDGET)?(position=POS8):false);
+observable "flag9" = ((9<=BUDGET)?(position=POS9):false);
+observable "flag10" = ((10<=BUDGET)?(position=POS10):false);
+observable "flag11" = ((11<=BUDGET)?(position=POS11):false);
+observable "flag12" = ((12<=BUDGET)?(position=POS12):false);
+observable "flag13" = ((13<=BUDGET)?(position=POS13):false);
+observable "flag14" = ((14<=BUDGET)?(position=POS14):false);
+observable "flag15" = ((15<=BUDGET)?(position=POS15):false);
+observable "flag16" = ((16<=BUDGET)?(position=POS16):false);
+observable "flag17" = ((17<=BUDGET)?(position=POS17):false);
+observable "flag18" = ((18<=BUDGET)?(position=POS18):false);
+observable "flag19" = ((19<=BUDGET)?(position=POS19):false);
+observable "flag20" = ((20<=BUDGET)?(position=POS20):false);
+observable "flag21" = ((21<=BUDGET)?(position=POS21):false);
+observable "flag22" = ((22<=BUDGET)?(position=POS22):false);
+observable "flag23" = ((23<=BUDGET)?(position=POS23):false);
+observable "flag24" = ((24<=BUDGET)?(position=POS24):false);
+observable "flag25" = ((25<=BUDGET)?(position=POS25):false);
+observable "flag26" = ((26<=BUDGET)?(position=POS26):false);
+observable "flag27" = ((27<=BUDGET)?(position=POS27):false);
+observable "flag28" = ((28<=BUDGET)?(position=POS28):false);
+observable "flag29" = ((29<=BUDGET)?(position=POS29):false);
+observable "flag30" = ((30<=BUDGET)?(position=POS30):false);
+observable "flag31" = ((31<=BUDGET)?(position=POS31):false);
+observable "flag32" = ((32<=BUDGET)?(position=POS32):false);
+observable "flag33" = ((33<=BUDGET)?(position=POS33):false);
+observable "flag34" = ((34<=BUDGET)?(position=POS34):false);
+observable "flag35" = ((35<=BUDGET)?(position=POS35):false);
+observable "flag36" = ((36<=BUDGET)?(position=POS36):false);
+observable "flag37" = ((37<=BUDGET)?(position=POS37):false);
+observable "flag38" = ((38<=BUDGET)?(position=POS38):false);
+observable "flag39" = ((39<=BUDGET)?(position=POS39):false);
+observable "flag40" = ((40<=BUDGET)?(position=POS40):false);
+observable "flag41" = ((41<=BUDGET)?(position=POS41):false);
+observable "flag42" = ((42<=BUDGET)?(position=POS42):false);
+observable "flag43" = ((43<=BUDGET)?(position=POS43):false);
+observable "flag44" = ((44<=BUDGET)?(position=POS44):false);
+observable "flag45" = ((45<=BUDGET)?(position=POS45):false);
+observable "flag46" = ((46<=BUDGET)?(position=POS46):false);
+observable "flag47" = ((47<=BUDGET)?(position=POS47):false);
+observable "flag48" = ((48<=BUDGET)?(position=POS48):false);
+observable "flag49" = ((49<=BUDGET)?(position=POS49):false);
+observable "flag50" = ((50<=BUDGET)?(position=POS50):false);
+
+module LINE
+
+chosen : bool init false;
+started : bool init false;
+position : [0..LENGTH-1];
+
+[start] !chosen ->
+  ((0>=LENGTH | GOAL=0)?0:1)/(LENGTH-1):(started'=0<LENGTH)&(position'=(0<LENGTH?0:GOAL))&(chosen'=true)
++ ((1>=LENGTH | GOAL=1)?0:1)/(LENGTH-1):(started'=1<LENGTH)&(position'=(1<LENGTH?1:GOAL))&(chosen'=true)
++ ((2>=LENGTH | GOAL=2)?0:1)/(LENGTH-1):(started'=2<LENGTH)&(position'=(2<LENGTH?2:GOAL))&(chosen'=true)
++ ((3>=LENGTH | GOAL=3)?0:1)/(LENGTH-1):(started'=3<LENGTH)&(position'=(3<LENGTH?3:GOAL))&(chosen'=true)
++ ((4>=LENGTH | GOAL=4)?0:1)/(LENGTH-1):(started'=4<LENGTH)&(position'=(4<LENGTH?4:GOAL))&(chosen'=true)
++ ((5>=LENGTH | GOAL=5)?0:1)/(LENGTH-1):(started'=5<LENGTH)&(position'=(5<LENGTH?5:GOAL))&(chosen'=true)
++ ((6>=LENGTH | GOAL=6)?0:1)/(LENGTH-1):(started'=6<LENGTH)&(position'=(6<LENGTH?6:GOAL))&(chosen'=true)
++ ((7>=LENGTH | GOAL=7)?0:1)/(LENGTH-1):(started'=7<LENGTH)&(position'=(7<LENGTH?7:GOAL))&(chosen'=true)
++ ((8>=LENGTH | GOAL=8)?0:1)/(LENGTH-1):(started'=8<LENGTH)&(position'=(8<LENGTH?8:GOAL))&(chosen'=true)
++ ((9>=LENGTH | GOAL=9)?0:1)/(LENGTH-1):(started'=9<LENGTH)&(position'=(9<LENGTH?9:GOAL))&(chosen'=true)
++ ((10>=LENGTH | GOAL=10)?0:1)/(LENGTH-1):(started'=10<LENGTH)&(position'=(10<LENGTH?10:GOAL))&(chosen'=true)
++ ((11>=LENGTH | GOAL=11)?0:1)/(LENGTH-1):(started'=11<LENGTH)&(position'=(11<LENGTH?11:GOAL))&(chosen'=true)
++ ((12>=LENGTH | GOAL=12)?0:1)/(LENGTH-1):(started'=12<LENGTH)&(position'=(12<LENGTH?12:GOAL))&(chosen'=true)
++ ((13>=LENGTH | GOAL=13)?0:1)/(LENGTH-1):(started'=13<LENGTH)&(position'=(13<LENGTH?13:GOAL))&(chosen'=true)
++ ((14>=LENGTH | GOAL=14)?0:1)/(LENGTH-1):(started'=14<LENGTH)&(position'=(14<LENGTH?14:GOAL))&(chosen'=true)
++ ((15>=LENGTH | GOAL=15)?0:1)/(LENGTH-1):(started'=15<LENGTH)&(position'=(15<LENGTH?15:GOAL))&(chosen'=true)
++ ((16>=LENGTH | GOAL=16)?0:1)/(LENGTH-1):(started'=16<LENGTH)&(position'=(16<LENGTH?16:GOAL))&(chosen'=true)
++ ((17>=LENGTH | GOAL=17)?0:1)/(LENGTH-1):(started'=17<LENGTH)&(position'=(17<LENGTH?17:GOAL))&(chosen'=true)
++ ((18>=LENGTH | GOAL=18)?0:1)/(LENGTH-1):(started'=18<LENGTH)&(position'=(18<LENGTH?18:GOAL))&(chosen'=true)
++ ((19>=LENGTH | GOAL=19)?0:1)/(LENGTH-1):(started'=19<LENGTH)&(position'=(19<LENGTH?19:GOAL))&(chosen'=true)
++ ((20>=LENGTH | GOAL=20)?0:1)/(LENGTH-1):(started'=20<LENGTH)&(position'=(20<LENGTH?20:GOAL))&(chosen'=true)
++ ((21>=LENGTH | GOAL=21)?0:1)/(LENGTH-1):(started'=21<LENGTH)&(position'=(21<LENGTH?21:GOAL))&(chosen'=true)
++ ((22>=LENGTH | GOAL=22)?0:1)/(LENGTH-1):(started'=22<LENGTH)&(position'=(22<LENGTH?22:GOAL))&(chosen'=true)
++ ((23>=LENGTH | GOAL=23)?0:1)/(LENGTH-1):(started'=23<LENGTH)&(position'=(23<LENGTH?23:GOAL))&(chosen'=true)
++ ((24>=LENGTH | GOAL=24)?0:1)/(LENGTH-1):(started'=24<LENGTH)&(position'=(24<LENGTH?24:GOAL))&(chosen'=true)
++ ((25>=LENGTH | GOAL=25)?0:1)/(LENGTH-1):(started'=25<LENGTH)&(position'=(25<LENGTH?25:GOAL))&(chosen'=true)
++ ((26>=LENGTH | GOAL=26)?0:1)/(LENGTH-1):(started'=26<LENGTH)&(position'=(26<LENGTH?26:GOAL))&(chosen'=true)
++ ((27>=LENGTH | GOAL=27)?0:1)/(LENGTH-1):(started'=27<LENGTH)&(position'=(27<LENGTH?27:GOAL))&(chosen'=true)
++ ((28>=LENGTH | GOAL=28)?0:1)/(LENGTH-1):(started'=28<LENGTH)&(position'=(28<LENGTH?28:GOAL))&(chosen'=true)
++ ((29>=LENGTH | GOAL=29)?0:1)/(LENGTH-1):(started'=29<LENGTH)&(position'=(29<LENGTH?29:GOAL))&(chosen'=true)
++ ((30>=LENGTH | GOAL=30)?0:1)/(LENGTH-1):(started'=30<LENGTH)&(position'=(30<LENGTH?30:GOAL))&(chosen'=true)
++ ((31>=LENGTH | GOAL=31)?0:1)/(LENGTH-1):(started'=31<LENGTH)&(position'=(31<LENGTH?31:GOAL))&(chosen'=true)
++ ((32>=LENGTH | GOAL=32)?0:1)/(LENGTH-1):(started'=32<LENGTH)&(position'=(32<LENGTH?32:GOAL))&(chosen'=true)
++ ((33>=LENGTH | GOAL=33)?0:1)/(LENGTH-1):(started'=33<LENGTH)&(position'=(33<LENGTH?33:GOAL))&(chosen'=true)
++ ((34>=LENGTH | GOAL=34)?0:1)/(LENGTH-1):(started'=34<LENGTH)&(position'=(34<LENGTH?34:GOAL))&(chosen'=true)
++ ((35>=LENGTH | GOAL=35)?0:1)/(LENGTH-1):(started'=35<LENGTH)&(position'=(35<LENGTH?35:GOAL))&(chosen'=true)
++ ((36>=LENGTH | GOAL=36)?0:1)/(LENGTH-1):(started'=36<LENGTH)&(position'=(36<LENGTH?36:GOAL))&(chosen'=true)
++ ((37>=LENGTH | GOAL=37)?0:1)/(LENGTH-1):(started'=37<LENGTH)&(position'=(37<LENGTH?37:GOAL))&(chosen'=true)
++ ((38>=LENGTH | GOAL=38)?0:1)/(LENGTH-1):(started'=38<LENGTH)&(position'=(38<LENGTH?38:GOAL))&(chosen'=true)
++ ((39>=LENGTH | GOAL=39)?0:1)/(LENGTH-1):(started'=39<LENGTH)&(position'=(39<LENGTH?39:GOAL))&(chosen'=true)
++ ((40>=LENGTH | GOAL=40)?0:1)/(LENGTH-1):(started'=40<LENGTH)&(position'=(40<LENGTH?40:GOAL))&(chosen'=true)
++ ((41>=LENGTH | GOAL=41)?0:1)/(LENGTH-1):(started'=41<LENGTH)&(position'=(41<LENGTH?41:GOAL))&(chosen'=true)
++ ((42>=LENGTH | GOAL=42)?0:1)/(LENGTH-1):(started'=42<LENGTH)&(position'=(42<LENGTH?42:GOAL))&(chosen'=true)
++ ((43>=LENGTH | GOAL=43)?0:1)/(LENGTH-1):(started'=43<LENGTH)&(position'=(43<LENGTH?43:GOAL))&(chosen'=true)
++ ((44>=LENGTH | GOAL=44)?0:1)/(LENGTH-1):(started'=44<LENGTH)&(position'=(44<LENGTH?44:GOAL))&(chosen'=true)
++ ((45>=LENGTH | GOAL=45)?0:1)/(LENGTH-1):(started'=45<LENGTH)&(position'=(45<LENGTH?45:GOAL))&(chosen'=true)
++ ((46>=LENGTH | GOAL=46)?0:1)/(LENGTH-1):(started'=46<LENGTH)&(position'=(46<LENGTH?46:GOAL))&(chosen'=true)
++ ((47>=LENGTH | GOAL=47)?0:1)/(LENGTH-1):(started'=47<LENGTH)&(position'=(47<LENGTH?47:GOAL))&(chosen'=true)
++ ((48>=LENGTH | GOAL=48)?0:1)/(LENGTH-1):(started'=48<LENGTH)&(position'=(48<LENGTH?48:GOAL))&(chosen'=true)
++ ((49>=LENGTH | GOAL=49)?0:1)/(LENGTH-1):(started'=49<LENGTH)&(position'=(49<LENGTH?49:GOAL))&(chosen'=true)
++ ((50>=LENGTH | GOAL=50)?0:1)/(LENGTH-1):(started'=50<LENGTH)&(position'=(50<LENGTH?50:GOAL))&(chosen'=true)
++ ((51>=LENGTH | GOAL=51)?0:1)/(LENGTH-1):(started'=51<LENGTH)&(position'=(51<LENGTH?51:GOAL))&(chosen'=true)
++ ((52>=LENGTH | GOAL=52)?0:1)/(LENGTH-1):(started'=52<LENGTH)&(position'=(52<LENGTH?52:GOAL))&(chosen'=true)
++ ((53>=LENGTH | GOAL=53)?0:1)/(LENGTH-1):(started'=53<LENGTH)&(position'=(53<LENGTH?53:GOAL))&(chosen'=true)
++ ((54>=LENGTH | GOAL=54)?0:1)/(LENGTH-1):(started'=54<LENGTH)&(position'=(54<LENGTH?54:GOAL))&(chosen'=true)
++ ((55>=LENGTH | GOAL=55)?0:1)/(LENGTH-1):(started'=55<LENGTH)&(position'=(55<LENGTH?55:GOAL))&(chosen'=true)
++ ((56>=LENGTH | GOAL=56)?0:1)/(LENGTH-1):(started'=56<LENGTH)&(position'=(56<LENGTH?56:GOAL))&(chosen'=true)
++ ((57>=LENGTH | GOAL=57)?0:1)/(LENGTH-1):(started'=57<LENGTH)&(position'=(57<LENGTH?57:GOAL))&(chosen'=true)
++ ((58>=LENGTH | GOAL=58)?0:1)/(LENGTH-1):(started'=58<LENGTH)&(position'=(58<LENGTH?58:GOAL))&(chosen'=true)
++ ((59>=LENGTH | GOAL=59)?0:1)/(LENGTH-1):(started'=59<LENGTH)&(position'=(59<LENGTH?59:GOAL))&(chosen'=true)
++ ((60>=LENGTH | GOAL=60)?0:1)/(LENGTH-1):(started'=60<LENGTH)&(position'=(60<LENGTH?60:GOAL))&(chosen'=true)
++ ((61>=LENGTH | GOAL=61)?0:1)/(LENGTH-1):(started'=61<LENGTH)&(position'=(61<LENGTH?61:GOAL))&(chosen'=true)
++ ((62>=LENGTH | GOAL=62)?0:1)/(LENGTH-1):(started'=62<LENGTH)&(position'=(62<LENGTH?62:GOAL))&(chosen'=true)
++ ((63>=LENGTH | GOAL=63)?0:1)/(LENGTH-1):(started'=63<LENGTH)&(position'=(63<LENGTH?63:GOAL))&(chosen'=true)
++ ((64>=LENGTH | GOAL=64)?0:1)/(LENGTH-1):(started'=64<LENGTH)&(position'=(64<LENGTH?64:GOAL))&(chosen'=true)
++ ((65>=LENGTH | GOAL=65)?0:1)/(LENGTH-1):(started'=65<LENGTH)&(position'=(65<LENGTH?65:GOAL))&(chosen'=true)
++ ((66>=LENGTH | GOAL=66)?0:1)/(LENGTH-1):(started'=66<LENGTH)&(position'=(66<LENGTH?66:GOAL))&(chosen'=true)
++ ((67>=LENGTH | GOAL=67)?0:1)/(LENGTH-1):(started'=67<LENGTH)&(position'=(67<LENGTH?67:GOAL))&(chosen'=true)
++ ((68>=LENGTH | GOAL=68)?0:1)/(LENGTH-1):(started'=68<LENGTH)&(position'=(68<LENGTH?68:GOAL))&(chosen'=true)
++ ((69>=LENGTH | GOAL=69)?0:1)/(LENGTH-1):(started'=69<LENGTH)&(position'=(69<LENGTH?69:GOAL))&(chosen'=true)
++ ((70>=LENGTH | GOAL=70)?0:1)/(LENGTH-1):(started'=70<LENGTH)&(position'=(70<LENGTH?70:GOAL))&(chosen'=true)
++ ((71>=LENGTH | GOAL=71)?0:1)/(LENGTH-1):(started'=71<LENGTH)&(position'=(71<LENGTH?71:GOAL))&(chosen'=true)
++ ((72>=LENGTH | GOAL=72)?0:1)/(LENGTH-1):(started'=72<LENGTH)&(position'=(72<LENGTH?72:GOAL))&(chosen'=true)
++ ((73>=LENGTH | GOAL=73)?0:1)/(LENGTH-1):(started'=73<LENGTH)&(position'=(73<LENGTH?73:GOAL))&(chosen'=true)
++ ((74>=LENGTH | GOAL=74)?0:1)/(LENGTH-1):(started'=74<LENGTH)&(position'=(74<LENGTH?74:GOAL))&(chosen'=true)
++ ((75>=LENGTH | GOAL=75)?0:1)/(LENGTH-1):(started'=75<LENGTH)&(position'=(75<LENGTH?75:GOAL))&(chosen'=true)
++ ((76>=LENGTH | GOAL=76)?0:1)/(LENGTH-1):(started'=76<LENGTH)&(position'=(76<LENGTH?76:GOAL))&(chosen'=true)
++ ((77>=LENGTH | GOAL=77)?0:1)/(LENGTH-1):(started'=77<LENGTH)&(position'=(77<LENGTH?77:GOAL))&(chosen'=true)
++ ((78>=LENGTH | GOAL=78)?0:1)/(LENGTH-1):(started'=78<LENGTH)&(position'=(78<LENGTH?78:GOAL))&(chosen'=true)
++ ((79>=LENGTH | GOAL=79)?0:1)/(LENGTH-1):(started'=79<LENGTH)&(position'=(79<LENGTH?79:GOAL))&(chosen'=true)
++ ((80>=LENGTH | GOAL=80)?0:1)/(LENGTH-1):(started'=80<LENGTH)&(position'=(80<LENGTH?80:GOAL))&(chosen'=true)
++ ((81>=LENGTH | GOAL=81)?0:1)/(LENGTH-1):(started'=81<LENGTH)&(position'=(81<LENGTH?81:GOAL))&(chosen'=true)
++ ((82>=LENGTH | GOAL=82)?0:1)/(LENGTH-1):(started'=82<LENGTH)&(position'=(82<LENGTH?82:GOAL))&(chosen'=true)
++ ((83>=LENGTH | GOAL=83)?0:1)/(LENGTH-1):(started'=83<LENGTH)&(position'=(83<LENGTH?83:GOAL))&(chosen'=true)
++ ((84>=LENGTH | GOAL=84)?0:1)/(LENGTH-1):(started'=84<LENGTH)&(position'=(84<LENGTH?84:GOAL))&(chosen'=true)
++ ((85>=LENGTH | GOAL=85)?0:1)/(LENGTH-1):(started'=85<LENGTH)&(position'=(85<LENGTH?85:GOAL))&(chosen'=true)
++ ((86>=LENGTH | GOAL=86)?0:1)/(LENGTH-1):(started'=86<LENGTH)&(position'=(86<LENGTH?86:GOAL))&(chosen'=true)
++ ((87>=LENGTH | GOAL=87)?0:1)/(LENGTH-1):(started'=87<LENGTH)&(position'=(87<LENGTH?87:GOAL))&(chosen'=true)
++ ((88>=LENGTH | GOAL=88)?0:1)/(LENGTH-1):(started'=88<LENGTH)&(position'=(88<LENGTH?88:GOAL))&(chosen'=true)
++ ((89>=LENGTH | GOAL=89)?0:1)/(LENGTH-1):(started'=89<LENGTH)&(position'=(89<LENGTH?89:GOAL))&(chosen'=true)
++ ((90>=LENGTH | GOAL=90)?0:1)/(LENGTH-1):(started'=90<LENGTH)&(position'=(90<LENGTH?90:GOAL))&(chosen'=true)
++ ((91>=LENGTH | GOAL=91)?0:1)/(LENGTH-1):(started'=91<LENGTH)&(position'=(91<LENGTH?91:GOAL))&(chosen'=true)
++ ((92>=LENGTH | GOAL=92)?0:1)/(LENGTH-1):(started'=92<LENGTH)&(position'=(92<LENGTH?92:GOAL))&(chosen'=true)
++ ((93>=LENGTH | GOAL=93)?0:1)/(LENGTH-1):(started'=93<LENGTH)&(position'=(93<LENGTH?93:GOAL))&(chosen'=true)
++ ((94>=LENGTH | GOAL=94)?0:1)/(LENGTH-1):(started'=94<LENGTH)&(position'=(94<LENGTH?94:GOAL))&(chosen'=true)
++ ((95>=LENGTH | GOAL=95)?0:1)/(LENGTH-1):(started'=95<LENGTH)&(position'=(95<LENGTH?95:GOAL))&(chosen'=true)
++ ((96>=LENGTH | GOAL=96)?0:1)/(LENGTH-1):(started'=96<LENGTH)&(position'=(96<LENGTH?96:GOAL))&(chosen'=true)
++ ((97>=LENGTH | GOAL=97)?0:1)/(LENGTH-1):(started'=97<LENGTH)&(position'=(97<LENGTH?97:GOAL))&(chosen'=true)
++ ((98>=LENGTH | GOAL=98)?0:1)/(LENGTH-1):(started'=98<LENGTH)&(position'=(98<LENGTH?98:GOAL))&(chosen'=true)
++ ((99>=LENGTH | GOAL=99)?0:1)/(LENGTH-1):(started'=99<LENGTH)&(position'=(99<LENGTH?99:GOAL))&(chosen'=true)
++ ((100>=LENGTH | GOAL=100)?0:1)/(LENGTH-1):(started'=100<LENGTH)&(position'=(100<LENGTH?100:GOAL))&(chosen'=true)
++ ((101>=LENGTH | GOAL=101)?0:1)/(LENGTH-1):(started'=101<LENGTH)&(position'=(101<LENGTH?101:GOAL))&(chosen'=true)
++ ((102>=LENGTH | GOAL=102)?0:1)/(LENGTH-1):(started'=102<LENGTH)&(position'=(102<LENGTH?102:GOAL))&(chosen'=true)
++ ((103>=LENGTH | GOAL=103)?0:1)/(LENGTH-1):(started'=103<LENGTH)&(position'=(103<LENGTH?103:GOAL))&(chosen'=true)
++ ((104>=LENGTH | GOAL=104)?0:1)/(LENGTH-1):(started'=104<LENGTH)&(position'=(104<LENGTH?104:GOAL))&(chosen'=true)
++ ((105>=LENGTH | GOAL=105)?0:1)/(LENGTH-1):(started'=105<LENGTH)&(position'=(105<LENGTH?105:GOAL))&(chosen'=true)
++ ((106>=LENGTH | GOAL=106)?0:1)/(LENGTH-1):(started'=106<LENGTH)&(position'=(106<LENGTH?106:GOAL))&(chosen'=true)
++ ((107>=LENGTH | GOAL=107)?0:1)/(LENGTH-1):(started'=107<LENGTH)&(position'=(107<LENGTH?107:GOAL))&(chosen'=true)
++ ((108>=LENGTH | GOAL=108)?0:1)/(LENGTH-1):(started'=108<LENGTH)&(position'=(108<LENGTH?108:GOAL))&(chosen'=true)
++ ((109>=LENGTH | GOAL=109)?0:1)/(LENGTH-1):(started'=109<LENGTH)&(position'=(109<LENGTH?109:GOAL))&(chosen'=true)
++ ((110>=LENGTH | GOAL=110)?0:1)/(LENGTH-1):(started'=110<LENGTH)&(position'=(110<LENGTH?110:GOAL))&(chosen'=true)
++ ((111>=LENGTH | GOAL=111)?0:1)/(LENGTH-1):(started'=111<LENGTH)&(position'=(111<LENGTH?111:GOAL))&(chosen'=true)
++ ((112>=LENGTH | GOAL=112)?0:1)/(LENGTH-1):(started'=112<LENGTH)&(position'=(112<LENGTH?112:GOAL))&(chosen'=true)
++ ((113>=LENGTH | GOAL=113)?0:1)/(LENGTH-1):(started'=113<LENGTH)&(position'=(113<LENGTH?113:GOAL))&(chosen'=true)
++ ((114>=LENGTH | GOAL=114)?0:1)/(LENGTH-1):(started'=114<LENGTH)&(position'=(114<LENGTH?114:GOAL))&(chosen'=true)
++ ((115>=LENGTH | GOAL=115)?0:1)/(LENGTH-1):(started'=115<LENGTH)&(position'=(115<LENGTH?115:GOAL))&(chosen'=true)
++ ((116>=LENGTH | GOAL=116)?0:1)/(LENGTH-1):(started'=116<LENGTH)&(position'=(116<LENGTH?116:GOAL))&(chosen'=true)
++ ((117>=LENGTH | GOAL=117)?0:1)/(LENGTH-1):(started'=117<LENGTH)&(position'=(117<LENGTH?117:GOAL))&(chosen'=true)
++ ((118>=LENGTH | GOAL=118)?0:1)/(LENGTH-1):(started'=118<LENGTH)&(position'=(118<LENGTH?118:GOAL))&(chosen'=true)
++ ((119>=LENGTH | GOAL=119)?0:1)/(LENGTH-1):(started'=119<LENGTH)&(position'=(119<LENGTH?119:GOAL))&(chosen'=true)
++ ((120>=LENGTH | GOAL=120)?0:1)/(LENGTH-1):(started'=120<LENGTH)&(position'=(120<LENGTH?120:GOAL))&(chosen'=true)
++ ((121>=LENGTH | GOAL=121)?0:1)/(LENGTH-1):(started'=121<LENGTH)&(position'=(121<LENGTH?121:GOAL))&(chosen'=true)
++ ((122>=LENGTH | GOAL=122)?0:1)/(LENGTH-1):(started'=122<LENGTH)&(position'=(122<LENGTH?122:GOAL))&(chosen'=true)
++ ((123>=LENGTH | GOAL=123)?0:1)/(LENGTH-1):(started'=123<LENGTH)&(position'=(123<LENGTH?123:GOAL))&(chosen'=true)
++ ((124>=LENGTH | GOAL=124)?0:1)/(LENGTH-1):(started'=124<LENGTH)&(position'=(124<LENGTH?124:GOAL))&(chosen'=true)
++ ((125>=LENGTH | GOAL=125)?0:1)/(LENGTH-1):(started'=125<LENGTH)&(position'=(125<LENGTH?125:GOAL))&(chosen'=true)
++ ((126>=LENGTH | GOAL=126)?0:1)/(LENGTH-1):(started'=126<LENGTH)&(position'=(126<LENGTH?126:GOAL))&(chosen'=true)
++ ((127>=LENGTH | GOAL=127)?0:1)/(LENGTH-1):(started'=127<LENGTH)&(position'=(127<LENGTH?127:GOAL))&(chosen'=true)
++ ((128>=LENGTH | GOAL=128)?0:1)/(LENGTH-1):(started'=128<LENGTH)&(position'=(128<LENGTH?128:GOAL))&(chosen'=true)
++ ((129>=LENGTH | GOAL=129)?0:1)/(LENGTH-1):(started'=129<LENGTH)&(position'=(129<LENGTH?129:GOAL))&(chosen'=true)
++ ((130>=LENGTH | GOAL=130)?0:1)/(LENGTH-1):(started'=130<LENGTH)&(position'=(130<LENGTH?130:GOAL))&(chosen'=true)
++ ((131>=LENGTH | GOAL=131)?0:1)/(LENGTH-1):(started'=131<LENGTH)&(position'=(131<LENGTH?131:GOAL))&(chosen'=true)
++ ((132>=LENGTH | GOAL=132)?0:1)/(LENGTH-1):(started'=132<LENGTH)&(position'=(132<LENGTH?132:GOAL))&(chosen'=true)
++ ((133>=LENGTH | GOAL=133)?0:1)/(LENGTH-1):(started'=133<LENGTH)&(position'=(133<LENGTH?133:GOAL))&(chosen'=true)
++ ((134>=LENGTH | GOAL=134)?0:1)/(LENGTH-1):(started'=134<LENGTH)&(position'=(134<LENGTH?134:GOAL))&(chosen'=true)
++ ((135>=LENGTH | GOAL=135)?0:1)/(LENGTH-1):(started'=135<LENGTH)&(position'=(135<LENGTH?135:GOAL))&(chosen'=true)
++ ((136>=LENGTH | GOAL=136)?0:1)/(LENGTH-1):(started'=136<LENGTH)&(position'=(136<LENGTH?136:GOAL))&(chosen'=true)
++ ((137>=LENGTH | GOAL=137)?0:1)/(LENGTH-1):(started'=137<LENGTH)&(position'=(137<LENGTH?137:GOAL))&(chosen'=true)
++ ((138>=LENGTH | GOAL=138)?0:1)/(LENGTH-1):(started'=138<LENGTH)&(position'=(138<LENGTH?138:GOAL))&(chosen'=true)
++ ((139>=LENGTH | GOAL=139)?0:1)/(LENGTH-1):(started'=139<LENGTH)&(position'=(139<LENGTH?139:GOAL))&(chosen'=true)
++ ((140>=LENGTH | GOAL=140)?0:1)/(LENGTH-1):(started'=140<LENGTH)&(position'=(140<LENGTH?140:GOAL))&(chosen'=true)
++ ((141>=LENGTH | GOAL=141)?0:1)/(LENGTH-1):(started'=141<LENGTH)&(position'=(141<LENGTH?141:GOAL))&(chosen'=true)
++ ((142>=LENGTH | GOAL=142)?0:1)/(LENGTH-1):(started'=142<LENGTH)&(position'=(142<LENGTH?142:GOAL))&(chosen'=true)
++ ((143>=LENGTH | GOAL=143)?0:1)/(LENGTH-1):(started'=143<LENGTH)&(position'=(143<LENGTH?143:GOAL))&(chosen'=true)
++ ((144>=LENGTH | GOAL=144)?0:1)/(LENGTH-1):(started'=144<LENGTH)&(position'=(144<LENGTH?144:GOAL))&(chosen'=true)
++ ((145>=LENGTH | GOAL=145)?0:1)/(LENGTH-1):(started'=145<LENGTH)&(position'=(145<LENGTH?145:GOAL))&(chosen'=true)
++ ((146>=LENGTH | GOAL=146)?0:1)/(LENGTH-1):(started'=146<LENGTH)&(position'=(146<LENGTH?146:GOAL))&(chosen'=true)
++ ((147>=LENGTH | GOAL=147)?0:1)/(LENGTH-1):(started'=147<LENGTH)&(position'=(147<LENGTH?147:GOAL))&(chosen'=true)
++ ((148>=LENGTH | GOAL=148)?0:1)/(LENGTH-1):(started'=148<LENGTH)&(position'=(148<LENGTH?148:GOAL))&(chosen'=true)
++ ((149>=LENGTH | GOAL=149)?0:1)/(LENGTH-1):(started'=149<LENGTH)&(position'=(149<LENGTH?149:GOAL))&(chosen'=true)
++ ((150>=LENGTH | GOAL=150)?0:1)/(LENGTH-1):(started'=150<LENGTH)&(position'=(150<LENGTH?150:GOAL))&(chosen'=true)
++ ((151>=LENGTH | GOAL=151)?0:1)/(LENGTH-1):(started'=151<LENGTH)&(position'=(151<LENGTH?151:GOAL))&(chosen'=true)
++ ((152>=LENGTH | GOAL=152)?0:1)/(LENGTH-1):(started'=152<LENGTH)&(position'=(152<LENGTH?152:GOAL))&(chosen'=true)
++ ((153>=LENGTH | GOAL=153)?0:1)/(LENGTH-1):(started'=153<LENGTH)&(position'=(153<LENGTH?153:GOAL))&(chosen'=true)
++ ((154>=LENGTH | GOAL=154)?0:1)/(LENGTH-1):(started'=154<LENGTH)&(position'=(154<LENGTH?154:GOAL))&(chosen'=true)
++ ((155>=LENGTH | GOAL=155)?0:1)/(LENGTH-1):(started'=155<LENGTH)&(position'=(155<LENGTH?155:GOAL))&(chosen'=true)
++ ((156>=LENGTH | GOAL=156)?0:1)/(LENGTH-1):(started'=156<LENGTH)&(position'=(156<LENGTH?156:GOAL))&(chosen'=true)
++ ((157>=LENGTH | GOAL=157)?0:1)/(LENGTH-1):(started'=157<LENGTH)&(position'=(157<LENGTH?157:GOAL))&(chosen'=true)
++ ((158>=LENGTH | GOAL=158)?0:1)/(LENGTH-1):(started'=158<LENGTH)&(position'=(158<LENGTH?158:GOAL))&(chosen'=true)
++ ((159>=LENGTH | GOAL=159)?0:1)/(LENGTH-1):(started'=159<LENGTH)&(position'=(159<LENGTH?159:GOAL))&(chosen'=true)
++ ((160>=LENGTH | GOAL=160)?0:1)/(LENGTH-1):(started'=160<LENGTH)&(position'=(160<LENGTH?160:GOAL))&(chosen'=true)
++ ((161>=LENGTH | GOAL=161)?0:1)/(LENGTH-1):(started'=161<LENGTH)&(position'=(161<LENGTH?161:GOAL))&(chosen'=true)
++ ((162>=LENGTH | GOAL=162)?0:1)/(LENGTH-1):(started'=162<LENGTH)&(position'=(162<LENGTH?162:GOAL))&(chosen'=true)
++ ((163>=LENGTH | GOAL=163)?0:1)/(LENGTH-1):(started'=163<LENGTH)&(position'=(163<LENGTH?163:GOAL))&(chosen'=true)
++ ((164>=LENGTH | GOAL=164)?0:1)/(LENGTH-1):(started'=164<LENGTH)&(position'=(164<LENGTH?164:GOAL))&(chosen'=true)
++ ((165>=LENGTH | GOAL=165)?0:1)/(LENGTH-1):(started'=165<LENGTH)&(position'=(165<LENGTH?165:GOAL))&(chosen'=true)
++ ((166>=LENGTH | GOAL=166)?0:1)/(LENGTH-1):(started'=166<LENGTH)&(position'=(166<LENGTH?166:GOAL))&(chosen'=true)
++ ((167>=LENGTH | GOAL=167)?0:1)/(LENGTH-1):(started'=167<LENGTH)&(position'=(167<LENGTH?167:GOAL))&(chosen'=true)
++ ((168>=LENGTH | GOAL=168)?0:1)/(LENGTH-1):(started'=168<LENGTH)&(position'=(168<LENGTH?168:GOAL))&(chosen'=true)
++ ((169>=LENGTH | GOAL=169)?0:1)/(LENGTH-1):(started'=169<LENGTH)&(position'=(169<LENGTH?169:GOAL))&(chosen'=true)
++ ((170>=LENGTH | GOAL=170)?0:1)/(LENGTH-1):(started'=170<LENGTH)&(position'=(170<LENGTH?170:GOAL))&(chosen'=true)
++ ((171>=LENGTH | GOAL=171)?0:1)/(LENGTH-1):(started'=171<LENGTH)&(position'=(171<LENGTH?171:GOAL))&(chosen'=true)
++ ((172>=LENGTH | GOAL=172)?0:1)/(LENGTH-1):(started'=172<LENGTH)&(position'=(172<LENGTH?172:GOAL))&(chosen'=true)
++ ((173>=LENGTH | GOAL=173)?0:1)/(LENGTH-1):(started'=173<LENGTH)&(position'=(173<LENGTH?173:GOAL))&(chosen'=true)
++ ((174>=LENGTH | GOAL=174)?0:1)/(LENGTH-1):(started'=174<LENGTH)&(position'=(174<LENGTH?174:GOAL))&(chosen'=true)
++ ((175>=LENGTH | GOAL=175)?0:1)/(LENGTH-1):(started'=175<LENGTH)&(position'=(175<LENGTH?175:GOAL))&(chosen'=true)
++ ((176>=LENGTH | GOAL=176)?0:1)/(LENGTH-1):(started'=176<LENGTH)&(position'=(176<LENGTH?176:GOAL))&(chosen'=true)
++ ((177>=LENGTH | GOAL=177)?0:1)/(LENGTH-1):(started'=177<LENGTH)&(position'=(177<LENGTH?177:GOAL))&(chosen'=true)
++ ((178>=LENGTH | GOAL=178)?0:1)/(LENGTH-1):(started'=178<LENGTH)&(position'=(178<LENGTH?178:GOAL))&(chosen'=true)
++ ((179>=LENGTH | GOAL=179)?0:1)/(LENGTH-1):(started'=179<LENGTH)&(position'=(179<LENGTH?179:GOAL))&(chosen'=true)
++ ((180>=LENGTH | GOAL=180)?0:1)/(LENGTH-1):(started'=180<LENGTH)&(position'=(180<LENGTH?180:GOAL))&(chosen'=true)
++ ((181>=LENGTH | GOAL=181)?0:1)/(LENGTH-1):(started'=181<LENGTH)&(position'=(181<LENGTH?181:GOAL))&(chosen'=true)
++ ((182>=LENGTH | GOAL=182)?0:1)/(LENGTH-1):(started'=182<LENGTH)&(position'=(182<LENGTH?182:GOAL))&(chosen'=true)
++ ((183>=LENGTH | GOAL=183)?0:1)/(LENGTH-1):(started'=183<LENGTH)&(position'=(183<LENGTH?183:GOAL))&(chosen'=true)
++ ((184>=LENGTH | GOAL=184)?0:1)/(LENGTH-1):(started'=184<LENGTH)&(position'=(184<LENGTH?184:GOAL))&(chosen'=true)
++ ((185>=LENGTH | GOAL=185)?0:1)/(LENGTH-1):(started'=185<LENGTH)&(position'=(185<LENGTH?185:GOAL))&(chosen'=true)
++ ((186>=LENGTH | GOAL=186)?0:1)/(LENGTH-1):(started'=186<LENGTH)&(position'=(186<LENGTH?186:GOAL))&(chosen'=true)
++ ((187>=LENGTH | GOAL=187)?0:1)/(LENGTH-1):(started'=187<LENGTH)&(position'=(187<LENGTH?187:GOAL))&(chosen'=true)
++ ((188>=LENGTH | GOAL=188)?0:1)/(LENGTH-1):(started'=188<LENGTH)&(position'=(188<LENGTH?188:GOAL))&(chosen'=true)
++ ((189>=LENGTH | GOAL=189)?0:1)/(LENGTH-1):(started'=189<LENGTH)&(position'=(189<LENGTH?189:GOAL))&(chosen'=true)
++ ((190>=LENGTH | GOAL=190)?0:1)/(LENGTH-1):(started'=190<LENGTH)&(position'=(190<LENGTH?190:GOAL))&(chosen'=true)
++ ((191>=LENGTH | GOAL=191)?0:1)/(LENGTH-1):(started'=191<LENGTH)&(position'=(191<LENGTH?191:GOAL))&(chosen'=true)
++ ((192>=LENGTH | GOAL=192)?0:1)/(LENGTH-1):(started'=192<LENGTH)&(position'=(192<LENGTH?192:GOAL))&(chosen'=true)
++ ((193>=LENGTH | GOAL=193)?0:1)/(LENGTH-1):(started'=193<LENGTH)&(position'=(193<LENGTH?193:GOAL))&(chosen'=true)
++ ((194>=LENGTH | GOAL=194)?0:1)/(LENGTH-1):(started'=194<LENGTH)&(position'=(194<LENGTH?194:GOAL))&(chosen'=true)
++ ((195>=LENGTH | GOAL=195)?0:1)/(LENGTH-1):(started'=195<LENGTH)&(position'=(195<LENGTH?195:GOAL))&(chosen'=true)
++ ((196>=LENGTH | GOAL=196)?0:1)/(LENGTH-1):(started'=196<LENGTH)&(position'=(196<LENGTH?196:GOAL))&(chosen'=true)
++ ((197>=LENGTH | GOAL=197)?0:1)/(LENGTH-1):(started'=197<LENGTH)&(position'=(197<LENGTH?197:GOAL))&(chosen'=true)
++ ((198>=LENGTH | GOAL=198)?0:1)/(LENGTH-1):(started'=198<LENGTH)&(position'=(198<LENGTH?198:GOAL))&(chosen'=true)
++ ((199>=LENGTH | GOAL=199)?0:1)/(LENGTH-1):(started'=199<LENGTH)&(position'=(199<LENGTH?199:GOAL))&(chosen'=true)
++ ((200>=LENGTH | GOAL=200)?0:1)/(LENGTH-1):(started'=200<LENGTH)&(position'=(200<LENGTH?200:GOAL))&(chosen'=true)
++ ((201>=LENGTH | GOAL=201)?0:1)/(LENGTH-1):(started'=201<LENGTH)&(position'=(201<LENGTH?201:GOAL))&(chosen'=true)
++ ((202>=LENGTH | GOAL=202)?0:1)/(LENGTH-1):(started'=202<LENGTH)&(position'=(202<LENGTH?202:GOAL))&(chosen'=true)
++ ((203>=LENGTH | GOAL=203)?0:1)/(LENGTH-1):(started'=203<LENGTH)&(position'=(203<LENGTH?203:GOAL))&(chosen'=true)
++ ((204>=LENGTH | GOAL=204)?0:1)/(LENGTH-1):(started'=204<LENGTH)&(position'=(204<LENGTH?204:GOAL))&(chosen'=true)
++ ((205>=LENGTH | GOAL=205)?0:1)/(LENGTH-1):(started'=205<LENGTH)&(position'=(205<LENGTH?205:GOAL))&(chosen'=true)
++ ((206>=LENGTH | GOAL=206)?0:1)/(LENGTH-1):(started'=206<LENGTH)&(position'=(206<LENGTH?206:GOAL))&(chosen'=true)
++ ((207>=LENGTH | GOAL=207)?0:1)/(LENGTH-1):(started'=207<LENGTH)&(position'=(207<LENGTH?207:GOAL))&(chosen'=true)
++ ((208>=LENGTH | GOAL=208)?0:1)/(LENGTH-1):(started'=208<LENGTH)&(position'=(208<LENGTH?208:GOAL))&(chosen'=true)
++ ((209>=LENGTH | GOAL=209)?0:1)/(LENGTH-1):(started'=209<LENGTH)&(position'=(209<LENGTH?209:GOAL))&(chosen'=true)
++ ((210>=LENGTH | GOAL=210)?0:1)/(LENGTH-1):(started'=210<LENGTH)&(position'=(210<LENGTH?210:GOAL))&(chosen'=true)
++ ((211>=LENGTH | GOAL=211)?0:1)/(LENGTH-1):(started'=211<LENGTH)&(position'=(211<LENGTH?211:GOAL))&(chosen'=true)
++ ((212>=LENGTH | GOAL=212)?0:1)/(LENGTH-1):(started'=212<LENGTH)&(position'=(212<LENGTH?212:GOAL))&(chosen'=true)
++ ((213>=LENGTH | GOAL=213)?0:1)/(LENGTH-1):(started'=213<LENGTH)&(position'=(213<LENGTH?213:GOAL))&(chosen'=true)
++ ((214>=LENGTH | GOAL=214)?0:1)/(LENGTH-1):(started'=214<LENGTH)&(position'=(214<LENGTH?214:GOAL))&(chosen'=true)
++ ((215>=LENGTH | GOAL=215)?0:1)/(LENGTH-1):(started'=215<LENGTH)&(position'=(215<LENGTH?215:GOAL))&(chosen'=true)
++ ((216>=LENGTH | GOAL=216)?0:1)/(LENGTH-1):(started'=216<LENGTH)&(position'=(216<LENGTH?216:GOAL))&(chosen'=true)
++ ((217>=LENGTH | GOAL=217)?0:1)/(LENGTH-1):(started'=217<LENGTH)&(position'=(217<LENGTH?217:GOAL))&(chosen'=true)
++ ((218>=LENGTH | GOAL=218)?0:1)/(LENGTH-1):(started'=218<LENGTH)&(position'=(218<LENGTH?218:GOAL))&(chosen'=true)
++ ((219>=LENGTH | GOAL=219)?0:1)/(LENGTH-1):(started'=219<LENGTH)&(position'=(219<LENGTH?219:GOAL))&(chosen'=true)
++ ((220>=LENGTH | GOAL=220)?0:1)/(LENGTH-1):(started'=220<LENGTH)&(position'=(220<LENGTH?220:GOAL))&(chosen'=true)
++ ((221>=LENGTH | GOAL=221)?0:1)/(LENGTH-1):(started'=221<LENGTH)&(position'=(221<LENGTH?221:GOAL))&(chosen'=true)
++ ((222>=LENGTH | GOAL=222)?0:1)/(LENGTH-1):(started'=222<LENGTH)&(position'=(222<LENGTH?222:GOAL))&(chosen'=true)
++ ((223>=LENGTH | GOAL=223)?0:1)/(LENGTH-1):(started'=223<LENGTH)&(position'=(223<LENGTH?223:GOAL))&(chosen'=true)
++ ((224>=LENGTH | GOAL=224)?0:1)/(LENGTH-1):(started'=224<LENGTH)&(position'=(224<LENGTH?224:GOAL))&(chosen'=true)
++ ((225>=LENGTH | GOAL=225)?0:1)/(LENGTH-1):(started'=225<LENGTH)&(position'=(225<LENGTH?225:GOAL))&(chosen'=true)
++ ((226>=LENGTH | GOAL=226)?0:1)/(LENGTH-1):(started'=226<LENGTH)&(position'=(226<LENGTH?226:GOAL))&(chosen'=true)
++ ((227>=LENGTH | GOAL=227)?0:1)/(LENGTH-1):(started'=227<LENGTH)&(position'=(227<LENGTH?227:GOAL))&(chosen'=true)
++ ((228>=LENGTH | GOAL=228)?0:1)/(LENGTH-1):(started'=228<LENGTH)&(position'=(228<LENGTH?228:GOAL))&(chosen'=true)
++ ((229>=LENGTH | GOAL=229)?0:1)/(LENGTH-1):(started'=229<LENGTH)&(position'=(229<LENGTH?229:GOAL))&(chosen'=true)
++ ((230>=LENGTH | GOAL=230)?0:1)/(LENGTH-1):(started'=230<LENGTH)&(position'=(230<LENGTH?230:GOAL))&(chosen'=true)
++ ((231>=LENGTH | GOAL=231)?0:1)/(LENGTH-1):(started'=231<LENGTH)&(position'=(231<LENGTH?231:GOAL))&(chosen'=true)
++ ((232>=LENGTH | GOAL=232)?0:1)/(LENGTH-1):(started'=232<LENGTH)&(position'=(232<LENGTH?232:GOAL))&(chosen'=true)
++ ((233>=LENGTH | GOAL=233)?0:1)/(LENGTH-1):(started'=233<LENGTH)&(position'=(233<LENGTH?233:GOAL))&(chosen'=true)
++ ((234>=LENGTH | GOAL=234)?0:1)/(LENGTH-1):(started'=234<LENGTH)&(position'=(234<LENGTH?234:GOAL))&(chosen'=true)
++ ((235>=LENGTH | GOAL=235)?0:1)/(LENGTH-1):(started'=235<LENGTH)&(position'=(235<LENGTH?235:GOAL))&(chosen'=true)
++ ((236>=LENGTH | GOAL=236)?0:1)/(LENGTH-1):(started'=236<LENGTH)&(position'=(236<LENGTH?236:GOAL))&(chosen'=true)
++ ((237>=LENGTH | GOAL=237)?0:1)/(LENGTH-1):(started'=237<LENGTH)&(position'=(237<LENGTH?237:GOAL))&(chosen'=true)
++ ((238>=LENGTH | GOAL=238)?0:1)/(LENGTH-1):(started'=238<LENGTH)&(position'=(238<LENGTH?238:GOAL))&(chosen'=true)
++ ((239>=LENGTH | GOAL=239)?0:1)/(LENGTH-1):(started'=239<LENGTH)&(position'=(239<LENGTH?239:GOAL))&(chosen'=true)
++ ((240>=LENGTH | GOAL=240)?0:1)/(LENGTH-1):(started'=240<LENGTH)&(position'=(240<LENGTH?240:GOAL))&(chosen'=true)
++ ((241>=LENGTH | GOAL=241)?0:1)/(LENGTH-1):(started'=241<LENGTH)&(position'=(241<LENGTH?241:GOAL))&(chosen'=true)
++ ((242>=LENGTH | GOAL=242)?0:1)/(LENGTH-1):(started'=242<LENGTH)&(position'=(242<LENGTH?242:GOAL))&(chosen'=true)
++ ((243>=LENGTH | GOAL=243)?0:1)/(LENGTH-1):(started'=243<LENGTH)&(position'=(243<LENGTH?243:GOAL))&(chosen'=true)
++ ((244>=LENGTH | GOAL=244)?0:1)/(LENGTH-1):(started'=244<LENGTH)&(position'=(244<LENGTH?244:GOAL))&(chosen'=true)
++ ((245>=LENGTH | GOAL=245)?0:1)/(LENGTH-1):(started'=245<LENGTH)&(position'=(245<LENGTH?245:GOAL))&(chosen'=true)
++ ((246>=LENGTH | GOAL=246)?0:1)/(LENGTH-1):(started'=246<LENGTH)&(position'=(246<LENGTH?246:GOAL))&(chosen'=true)
++ ((247>=LENGTH | GOAL=247)?0:1)/(LENGTH-1):(started'=247<LENGTH)&(position'=(247<LENGTH?247:GOAL))&(chosen'=true)
++ ((248>=LENGTH | GOAL=248)?0:1)/(LENGTH-1):(started'=248<LENGTH)&(position'=(248<LENGTH?248:GOAL))&(chosen'=true)
++ ((249>=LENGTH | GOAL=249)?0:1)/(LENGTH-1):(started'=249<LENGTH)&(position'=(249<LENGTH?249:GOAL))&(chosen'=true)
+;
+
+[left]  started -> 1.0:(position'=max(0,position-1));
+[right] started -> 1.0:(position'=min(LENGTH-1,position+1));
+[stop] (position = GOAL) -> true;
+endmodule
+
+label "gameover" = (position=GOAL);
+
+rewards
+[left] true : 1 ;
+[right] true : 1 ;
+endrewards
+
+// storm-pomdp --prism line.prism -const LENGTH=7,BUDGET=3,POS1=0,POS2=0,POS3=0,POS4=0,POS5=0,POS6=0,POS7=0,POS8=0,POS9=0,POS10=0,POS11=0,POS12=0,POS13=0,POS14=0,POS15=0,POS16=0,POS17=0,POS18=0,POS19=0,POS20=0,POS21=0,POS22=0,POS23=0,POS24=0,POS25=0,POS26=0,POS27=0,POS28=0,POS29=0,POS30=0,POS31=0,POS32=0,POS33=0,POS34=0,POS35=0,POS36=0,POS37=0,POS38=0,POS39=0,POS40=0,POS41=0,POS42=0,POS43=0,POS44=0,POS45=0,POS46=0,POS47=0,POS48=0,POS49=0,POS50=0,GOAL=3 --prop "Rmin=?[F \"gameover\"]" --buildfull --belief-exploration --exact --memorybound 1
