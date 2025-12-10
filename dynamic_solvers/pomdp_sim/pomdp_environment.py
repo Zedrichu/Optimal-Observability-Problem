@@ -624,8 +624,8 @@ class MazePOMDPEnv(Maze, BasePOMDPEnvironment):
 if __name__ == '__main__':
     grid_env = GridPOMDPEnv(
         rows=5, cols=5, goal=(4,3),
-        obs_function=np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, -1, 2]),
-        pomdp_variant=OOPVariant.POP,
+        obs_function=np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, -1, 1]),
+        pomdp_variant=OOPVariant.SSP,
         step_penalty=-1,
         goal_reward=0
     )
@@ -634,6 +634,9 @@ if __name__ == '__main__':
     while obs != -1:
         action_index = int(input("Action index: "))
         obs, reward, _, _, _ =  grid_env.step(action_index)
-        print(f"Observed: {obs}")
+        if obs > 1:
+            print(f"Observed sensor for state: {grid_env._index_to_state(obs - 1)}")
+        else:
+            print(f"Observed: {obs}")
     print(f"Goal achieved!")
     print(f"Info: {info}")
