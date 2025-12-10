@@ -218,12 +218,11 @@ class LinePOMDPEnv(Line, BasePOMDPEnvironment):
         assert len(obs_function) == size, f"Y length {len(obs_function)} must match size {size}"
         assert 0 <= goal < size, f"Goal {goal} out of bounds [0, {size})"
 
-        Line.__init__(self, length=size)
+        Line.__init__(self, length=size, goal=goal)
         BasePOMDPEnvironment.__init__(self, obs_function, pomdp_variant, seed)
         # Restore Line actions (BasePOMDPEnvironment.__init__ overwrites them)
         self.actions = ['l', 'r']
         self.action_space = spaces.Discrete(len(self.actions))
-        self.goal = goal
         self.step_penalty = step_penalty
         self.goal_reward = goal_reward
         self.stochastic = stochastic
@@ -344,15 +343,16 @@ class GridPOMDPEnv(Grid, BasePOMDPEnvironment):
         assert len(obs_function) == rows * cols, f"Y length {len(obs_function)} must match grid size {rows * cols}"
         assert 0 <= goal[0] < rows and 0 <= goal[1] < cols, "Goal out of bounds"
 
-        Grid.__init__(self, width=cols, height=rows)
+        self.rows = rows
+        self.cols = cols
+        self.goal_state = goal
+
+        Grid.__init__(self, width=cols, height=rows, goal=self._state_to_index(goal))
         BasePOMDPEnvironment.__init__(self, obs_function, pomdp_variant, seed)
 
         # Override actions to match POMDP ordering: 0=up, 1=right, 2=down, 3=left
         self.actions = ['u', 'r', 'd', 'l']
 
-        self.rows = rows
-        self.cols = cols
-        self.goal = goal
         self.step_penalty = step_penalty
         self.goal_reward = goal_reward
         self.stochastic = stochastic
@@ -363,8 +363,8 @@ class GridPOMDPEnv(Grid, BasePOMDPEnvironment):
         self._np_random = np.random.default_rng(seed)
 
         while True:
-            row = self.np_random.integers(0, self.rows)
-            col = self.np_random.integers(0, self.cols)
+            row = int(self.np_random.integers(0, self.rows))
+            col = int(self.np_random.integers(0, self.cols))
             if (row, col) != self.goal:
                 self.state = (row, col)
                 break
@@ -447,7 +447,7 @@ class GridPOMDPEnv(Grid, BasePOMDPEnvironment):
             raise Exception("Should call environment.reset() before rendering")
 
         grid = [['.' for _ in range(self.cols)] for _ in range(self.rows)]
-        grid[self.goal[0]][self.goal[1]] = 'G'
+        grid[self.goal_state[0]][self.goal_state[1]] = 'G'
         grid[self.state[0]][self.state[1]] = 'A'
 
         obs = self.get_observation(self.state)
@@ -500,7 +500,7 @@ class MazePOMDPEnv(Maze, BasePOMDPEnvironment):
         assert len(obs_function) == expected_size, f"Y length {len(obs_function)} must match maze size {expected_size}"
         assert 0 <= goal < expected_size, f"Goal {goal} out of bounds [0, {expected_size})"
 
-        Maze.__init__(self, width=width, depth=depth)
+        Maze.__init__(self, width=width, depth=depth, goal=goal)
         BasePOMDPEnvironment.__init__(self, obs_function, pomdp_variant, seed)
 
         # Override actions to match POMDP ordering: 0=up, 1=right, 2=down, 3=left
