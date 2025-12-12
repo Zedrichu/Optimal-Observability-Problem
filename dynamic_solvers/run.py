@@ -14,9 +14,12 @@ from typing import List, Tuple
 import z3
 from z3 import sat
 
+from ClusterPOPSolver import ClusterPOPSolver
+from builders.POMDPSpec import POMDPAdapter
+from builders.pop.POPSpec import POPSpec
 from utils import convert_text_to_html
-from TPMCSolver import TPMCSolver
-from builders.TPMCFactory import TPMCFactory, variant_from_string, puzzle_from_string
+from Z3Executor import Z3Executor
+from builders.TPMCFactory import TPMCFactory
 
 VARIANT_CHOICES = ['ssp', 'pop']
 PUZZLE_CHOICES = ['line', 'grid', 'maze']
@@ -118,6 +121,15 @@ Examples:
     )
 
     solver_group.add_argument(
+        '--precision', '-p',
+        type=str,
+        choices=['strict', 'relaxed'],
+        required=False,
+        default='relaxed',
+        help='Constraint precision mode: "strict" (equality == for optimal solutions), "relaxed" (inequality >= for Bellman, <= for budget, finding invariants)'
+    )
+
+    solver_group.add_argument(
         '--real-encoding', '-re',
         action='store_true',
         help='Encoding of TPMC parameters as real variables (slow performance)'
@@ -130,10 +142,29 @@ Examples:
     )
 
     solver_group.add_argument(
+        '--budget-repair', '-br',
+        action='store_true',
+        help='Budget repair mode for SSP (solve with no budget constraint, then repair the solution to fit the budget)'
+    )
+
+    solver_group.add_argument(
         '--timeout',
         type=int,
         default=30000,
         help='Solver timeout in milliseconds (default: 30000)'
+    )
+
+    solver_group.add_argument(
+        '--pomdp',
+        type=int,
+        nargs='+',
+        help='Observation function as space-separated integers (e.g., --pomdp 1 0 1 -1 0 1)'
+    )
+
+    solver_group.add_argument(
+        '--cluster',
+        action='store_true',
+        help='Use a clustering algorithm to attempt to solve all POMDPs for a POP instance. Only applicable for POP variant.'
     )
 
     # Output options
@@ -209,6 +240,9 @@ def validate_arguments(args: argparse.Namespace) -> None:
         raise ValueError(
             f"Invalid order_constraints format: {args.order_constraints}. Must be a comma-separated permutation of 0,1,2,3.")
 
+    # Validate clustering requirements
+    if args.cluster and args.variant != 'pop':
+        raise ValueError("--cluster is only applicable when the variant is 'pop'")
 
 def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
     """Main solving logic."""
@@ -220,21 +254,20 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
         print(f"    Budget: {args.budget}, Goal: {args.goal}, {dim_print}")
         print(f"    Strategy: {'Deterministic' if args.deterministic else 'Randomized'}, Threshold: {args.threshold}")
         print(f"    Operation mode (add-ons): \n"
-              f"        Bellman format -> {args.bellman_format}\n"
-              f"        Encoding       -> {"Real" if args.real_encoding else "Boolean"}\n"
-              f"        Verbose output -> {"✅" if args.verbose else "❌"}\n"
-              f"        Ordering       -> {args.order_constraints if args.order_constraints else "default"}"
+              f"        Bellman format       -> {args.bellman_format}\n"
+              f"        Optimality Precision -> {args.precision}\n"
+              f"        Encoding             -> {"Real" if args.real_encoding else "Boolean"}\n"
+              f"        Budget Repair        -> {"✅" if args.budget_repair else "❌"}\n"
+              f"        Verbose output       -> {"✅" if args.verbose else "❌"}\n"
+              f"        Ordering             -> {args.order_constraints if args.order_constraints else "default"}"
               f"\n"
         )
 
-    # Convert strings to enums, after which all comparisons are integer-based
-    variant = variant_from_string(args.variant)
-    world = puzzle_from_string(args.world)
-    order_constraints = list(map(int, args.order_constraints.split(","))) if args.order_constraints else args.order_constraints
+    args.order_constraints = list(map(int, args.order_constraints.split(","))) if args.order_constraints else args.order_constraints
 
     # Create a problem instance in location tpMC representation
-    # Factory handles parameter selection - client runner just passes everything
-    tpmc_instance = TPMCFactory.create(variant, world,
+    # Factory handles parameter selection - client runner just passes everything (now with enum types)
+    tpmc_instance = TPMCFactory.create(args.variant, args.world,
                                        length=args.length,
                                        width=args.width,
                                        height=args.height,
@@ -242,15 +275,34 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
                                        budget=args.budget,
                                        determinism=args.deterministic,
                                        bellman_format=args.bellman_format,
+                                       precision=args.precision,
                                        bool_encoding=not args.real_encoding,
-                                       order_constraints=order_constraints,
+                                       budget_repair=args.budget_repair,
+                                       order_constraints=args.order_constraints,
                                        verbose=args.verbose)
-    solver = TPMCSolver(tpmc_instance.ctx, verbose=not benchmark)
+    solver = Z3Executor(tpmc_instance.ctx, verbose=not benchmark)
     # Configure solver timeout
     solver.set_timeout(args.timeout)
 
     # Solve and get results
-    result = solver.solve(tpmc_instance, args.threshold, args.timeout)
+    if args.pomdp is not None:
+        adapter = POMDPAdapter(tpmc_instance)
+        solver.prepare_constraints(adapter, args.threshold)
+
+        # Play with large POMDP assignments here
+        # vector_y = ([0] * (args.width - 1) + [1]) * (args.height - 1) + ([0] * (args.width - 1) + [-1])
+        result = solver.evaluate_pomdp(adapter, args.pomdp, args.timeout)
+    elif isinstance(tpmc_instance, POPSpec) and args.cluster:
+        cluster_solver = ClusterPOPSolver(solver, tpmc_instance, True, args.threshold)
+        result = cluster_solver.solve(args.timeout)
+    elif args.budget_repair:
+        solver.prepare_constraints(tpmc_instance, args.threshold)
+        result = solver.solve_2_shot_repair(tpmc_instance, args.timeout)
+        solver.cleanup()
+    else:
+        solver.prepare_constraints(tpmc_instance, args.threshold)
+        result = solver.solve(args.timeout)
+        solver.cleanup()
 
     if not benchmark:
         # Report results

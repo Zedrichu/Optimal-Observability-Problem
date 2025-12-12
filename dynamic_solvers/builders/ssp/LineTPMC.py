@@ -19,7 +19,7 @@ class LineTPMC(Line, SSPSpec):
             **kwargs: Additional parameters (ctx, verbose, bellman_format).
                 See OOPSpec.__init__ for details.
         """
-        Line.__init__(self, length)
+        Line.__init__(self, length, goal)
         SSPSpec.__init__(self, budget, goal, determinism, **kwargs)
 
     def draw_model(self, model: dict, goal_state: int, budget: int, use_color: bool = True) -> str:

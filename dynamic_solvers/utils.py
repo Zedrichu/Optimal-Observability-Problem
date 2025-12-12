@@ -1,5 +1,5 @@
 import re
-from typing import Tuple, Callable, List
+from typing import Tuple, Callable, List, Generator, Iterable
 
 from z3 import Bool, Real, Context, z3
 
@@ -120,3 +120,50 @@ def convert_text_to_html(text: str, title: str = "World Visualization") -> str:
         </body>
         </html>"""
     return html
+
+
+def stirling_partitions(n, k) -> Generator[list[list[int]]]:
+    """Generate all partitions of {0...n-1} into k unlabeled nonempty subsets."""
+    items = list(range(n))
+
+    def backtrack(i: int, curr: list[list[int]], used: int):
+        if i == n:
+            if used == k:
+                # Yield a sorted normalized form (unlabeled buckets)
+                yield list(sorted(list(sorted(b)) for b in curr[:used]))
+            return
+
+        # Option 1: put item i into an existing bucket
+        for b in range(used):
+            curr[b].append(items[i])
+            yield from backtrack(i+1, curr, used)
+            curr[b].pop()
+
+        # Option 2: create a new bucket (only if we have room)
+        if used < k:
+            curr[used].append(items[i])
+            yield from backtrack(i+1, curr, used+1)
+            curr[used].pop()
+
+    curr = [[] for _ in range(k)]
+    yield from backtrack(0, curr, 0)
+
+
+def prettify(obj: object | Iterable, prefix: str):
+    """
+    Recursively traverses an object or iterable and adds a specified prefix to each element.
+
+    Parameters:
+        obj (object | Iterable): The object or iterable whose elements will be prefixed.
+        prefix (str): The string to prepend to each element.
+
+    Returns:
+        object | Iterable: A new object or iterable with the same structure as the input,
+        where each element has the prefix added.
+    """
+
+    if isinstance(obj, Iterable):
+        container_type = type(obj)
+        return container_type(prettify(item, prefix) for item in obj)
+    else:
+        return f"{prefix}{str(obj)}"

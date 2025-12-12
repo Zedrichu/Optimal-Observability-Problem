@@ -163,6 +163,7 @@ Thumbs.db
 
 
 # Project specific files
+**/bug/
 
 # Generated solving output
 **/results.txt

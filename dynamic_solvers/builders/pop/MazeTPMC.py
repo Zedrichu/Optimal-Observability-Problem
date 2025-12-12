@@ -20,7 +20,7 @@ class MazeTPMC(Maze, POPSpec):
             **kwargs: Additional parameters (ctx, verbose, bellman_format).
                 See OOPSpec.__init__ for details.
         """
-        Maze.__init__(self, width, depth)
+        Maze.__init__(self, width, depth, goal)
         POPSpec.__init__(self, budget, goal, determinism, **kwargs)
 
     def draw_model(self, model: dict, goal_state: int, budget: int, use_color: bool = True) -> str:
