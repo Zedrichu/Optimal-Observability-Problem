@@ -59,8 +59,8 @@ class GridTPMC(Grid, SSPSpec):
             lines.append("")
 
         lines.append(f"Legend: ✓=goal, "
-                     f"{get_observation_marker(0, use_color, binary=True)}=sensor on, "
-                     f"{get_observation_marker(1, use_color, binary=True)}=sensor off")
+                     f"{get_observation_marker(0, use_color, binary=True)}=sensor off, "
+                     f"{get_observation_marker(1, use_color, binary=True)}=sensor on")
 
         return "\n".join(lines)
 

@@ -3,6 +3,9 @@ from typing import Tuple, Callable, List, Generator, Iterable
 
 from z3 import Bool, Real, Context, z3
 
+from builders.worlds import World
+from direction import Direction
+
 
 def parse_threshold(arg: str) -> Tuple[List[int], Callable[[int, int], bool]]:
     sign_idx = arg.find('<')
@@ -136,17 +139,62 @@ def stirling_partitions(n, k) -> Generator[list[list[int]]]:
         # Option 1: put item i into an existing bucket
         for b in range(used):
             curr[b].append(items[i])
-            yield from backtrack(i+1, curr, used)
+            yield from backtrack(i + 1, curr, used)
             curr[b].pop()
 
         # Option 2: create a new bucket (only if we have room)
         if used < k:
             curr[used].append(items[i])
-            yield from backtrack(i+1, curr, used+1)
+            yield from backtrack(i + 1, curr, used + 1)
             curr[used].pop()
 
     curr = [[] for _ in range(k)]
     yield from backtrack(0, curr, 0)
+
+
+def minimal_positional_budget(world: World) -> int:
+    """
+    Compute the Minimal Positional Budget (MPB) for the general (non-cardinal) world.
+
+    The MPB is the minimum number of observation classes needed such that states
+    can be grouped while maintaining optimality. States can be grouped together
+    if their atomic groups share at least one common optimal action.
+
+    Returns:
+        int: The minimal positional budget.
+    """
+    n = len(world.clusters)
+    if n <= 1:
+        return n
+
+    def _partition_is_valid(partition: list[list[int]], atomic_groups: list[Direction]) -> bool:
+        """
+        Check if a partition is valid: each block must have atomic groups with strictly overlapping actions.
+
+        Args:
+            partition: List of blocks, where each block contains indices of atomic groups.
+            atomic_groups: List of Direction enum values representing the atomic groups.
+
+        Returns:
+            bool: True if all blocks have non-empty action intersection, False otherwise.
+        """
+        for block in partition:
+            action_sets = [atomic_groups[idx].actions for idx in block]
+            common_actions = set.intersection(*action_sets)
+            if len(common_actions) == 0:
+                return False
+        return True
+
+    atomic_groups = list(world.clusters.keys())
+
+    # Try partition sizes from 2 up to min(4, n)
+    for budget in range(2, n):
+        for partition in stirling_partitions(n, budget):
+            if _partition_is_valid(partition, atomic_groups):
+                return budget
+
+    # Fallback: each cluster needs its own observation class
+    return n
 
 
 def prettify(obj: object | Iterable, prefix: str):
