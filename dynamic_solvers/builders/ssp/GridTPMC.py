@@ -42,7 +42,7 @@ class GridTPMC(Grid, SSPSpec):
                 state = y * self.width + x
 
                 if state == goal_state:
-                    state_line += f" {state:{num_width}} "
+                    state_line += f" {state:{num_width}}  "
                     # Center the symbol in the cell
                     padding = (cell_width - 1) // 2
                     sensor_line += " " * padding + "✓" + " " * (cell_width - padding)

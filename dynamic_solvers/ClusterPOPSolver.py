@@ -68,8 +68,8 @@ class ClusterPOPSolver:
         Attempts to solve a POP instance by solving and evaluating the underlying POMDPs in it.
 
         The core algorithmic idea is to group states into 'atomic groups' based on their respective
-        optimal action(s) in the underlying MDP, and then explore a constant number of observation
-        functions that combine the atomic groups into observation classes.
+        optimal action(s) in the underlying MDP. Eventually we explore a constant number of observation
+        functions that combine the atomic distinguishability groups into observation classes.
 
         The observation functions are solved in an order specified by heuristic scores that estimate
         1) how close an observation function is to the optimal, and
@@ -134,7 +134,9 @@ class ClusterPOPSolver:
 
             # We use a default 30s timeout for each POMDP evaluation
             result = self.solver.evaluate_pomdp(self.adapter, observation_function, 30000, strategy_constraints)
+
             if result.result == sat:
+                result.obs = self.adapter.extract_obs_solution(observation_function)
                 result.solve_time += total_solve_time
                 return result
             else:

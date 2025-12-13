@@ -146,3 +146,7 @@ class POPSpec(OOPSpec, ABC):
     @override
     def repair_constraints(self) -> List[z3.BoolRef]:
         return []
+
+    @override
+    def extract_obs_solution(self, obs_function: list[int]) -> dict[str, int]:
+        return {f"ys{s}o{o+1}": obs_function[s] == o for s in range(self.size) for o in range(self.budget)}

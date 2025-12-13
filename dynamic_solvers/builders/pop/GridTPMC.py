@@ -45,7 +45,7 @@ class GridTPMC(Grid, POPSpec):
                     state_line += f" {state:{num_width}}  "
                     # Center the symbol in the cell
                     padding = (cell_width - 1) // 2
-                    obs_line += " " * padding + "✓" + " " * (cell_width - padding)
+                    obs_line += " " * padding + "✓" + " " * (cell_width - padding - 1)
                 else:
                     state_line += f" {state:{num_width}}  "
                     # Find which observation class this state belongs to
