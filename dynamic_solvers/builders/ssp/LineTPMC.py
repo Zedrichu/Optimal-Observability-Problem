@@ -53,8 +53,8 @@ class LineTPMC(Line, SSPSpec):
         lines.append(state_line)
         lines.append(sensor_line)
         lines.append(f"\nLegend: ✓=goal, "
-                     f"{get_observation_marker(0, use_color, binary=True)}=sensor on, "
-                     f"{get_observation_marker(1, use_color, binary=True)}=sensor off")
+                     f"{get_observation_marker(0, use_color, binary=True)}=sensor off, "
+                     f"{get_observation_marker(1, use_color, binary=True)}=sensor on")
 
         return "\n".join(lines)
 
