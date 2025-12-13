@@ -9,7 +9,7 @@ The agent maintains Q(observation, action) without explicit belief tracking.
 import numpy as np
 from typing import Tuple, List, Optional
 from dataclasses import dataclass
-from learner.pomdp_simulation.pomdp_environment import BasePOMDPEnvironment
+from pomdp_sim.pomdp_environment import BasePOMDPEnvironment
 
 
 @dataclass
