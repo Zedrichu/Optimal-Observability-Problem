@@ -183,3 +183,7 @@ class SSPSpec(OOPSpec, ABC):
         if self.budget_repair:
             return [self.build_budget_constraint()]
         return []
+
+    @override
+    def extract_obs_solution(self, obs_function: list[int]) -> dict[str, int]:
+        return {f"ys{i}": obs_function[i] for i in range(self.size)}

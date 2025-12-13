@@ -20,4 +20,5 @@ class Z3SolverResult:
     result: CheckSatResult
     model: Optional[ModelRef] = None
     reward: Optional[ArithRef] = None
+    obs: Optional[dict[str, int]] = None
     # constraint_count: int = 0
