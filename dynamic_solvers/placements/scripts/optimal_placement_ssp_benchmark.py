@@ -8,7 +8,7 @@ from z3 import *
 # Hyperparameters
 NUM_STATES = 15
 GOAL_STATE = (NUM_STATES - 1)//2
-BUDGET = min(GOAL_STATE, NUM_STATES - 1 - GOAL_STATE)
+BUDGET = min(GOAL_STATE, NUM_STATES - 1 - GOAL_STATE) - 1
 
 BIN_SEARCH_LOW = BUDGET//2
 BIN_SEARCH_HIGH = NUM_STATES
@@ -80,8 +80,8 @@ def solve(states_on: list[int], threshold: ArithRef) -> Result:
         else Result.UNSAT if result == unsat \
         else Result.UNKNOWN
 
-    # if result == Result.SAT:
-        # print(f"\tSAT for {instance(states_on, threshold)}")
+    if result == Result.SAT:
+        print(f"\tSAT for {instance(states_on, threshold)}")
 
     return result
 

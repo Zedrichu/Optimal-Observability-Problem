@@ -1,5 +1,5 @@
-from Frontier import Frontier
-from State import State
+from placements.Frontier import Frontier
+from placements.State import State
 from Z3Executor import Z3Executor
 from builders.POMDPSpec import POMDPAdapter
 
