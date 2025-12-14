@@ -87,7 +87,7 @@ class Z3Executor:
             ResultOOP with solve time, result, reward, and model
         """
         # Push a new scope
-        self.solver.push()
+        # self.solver.push()
         assert len(obs_function) == pomdp.size
 
         try:
@@ -103,8 +103,9 @@ class Z3Executor:
             return result
 
         finally:
+            pass
             # Pop the scope (removes observation-specific constraints)
-            self.solver.pop()
+            # self.solver.pop()
 
     def solve_2_shot_repair(self, tpmc: OOPSpec, timeout_ms: int) -> Z3SolverResult:
         # First shot without budget constraint
@@ -129,9 +130,11 @@ class Z3Executor:
 
         # Solving phase timing for benchmarks (CPU time)
         cpu_start = time.process_time()
-        result = self.wrap_timeout_check(timeout_ms)
+        # result = self.wrap_timeout_check(timeout_ms)
+        result = self.solver.check()
         cpu_end = time.process_time()
         solve_time = cpu_end - cpu_start
+        print(f"Solved: {solve_time}")
 
         model = None
         reward = None
