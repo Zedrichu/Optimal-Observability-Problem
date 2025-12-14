@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Set
 
 from builders.enums import PuzzleType
 from direction import Direction
@@ -10,7 +10,7 @@ class World(ABC):
     actions: List[str]
     puzzle_type: PuzzleType
     goal: int
-    clusters: dict[Direction, List[int]]
+    clusters: dict[Direction, Set[int]]
 
     @abstractmethod
     def navigate(self, state: int, action: int) -> int:
@@ -58,9 +58,9 @@ class Line(World):
 
         for state in range(self.size):
             if state < self.goal:
-                clusters.setdefault(Direction.E, []).append(state)
+                clusters.setdefault(Direction.E, set()).add(state)
             elif state > self.goal:
-                clusters.setdefault(Direction.W, []).append(state)
+                clusters.setdefault(Direction.W, set()).add(state)
         return clusters
 
 
@@ -129,21 +129,21 @@ class Grid(World):
             state_x = state % self.width
             state_y = state // self.width
             if state_x < goal_x and state_y == goal_y:
-                clusters.setdefault(Direction.E, []).append(state)
+                clusters.setdefault(Direction.E, set()).add(state)
             elif state_x > goal_x and state_y == goal_y:
-                clusters.setdefault(Direction.W, []).append(state)
+                clusters.setdefault(Direction.W, set()).add(state)
             elif state_x == goal_x and state_y < goal_y:
-                clusters.setdefault(Direction.S, []).append(state)
+                clusters.setdefault(Direction.S, set()).add(state)
             elif state_x == goal_x and state_y > goal_y:
-                clusters.setdefault(Direction.N, []).append(state)
+                clusters.setdefault(Direction.N, set()).add(state)
             elif state_x < goal_x and state_y < goal_y:
-                clusters.setdefault(Direction.SE, []).append(state)
+                clusters.setdefault(Direction.SE, set()).add(state)
             elif state_x > goal_x and state_y < goal_y:
-                clusters.setdefault(Direction.SW, []).append(state)
+                clusters.setdefault(Direction.SW, set()).add(state)
             elif state_x < goal_x and state_y > goal_y:
-                clusters.setdefault(Direction.NE, []).append(state)
+                clusters.setdefault(Direction.NE, set()).add(state)
             elif state_x > goal_x and state_y > goal_y:
-                clusters.setdefault(Direction.NW, []).append(state)
+                clusters.setdefault(Direction.NW, set()).add(state)
         return clusters
 
 
@@ -222,11 +222,11 @@ class Maze(World):
                 else (state - self.width) // 3 + 1
 
             if state_x < goal_x and state_y == 0:
-                clusters.setdefault(Direction.E, []).append(state)
+                clusters.setdefault(Direction.E, set()).add(state)
             elif state_x > goal_x and state_y == 0:
-                clusters.setdefault(Direction.W, []).append(state)
+                clusters.setdefault(Direction.W, set()).add(state)
             elif state_x == goal_x and state_y < goal_y:
-                clusters.setdefault(Direction.S, []).append(state)
+                clusters.setdefault(Direction.S, set()).add(state)
             elif (state_x != goal_x and state_y > 0) or (state_x == goal_x and state_y > goal_y):
-                clusters.setdefault(Direction.N, []).append(state)
+                clusters.setdefault(Direction.N, set()).add(state)
         return clusters

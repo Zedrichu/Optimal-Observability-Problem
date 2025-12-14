@@ -3,19 +3,19 @@ import time
 from z3 import sat, BoolRef, unknown
 
 from Z3SolverResult import Z3SolverResult
-from TPMCSolver import TPMCSolver
+from Z3Executor import Z3Executor
 from builders.POMDPSpec import POMDPAdapter
 from builders.pop.POPSpec import POPSpec
 from utils import stirling_partitions
 
 
 class ClusterPOPSolver:
-    solver: TPMCSolver
+    solver: Z3Executor
     tpmc: POPSpec
     verbose: bool
     adapter: POMDPAdapter
 
-    def __init__(self, solver: TPMCSolver, tpmc: POPSpec, verbose: bool, threshold: str) -> None:
+    def __init__(self, solver: Z3Executor, tpmc: POPSpec, verbose: bool, threshold: str) -> None:
         self.solver = solver
         self.tpmc = tpmc
         self.verbose = verbose

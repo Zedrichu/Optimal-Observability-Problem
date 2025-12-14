@@ -1,6 +1,6 @@
 from typing import List
 
-from z3 import z3, Implies, Sum
+from z3 import z3, Implies, Sum, BoolRef
 
 from builders.IndexStorage import IndexStorage
 from builders.TPMCFactory import OOPVariant
@@ -171,6 +171,22 @@ class POMDPAdapter:
         self._spec.console.print(" Release scope (pop constraints)"
                                  "\n ____________________________________________________________________")
         return bellman_equations
+
+    def infer_ssp_strategy_constraints(self, obs_function: list[int]) -> list[BoolRef]:
+        strategy_constraints = []
+        for state, sensor_on in enumerate(obs_function):
+            if sensor_on != 1:
+                continue
+            for direction in self._spec.clusters:
+                if state in self._spec.clusters[direction]:
+                    idx = state if state < self._spec.goal else state - 1
+                    for a, action in enumerate(self._spec.actions):
+                        if action not in direction.actions:
+                            strategy_constraints.append(self._spec.X[idx][a] == (False if self._spec.determinism else 0))
+                        elif {action} == direction.actions:
+                            strategy_constraints.append(self._spec.X[idx][a] == (True if self._spec.determinism else 1))
+                    break
+        return strategy_constraints
 
     # Delegate attribute access to wrapped spec for convenience
     def __getattr__(self, name):
