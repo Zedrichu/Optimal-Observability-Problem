@@ -9,7 +9,7 @@ import stormpy.pomdp
 from stormpy import BuilderOptions, PrismProgram
 from stormpy.pomdp import BeliefExplorationModelCheckerOptionsDouble
 
-from builders.POMDPSpec import POMDPAdapter
+from builders.POMDPAdapter import POMDPAdapter
 from builders.enums import PuzzleType
 from builders.ssp import LineTPMC
 
@@ -125,6 +125,7 @@ class StormResult:
     upper_bound: float = 0.0
     width: float = 0.0
     reward: float = 0.0
+    obs: dict[str, int] = None
     result: Optional[bool] = None
     raw: Optional[str] = None
 
@@ -324,6 +325,7 @@ class StormExecutor:
                 lower_bound=result.lower_bound,
                 upper_bound=result.upper_bound,
                 width=abs(result.upper_bound - result.lower_bound),
+                obs=pomdp.extract_obs_solution(obs_function),
                 reward=result.upper_bound,
                 result=True
             )
@@ -393,6 +395,7 @@ class StormExecutor:
 
             # Parse result from stdout
             parsed_result = _parse_storm_result_from_output("\n".join(lines[-3:]))
+            parsed_result.obs = pomdp.extract_obs_solution(obs_function)
             return parsed_result
 
         except subprocess.TimeoutExpired:
