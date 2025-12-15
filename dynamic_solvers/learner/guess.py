@@ -1,7 +1,7 @@
 from ClusterPOPSolver import rank_partitions
 from builders.enums import OOPVariant
 from builders.pop.POPSpec import POPSpec
-from builders.pop import GridTPMC
+from builders.ssp import GridTPMC
 from builders.ssp.SSPSpec import SSPSpec
 from direction import Direction
 from utils import stirling_partitions
@@ -91,11 +91,11 @@ def apply_partition(tpmc: POPSpec | SSPSpec, partition: list[list[int]]):
 
 
 if __name__ == "__main__":
-    tpmc = GridTPMC(budget=3, goal=12, width=5, height=5)
+    tpmc = GridTPMC(budget=10, goal=12, width=5, height=5)
     mpb = tpmc.minimal_pos_budget()
 
     # For POP use the actual budget for ranking partitions, for SSP - the minimal positional budget (B*)
     obs_function = start_observation_function(tpmc, mpb)
     model = tpmc.extract_obs_solution(obs_function)
-    drawing = tpmc.draw_model(model, goal_state=12, budget=3, use_color=True)
+    drawing = tpmc.draw_model(model, goal_state=12, budget=10, use_color=True)
     print(drawing)

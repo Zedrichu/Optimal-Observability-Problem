@@ -2,14 +2,17 @@ import numpy as np
 from z3 import sat, unsat, unknown
 
 from builders.pop import LineTPMC, GridTPMC
-from dynamic_solvers.TPMCSolver import TPMCSolver
+from builders.pop.POPSpec import POPSpec
+from dynamic_solvers.Z3Executor import Z3Executor
 from dynamic_solvers.builders.POMDPAdapter import POMDPAdapter
+from guess import start_observation_function
 
 
 class ObservativeAgent:
     """Agent for POP problem with multi-class observations using Categorical distribution."""
 
-    def __init__(self, goal: int, n_states: int, n_classes: int, lr: float = 0.05, init_strategy: str = "uniform"):
+    def __init__(self, tpmc: POPSpec, goal: int,
+                 n_states: int, n_classes: int, lr: float = 0.05):
         """
         Args:
             goal: Goal state index
@@ -22,17 +25,17 @@ class ObservativeAgent:
         self.goal = goal
         self.k = n_classes
         self.lr = lr
-        self.init_strategy = init_strategy
+        self.init_strategy = "atomic"
 
         # theta[i, c] is the logit for observation class c at state i
-        self.theta = self._initialize_theta(init_strategy)
+        self.theta = self._initialize_theta(tpmc, self.init_strategy)
         self.baseline = 0.0 # prevent random noise from destabilizing the update
 
-    def _initialize_theta(self, strategy: str) -> np.ndarray:
+    def _initialize_theta(self, tpmc: POPSpec, strategy: str) -> np.ndarray:
         """Initialize theta with different strategies.
 
         Args:
-            strategy: "uniform", "spatial", "alternating", or "random_bias"
+            strategy: "uniform", "alternating", or "atomic"
 
         Returns:
             theta: [n_states, n_classes] logit array
@@ -51,13 +54,16 @@ class ObservativeAgent:
                     theta[i, preferred_class] = 1.5
             return theta
 
-        elif strategy == "random_bias":
-            # Small random biases to break symmetry
-            for i in range(self.n):
-                if i != self.goal:
-                    theta[i] = np.random.randn(self.k) * 0.3
+        elif strategy == "atomic":
+            obs_function = start_observation_function(tpmc, tpmc.budget)
+            print(" ".join(list(map(str, obs_function))))
+            beta = 2.5
+            for i in range(len(obs_function)):
+                if obs_function[i] == -1:
+                    continue
+                theta[i, :] = -beta
+                theta[i][obs_function[i]] = beta
             return theta
-
         else:
             raise ValueError(f"Unknown init_strategy: {strategy}")
 
@@ -107,7 +113,7 @@ class ObservativeAgent:
             self.theta[i] -= self.lr * advantage * grad
 
 
-def train(agent: ObservativeAgent, oracle: TPMCSolver, pomdp: POMDPAdapter,
+def train(agent: ObservativeAgent, oracle: Z3Executor, pomdp: POMDPAdapter,
               episodes: int = 200, timeout: int = 10000,
               penalty_unsat: float = 1000, penalty_timeout: float = 500):
     """Train observative agent (POP) with oracle feedback as black-box optimization."""
@@ -116,6 +122,7 @@ def train(agent: ObservativeAgent, oracle: TPMCSolver, pomdp: POMDPAdapter,
 
     for ep in range(episodes):
         Y, probs = agent.sample()
+        print(Y)
         result = oracle.evaluate_pomdp(pomdp, Y, timeout)
 
         if result.result == sat:
@@ -142,18 +149,18 @@ def train(agent: ObservativeAgent, oracle: TPMCSolver, pomdp: POMDPAdapter,
 
 if __name__ == "__main__":
     budget = 2
-    width, height = 20, 20
-    goal = 399
-    tau = "7600 / 399"
+    width, height = 10, 10
+    goal = 99
+    tau = "900 / 99"
     threshold = f"<= {tau}"
     tpmc = GridTPMC(budget, goal, width, height, determinism=False, verbose=False)
     context = tpmc.ctx
     pomdp = POMDPAdapter(tpmc)
 
-    solver = TPMCSolver(context, verbose=True)
+    solver = Z3Executor(context, verbose=True)
     solver.prepare_constraints(pomdp, threshold)
 
-    agent = ObservativeAgent(goal, n_states=tpmc.size, n_classes=budget, init_strategy="uniform")
+    agent = ObservativeAgent(tpmc, goal, n_states=tpmc.size, n_classes=budget)
 
     trained_agent, stats = train(agent, solver, pomdp, episodes=20, timeout=10000)
     final_Y, _ = trained_agent.sample()

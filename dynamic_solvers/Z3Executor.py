@@ -98,7 +98,7 @@ class Z3Executor:
 
             # Solve
             result = self.solve(timeout_ms)
-
+            result.obs = pomdp.extract_obs_solution(obs_function)
             return result
 
         finally:
