@@ -7,7 +7,8 @@ from direction import Direction
 from utils import stirling_partitions
 
 
-def start_observation_function(tpmc: POPSpec | SSPSpec, variant: OOPVariant, min_budget: int):
+def start_observation_function(tpmc: POPSpec | SSPSpec, min_budget: int):
+    variant = tpmc.variant()
     no_atomic_groups = len(tpmc.clusters)
     no_blocks = min(no_atomic_groups, min_budget if variant == OOPVariant.SSP else tpmc.budget)
 
@@ -94,7 +95,7 @@ if __name__ == "__main__":
     mpb = tpmc.minimal_pos_budget()
 
     # For POP use the actual budget for ranking partitions, for SSP - the minimal positional budget (B*)
-    obs_function = start_observation_function(tpmc, OOPVariant.POP, mpb)
+    obs_function = start_observation_function(tpmc, mpb)
     model = tpmc.extract_obs_solution(obs_function)
     drawing = tpmc.draw_model(model, goal_state=12, budget=3, use_color=True)
     print(drawing)
