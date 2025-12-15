@@ -25,10 +25,9 @@ class ObservativeAgent:
         self.goal = goal
         self.k = n_classes
         self.lr = lr
-        self.init_strategy = "atomic"
 
         # theta[i, c] is the logit for observation class c at state i
-        self.theta = self._initialize_theta(tpmc, self.init_strategy)
+        self.theta = self._initialize_theta(tpmc, "atomic")
         self.baseline = 0.0 # prevent random noise from destabilizing the update
 
     def _initialize_theta(self, tpmc: POPSpec, strategy: str) -> np.ndarray:
@@ -55,6 +54,7 @@ class ObservativeAgent:
             return theta
 
         elif strategy == "atomic":
+            # Perform initial guess based on merging of atomic groups
             obs_function = start_observation_function(tpmc, tpmc.budget)
             print(" ".join(list(map(str, obs_function))))
             beta = 2.5

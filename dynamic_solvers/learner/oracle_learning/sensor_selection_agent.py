@@ -1,15 +1,17 @@
 import numpy as np
-from z3 import sat, unsat, unknown
+from z3 import sat, unsat
 
 from builders.ssp import LineTPMC
-from dynamic_solvers.TPMCSolver import TPMCSolver
+from builders.ssp.SSPSpec import SSPSpec
+from dynamic_solvers.Z3Executor import Z3Executor
 from dynamic_solvers.builders.POMDPAdapter import POMDPAdapter
+from guess import start_observation_function
 
 
 class SensorSelectionAgent:
     """Agent for sensor selection problem (SSP) with binary observations (0/1) using Bernoulli distribution."""
 
-    def __init__(self, goal: int, n_states: int, lr: float = 0.05, init_strategy: str = "uniform", init_bias: float = 0.0):
+    def __init__(self, tpmc: SSPSpec, goal: int, n_states: int, lr: float = 0.05):
         """
         Args:
             goal: Goal state index
@@ -23,11 +25,11 @@ class SensorSelectionAgent:
         self.lr = lr
 
         # theta[i] is the logit for P(obs=1) at state i
-        self.theta = self._initialize_theta(init_strategy, init_bias)
+        self.theta = self._initialize_theta(tpmc, "atomic")
         self.theta[goal] = 0  # Goal doesn't matter
         self.baseline = 0.0 # prevent random noise from destabilizing the update
 
-    def _initialize_theta(self, strategy: str, init_bias: float, split_power: int = 3) -> np.ndarray:
+    def _initialize_theta(self, tpmc: SSPSpec, strategy: str) -> np.ndarray:
         """
         Initialize theta with spatial awareness.
 
@@ -40,19 +42,23 @@ class SensorSelectionAgent:
 
         if strategy == "uniform":
             # All states have the same initial bias
-            theta[:] = init_bias
+            return theta
 
-        elif strategy == "spatial_split":
-            # States on left of goal biased toward sensors, right toward no-sensors
-            # This encourages different strategies on each side
-            for i in range(self.n):
-                if i < self.goal:
-                    theta[i] = split_power + 2  # Bias toward sensors on the left
-                elif i > self.goal:
-                    theta[i] = -split_power  # Bias against sensors on the right
-                # Goal gets 0 (will be set outside)
+        elif strategy == "atomic":
+            # Perform initial guess based on merging of atomic groups
+            mpb = tpmc.minimal_pos_budget()
+            obs_function = start_observation_function(tpmc, mpb)
+            print(" ".join(list(map(str, obs_function))))
+            beta = 3
+            for i in range(len(obs_function)):
+                if obs_function[i] == -1:
+                    continue
+                theta[i] = beta if obs_function[i] else -beta
+            return theta
 
         elif strategy == "distance_decay":
+            # Non-optimal - because the same distance layer away from goal implies optimal desired
+            # actions from all directions -> leading to non-optimality
             # States closer to goal more likely to have sensors
             for i in range(self.n):
                 if i != self.goal:
@@ -128,9 +134,9 @@ class SensorSelectionAgent:
             self.theta[i] -= self.lr * advantage * grad
 
 
-def train(agent: SensorSelectionAgent, oracle: TPMCSolver, pomdp: POMDPAdapter,
+def train(agent: SensorSelectionAgent, oracle: Z3Executor, pomdp: POMDPAdapter,
           episodes: int = 200, budget: int | None = None, timeout: int = 10000,
-            penalty_unsat: float = 100, penalty_timeout: float = 50,
+            penalty_unsat: float = 20, penalty_timeout: float = 50,
           budget_penalty: float = 0.0):
     """
     Train SSP agent with oracle feedback.
@@ -192,14 +198,14 @@ if __name__ == "__main__":
     context = tpmc.ctx
     pomdp = POMDPAdapter(tpmc)
 
-    solver = TPMCSolver(context, verbose=True)
+    solver = Z3Executor(context, verbose=True)
     solver.prepare_constraints(pomdp, threshold)
 
-    agent = SensorSelectionAgent(goal, n_states=size, init_strategy="spatial_split")
+    agent = SensorSelectionAgent(tpmc, goal, n_states=size)
 
     # Training: soft guidance toward budget
     trained_agent, stats = train(agent, solver, pomdp, episodes=40, budget=budget,
-                                 timeout=10000, budget_penalty=0.5)
+                                 timeout=10000, budget_penalty=0.3)
 
     # Inference: enforce exact budget via top-k
     final_Y, _ = trained_agent.sample(budget=budget, enforce_budget=True)

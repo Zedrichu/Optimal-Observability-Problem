@@ -38,6 +38,7 @@ class CEMAgent:
         theta = np.zeros((self.n, self.k), dtype=float)
 
         if strategy == "atomic":
+            # Perform initial guess based on merging of atomic groups
             mpb = tpmc.minimal_pos_budget()
             obs_function = start_observation_function(tpmc, mpb)
             print(obs_function)
