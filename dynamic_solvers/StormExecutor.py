@@ -417,8 +417,12 @@ class StormExecutor:
 
 
 if __name__ == "__main__":
-    tpmc = LineTPMC(budget=6, goal=7, length=15)
+    tpmc = LineTPMC(budget=1, goal=3, length=7)
     pomdp = POMDPAdapter(tpmc)
     exec = StormExecutor(verbose=True, puzzle_type=pomdp.puzzle_type)
-    result = exec.evaluate_pomdp_finite_state(pomdp, [1, 1, 0, 1, 1, 1, 1, -1, 0, 0, 0, 0, 0, 0, 0], 10000)
+    result = exec.evaluate_pomdp_finite_state(
+        pomdp,
+        [0] * 2 + [1] + [-1] + [0] * 3,
+        10000
+    )
     print(f"Reward: {result.reward} in {result.analysis_time}s")

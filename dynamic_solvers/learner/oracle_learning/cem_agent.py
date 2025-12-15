@@ -35,19 +35,19 @@ class CEMAgent:
 
     def _initialize_theta(self, tpmc: POPSpec | SSPSpec, strategy: str = "uniform") -> np.ndarray:
         # initialize logits for uniform distribution
-        thetas = np.zeros((self.n, self.k), dtype=float)
+        theta = np.zeros((self.n, self.k), dtype=float)
 
         if strategy == "atomic":
             mpb = tpmc.minimal_pos_budget()
             obs_function = start_observation_function(tpmc, mpb)
             print(obs_function)
-            split_power = 4
+            beta = 2.5
             for i in range(len(obs_function)):
                 if obs_function[i] == -1:
                     continue
-                thetas[i, :] = -split_power
-                thetas[i][obs_function[i]] = split_power
-        return thetas
+                theta[i, :] = -beta
+                theta[i][obs_function[i]] = beta
+        return theta
 
     def softmax(self, logits):
         """Numerically stable softmax."""
