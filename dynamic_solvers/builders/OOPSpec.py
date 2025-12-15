@@ -251,3 +251,7 @@ class OOPSpec(World, ABC):
             return lambda model, name: model.get(name, False)
         else:
             return lambda model, name: model.get(name, 0) == 1
+
+    @abstractmethod
+    def variant(self):
+        raise NotImplementedError()

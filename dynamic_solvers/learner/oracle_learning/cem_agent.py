@@ -1,15 +1,19 @@
 import numpy as np
 from z3 import sat, unsat, unknown
 
+from builders.pop.POPSpec import POPSpec
 from builders.ssp import LineTPMC
-from dynamic_solvers.TPMCSolver import TPMCSolver
+from builders.ssp.SSPSpec import SSPSpec
+from dynamic_solvers.Z3Executor import Z3Executor
 from dynamic_solvers.builders.POMDPAdapter import POMDPAdapter
+from guess import start_observation_function
 
 
 class CEMAgent:
-    """Cross-Entropy Method agent for POP observation assignment learning."""
+    """Cross-Entropy Method agent for observation assignment learning."""
 
-    def __init__(self, goal: int, n_states: int, n_classes: int,
+    def __init__(self, tpmc: POPSpec | SSPSpec,
+                 goal: int, n_states: int, n_classes: int, budget: int,
                  elite_frac: float = 0.2, smoothing: float = 0.1):
         """
         Args:
@@ -24,10 +28,26 @@ class CEMAgent:
         self.k = n_classes
         self.elite_frac = elite_frac
         self.smoothing = smoothing
+        self.budget = budget
 
         # theta[i, c] = logit for observation class c at state i
-        # Initialize uniform
-        self.theta = np.zeros((n_states, n_classes), dtype=float)
+        self.theta = self._initialize_theta(tpmc, "atomic")
+
+    def _initialize_theta(self, tpmc: POPSpec | SSPSpec, strategy: str = "uniform") -> np.ndarray:
+        # initialize logits for uniform distribution
+        thetas = np.zeros((self.n, self.k), dtype=float)
+
+        if strategy == "atomic":
+            mpb = tpmc.minimal_pos_budget()
+            obs_function = start_observation_function(tpmc, mpb)
+            print(obs_function)
+            split_power = 4
+            for i in range(len(obs_function)):
+                if obs_function[i] == -1:
+                    continue
+                thetas[i, :] = -split_power
+                thetas[i][obs_function[i]] = split_power
+        return thetas
 
     def softmax(self, logits):
         """Numerically stable softmax."""
@@ -91,7 +111,7 @@ class CEMAgent:
         self.theta = (1 - self.smoothing) * new_theta + self.smoothing * self.theta
 
 
-def train_cem(agent: CEMAgent, oracle: TPMCSolver, pomdp: POMDPAdapter,
+def train_cem(agent: CEMAgent, oracle: Z3Executor, pomdp: POMDPAdapter,
               iterations: int = 50, batch_size: int = 20, timeout: int = 10000,
               penalty_unsat: float = -50, penalty_timeout: float = -100):
     """
@@ -178,27 +198,36 @@ def train_cem(agent: CEMAgent, oracle: TPMCSolver, pomdp: POMDPAdapter,
     return agent, stats
 
 if __name__ == "__main__":
-    budget = 29
+    # POP Setting:
+    # budget = 2
+    # size = 31
+    # goal = 15
+    # tau = 16
+    # threshold_q = 1
+
+    # SSP Setting:
+    budget = 30
     size = 61
     goal = 30
     tau = 31
-    threshold_q = 3
+    threshold_q = 1
+
     threshold = f"<= Q({tau * threshold_q}, 2)"
     tpmc = LineTPMC(budget, goal, size, determinism=False, verbose=False)
     context = tpmc.ctx
     pomdp = POMDPAdapter(tpmc)
 
-    solver = TPMCSolver(context, verbose=True)
+    solver = Z3Executor(context, verbose=True)
     solver.prepare_constraints(pomdp, threshold)
 
-    agent = CEMAgent(goal, n_states=size, n_classes=2)
+    agent = CEMAgent(tpmc, goal, n_states=size, n_classes=2, budget=budget)
 
     # Training: soft guidance toward budget
     trained_agent, stats = train_cem(agent, solver, pomdp, iterations=40, batch_size=10,
                                      timeout=10000, penalty_timeout=50, penalty_unsat=100)
 
     # Inference: enforce exact budget via top-k
-    final_Y, _ = trained_agent.sample()
+    final_Y = trained_agent.sample()
     n_active_final = sum(1 for y in final_Y if y == 1)
 
     print(f"\nBest Y: {stats['best_Y']}")

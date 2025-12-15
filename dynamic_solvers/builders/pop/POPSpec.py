@@ -5,7 +5,7 @@ from typing import List, override
 from z3 import z3, Or, Sum, Implies, And, Not, PbEq
 
 from builders.OOPSpec import OOPSpec
-from builders.enums import Precision
+from builders.enums import Precision, OOPVariant
 from utils import init_var_type
 
 
@@ -150,3 +150,7 @@ class POPSpec(OOPSpec, ABC):
     @override
     def extract_obs_solution(self, obs_function: list[int]) -> dict[str, int]:
         return {f"ys{s}o{o+1}": obs_function[s] == o for s in range(self.size) for o in range(self.budget)}
+
+    @override
+    def variant(self):
+        return OOPVariant.POP
