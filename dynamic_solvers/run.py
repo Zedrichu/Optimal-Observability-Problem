@@ -12,9 +12,11 @@ from collections import defaultdict
 from typing import List, Tuple
 
 import z3
-from z3 import sat
+from z3 import sat, CheckSatResult
 
 from ClusterPOPSolver import ClusterPOPSolver
+from StormExecutor import StormExecutor
+from Z3SolverResult import Z3SolverResult
 from builders.POMDPAdapter import POMDPAdapter
 from builders.pop.POPSpec import POPSpec
 from utils import convert_text_to_html
@@ -167,6 +169,12 @@ Examples:
         help='Use a clustering algorithm to attempt to solve all POMDPs for a POP instance. Only applicable for POP variant.'
     )
 
+    solver_group.add_argument(
+        '--storm',
+        action='store_true',
+        help='Use the Storm backend for computing finite-state controllers for POMDPs.'
+    )
+
     # Output options
     output_group = parser.add_argument_group('Output Options')
     output_group.add_argument(
@@ -259,7 +267,8 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
               f"        Encoding             -> {"Real" if args.real_encoding else "Boolean"}\n"
               f"        Budget Repair        -> {"✅" if args.budget_repair else "❌"}\n"
               f"        Verbose output       -> {"✅" if args.verbose else "❌"}\n"
-              f"        Ordering             -> {args.order_constraints if args.order_constraints else "default"}"
+              f"        Ordering             -> {args.order_constraints if args.order_constraints else "default"}\n"
+              f"        POMDP Back-end       -> {"Z3 (SMT, memory-less) " if not args.storm else "Storm (PMC, finite-state)"}"
               f"\n"
         )
 
@@ -287,11 +296,22 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
     # Solve and get results
     if args.pomdp is not None:
         adapter = POMDPAdapter(tpmc_instance)
-        solver.prepare_constraints(adapter, args.threshold)
 
-        # Play with large POMDP assignments here
-        # vector_y = ([0] * (args.width - 1) + [1]) * (args.height - 1) + ([0] * (args.width - 1) + [-1])
-        result = solver.evaluate_pomdp(adapter, args.pomdp, args.timeout)
+        if args.storm:
+            storm_solver = StormExecutor(verbose=True, puzzle_type=tpmc_instance.puzzle_type)
+
+            # Call for finite-state controller through `stormpy` binders (using Sparse POMDP, misleading)
+            # storm_res = storm_solver.evaluate_pomdp_fsc_binder(adapter, args.pomdp, args.timeout)
+
+            # Call for finite-state controller through `storm-pomdp` subprocess calls (using Sparse Exact POMDP)
+            storm_res = storm_solver.evaluate_pomdp_fsc_cli(adapter, args.pomdp, args.timeout)
+            sat_res = CheckSatResult(-1*(1 + int(storm_res.result)) if storm_res.result else 0)
+            result = Z3SolverResult(storm_res.analysis_time, sat_res, None, storm_res.reward)
+        else:
+            solver.prepare_constraints(adapter, args.threshold)
+            # Plant observations with large POMDP assignments here
+            # vector_y = ([0] * (args.width - 1) + [1]) * (args.height - 1) + ([0] * (args.width - 1) + [-1])
+            result = solver.evaluate_pomdp(adapter, args.pomdp, args.timeout)
     elif isinstance(tpmc_instance, POPSpec) and args.cluster:
         cluster_solver = ClusterPOPSolver(solver, tpmc_instance, True, args.threshold)
         result = cluster_solver.solve(args.timeout)
