@@ -312,6 +312,7 @@ class StormExecutor:
         belexpl_options = BeliefExplorationModelCheckerOptionsDouble(False, True)
         belexpl_options.use_state_elimination_cutoff = False
         belexpl_options.use_clipping = False
+        # belexpl_options.clipping_grid_res = 25 # finer resolution -> more memory
         belexpl_options.exploration_time_limit = timeout_ms // 1000
         # Model check with Belief Exploration (memory-less belief MDP -> finite-state controller)
         checker = stormpy.pomdp.BeliefExplorationModelCheckerDouble(model, belexpl_options)
@@ -378,6 +379,7 @@ class StormExecutor:
                 "--belief-exploration",
                 "--exact",
                 "--memorybound", str(memory_bound),
+                # "--exportdot", "model.dot",
             ]
 
             if self.verbose:
