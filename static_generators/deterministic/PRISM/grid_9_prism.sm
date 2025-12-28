@@ -1,0 +1,111 @@
+mdp
+
+formula target = s = 4;
+
+formula initialised = 
+x00 >= 0 & 
+x01 >= 0 & 
+x02 >= 0 & 
+x03 >= 0 & 
+x10 >= 0 & 
+x11 >= 0 & 
+x12 >= 0 & 
+x13 >= 0 & 
+y00 >= 0 & 
+y01 >= 0 & 
+y10 >= 0 & 
+y11 >= 0 & 
+y20 >= 0 & 
+y21 >= 0 & 
+y30 >= 0 & 
+y31 >= 0 & 
+y50 >= 0 & 
+y51 >= 0 & 
+y60 >= 0 & 
+y61 >= 0 & 
+y70 >= 0 & 
+y71 >= 0 & 
+y80 >= 0 & 
+y81 >= 0 & 
+true;
+
+module grid
+		s : [0..8];
+		started : bool;
+		y00 : [-1..1] init -1;
+		y01 : [-1..1] init -1;
+		y10 : [-1..1] init -1;
+		y11 : [-1..1] init -1;
+		y20 : [-1..1] init -1;
+		y21 : [-1..1] init -1;
+		y30 : [-1..1] init -1;
+		y31 : [-1..1] init -1;
+		y50 : [-1..1] init -1;
+		y51 : [-1..1] init -1;
+		y60 : [-1..1] init -1;
+		y61 : [-1..1] init -1;
+		y70 : [-1..1] init -1;
+		y71 : [-1..1] init -1;
+		y80 : [-1..1] init -1;
+		y81 : [-1..1] init -1;
+		x00 : [-1..1] init -1;
+		x01 : [-1..1] init -1;
+		x02 : [-1..1] init -1;
+		x03 : [-1..1] init -1;
+		x10 : [-1..1] init -1;
+		x11 : [-1..1] init -1;
+		x12 : [-1..1] init -1;
+		x13 : [-1..1] init -1;
+		
+		// CHOICE OF OBSERVATIONS
+		[y00] (!initialised & y00=-1 &y01=-1) ->(y00'=1) & (y01'=0);
+		[y01] (!initialised & y00=-1 &y01=-1) ->(y00'=0) & (y01'=1);
+		[y10] (!initialised & y10=-1 &y11=-1) ->(y10'=1) & (y11'=0);
+		[y11] (!initialised & y10=-1 &y11=-1) ->(y10'=0) & (y11'=1);
+		[y20] (!initialised & y20=-1 &y21=-1) ->(y20'=1) & (y21'=0);
+		[y21] (!initialised & y20=-1 &y21=-1) ->(y20'=0) & (y21'=1);
+		[y30] (!initialised & y30=-1 &y31=-1) ->(y30'=1) & (y31'=0);
+		[y31] (!initialised & y30=-1 &y31=-1) ->(y30'=0) & (y31'=1);
+		[y50] (!initialised & y50=-1 &y51=-1) ->(y50'=1) & (y51'=0);
+		[y51] (!initialised & y50=-1 &y51=-1) ->(y50'=0) & (y51'=1);
+		[y60] (!initialised & y60=-1 &y61=-1) ->(y60'=1) & (y61'=0);
+		[y61] (!initialised & y60=-1 &y61=-1) ->(y60'=0) & (y61'=1);
+		[y70] (!initialised & y70=-1 &y71=-1) ->(y70'=1) & (y71'=0);
+		[y71] (!initialised & y70=-1 &y71=-1) ->(y70'=0) & (y71'=1);
+		[y80] (!initialised & y80=-1 &y81=-1) ->(y80'=1) & (y81'=0);
+		[y81] (!initialised & y80=-1 &y81=-1) ->(y80'=0) & (y81'=1);
+		
+		// CHOICE OF STRATEGY
+		[x00] (!initialised & x00=-1 &x01=-1 &x02=-1 &x03=-1) ->(x00'=1) & (x01'=0) &(x02'=0) &(x03'=0);
+		[x01] (!initialised & x00=-1 &x01=-1 &x02=-1 &x03=-1) ->(x00'=0) &(x01'=1) & (x02'=0) &(x03'=0);
+		[x02] (!initialised & x00=-1 &x01=-1 &x02=-1 &x03=-1) ->(x00'=0) &(x01'=0) &(x02'=1) & (x03'=0);
+		[x03] (!initialised & x00=-1 &x01=-1 &x02=-1 &x03=-1) ->(x00'=0) &(x01'=0) &(x02'=0) &(x03'=1);
+		[x10] (!initialised & x10=-1 &x11=-1 &x12=-1 &x13=-1) ->(x10'=1) & (x11'=0) &(x12'=0) &(x13'=0);
+		[x11] (!initialised & x10=-1 &x11=-1 &x12=-1 &x13=-1) ->(x10'=0) &(x11'=1) & (x12'=0) &(x13'=0);
+		[x12] (!initialised & x10=-1 &x11=-1 &x12=-1 &x13=-1) ->(x10'=0) &(x11'=0) &(x12'=1) & (x13'=0);
+		[x13] (!initialised & x10=-1 &x11=-1 &x12=-1 &x13=-1) ->(x10'=0) &(x11'=0) &(x12'=0) &(x13'=1);
+		
+		[] !started & initialised -> 1/8: (started' = true) & (s' = 0)
+			+ 1/8 : (started'=true) & (s'=1)
+			+ 1/8 : (started'=true) & (s'=2)
+			+ 1/8 : (started'=true) & (s'=3)
+			+ 1/8 : (started'=true) & (s'=5)
+			+ 1/8 : (started'=true) & (s'=6)
+			+ 1/8 : (started'=true) & (s'=7)
+			+ 1/8 : (started'=true) & (s'=8);
+
+
+		[move] s=0 & started -> y00*x00+y01*x10: (s'=0) +y00*x01+y01*x11: (s'= 1) + y00*x02+y01*x12: (s'= 0) + y00*x03+y01*x13: (s'= 3);
+		[move] s=1 & started -> y10*x00+y11*x10: (s'=0) +y10*x01+y11*x11: (s'= 2) + y10*x02+y11*x12: (s'= 1) + y10*x03+y11*x13: (s'= 4);
+		[move] s=2 & started -> y20*x00+y21*x10: (s'=1) +y20*x01+y21*x11: (s'= 2) + y20*x02+y21*x12: (s'= 2) + y20*x03+y21*x13: (s'= 5);
+		[move] s=3 & started -> y30*x00+y31*x10: (s'=2) +y30*x01+y31*x11: (s'= 4) + y30*x02+y31*x12: (s'= 0) + y30*x03+y31*x13: (s'= 6);
+		[move] s=4 & started  -> (s' = s); 
+		[move] s=5 & started -> y50*x00+y51*x10: (s'=4) +y50*x01+y51*x11: (s'= 6) + y50*x02+y51*x12: (s'= 2) + y50*x03+y51*x13: (s'= 8);
+		[move] s=6 & started -> y60*x00+y61*x10: (s'=5) +y60*x01+y61*x11: (s'= 7) + y60*x02+y61*x12: (s'= 3) + y60*x03+y61*x13: (s'= 6);
+		[move] s=7 & started -> y70*x00+y71*x10: (s'=6) +y70*x01+y71*x11: (s'= 8) + y70*x02+y71*x12: (s'= 4) + y70*x03+y71*x13: (s'= 7);
+		[move] s=8 & started -> y80*x00+y81*x10: (s'=7) +y80*x01+y81*x11: (s'= 9) + y80*x02+y81*x12: (s'= 5) + y80*x03+y81*x13: (s'= 8);
+endmodule
+
+rewards
+		[move] !target : 1;
+endrewards
