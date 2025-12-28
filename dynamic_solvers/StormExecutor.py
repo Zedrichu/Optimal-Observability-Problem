@@ -217,6 +217,7 @@ def _define_program_constants(program: PrismProgram, constants: dict[str, int]) 
 
 
 class StormExecutor:
+    """Storm-pomdp execution binder for finite-state controllers of SSP-induced POMDPs"""
 
     def __init__(self, verbose: bool, puzzle_type: Optional[PuzzleType] = None):
         self.puzzle_type = puzzle_type
@@ -282,7 +283,7 @@ class StormExecutor:
         const_pairs = [f"{key}={value}" for key, value in sorted(all_constants.items())]
         return ",".join(const_pairs)
 
-    def evaluate_pomdp_finite_state(self, pomdp: POMDPAdapter, obs_function: list[int], timeout_ms: int):
+    def evaluate_pomdp_fsc_binder(self, pomdp: POMDPAdapter, obs_function: list[int], timeout_ms: int):
         if self.puzzle_type is None:
             self.puzzle_type = pomdp.puzzle_type
             self._start_prism_parsing()
@@ -302,11 +303,16 @@ class StormExecutor:
         model = stormpy.build_sparse_model_with_options(self.static_program, build_options)
         model = stormpy.pomdp.make_canonic(model)
 
-        # TODO! Require the memorybound for belief-MDP controllers to 1 === memoryless
+        # Attempt for Sparse and Exact POMDP models (no integration for exact PMC)
+        # model = stormpy.build_sparse_exact_model_with_options(self.static_program, build_options)
+        # model = stormpy.pomdp.make_canonic(model)
+
+        # TODO! Require the memory bound for belief-MDP controllers to 1 === memoryless
         # Setup belief exploration options
         belexpl_options = BeliefExplorationModelCheckerOptionsDouble(False, True)
         belexpl_options.use_state_elimination_cutoff = False
         belexpl_options.use_clipping = False
+        # belexpl_options.clipping_grid_res = 25 # finer resolution -> more memory
         belexpl_options.exploration_time_limit = timeout_ms // 1000
         # Model check with Belief Exploration (memory-less belief MDP -> finite-state controller)
         checker = stormpy.pomdp.BeliefExplorationModelCheckerDouble(model, belexpl_options)
@@ -344,7 +350,7 @@ class StormExecutor:
             # Reset timeout after completion
             stormpy.reset_timeout()
 
-    def evaluate_pomdp_cli(self, pomdp: POMDPAdapter, obs_function: list[int], timeout_ms: int, memory_bound: int = 1):
+    def evaluate_pomdp_fsc_cli(self, pomdp: POMDPAdapter, obs_function: list[int], timeout_ms: int, memory_bound: int = 1):
         """Evaluate a POMDP using the storm-pomdp command-line tool."""
         if self.puzzle_type is None:
             self.puzzle_type = pomdp.puzzle_type
@@ -357,7 +363,7 @@ class StormExecutor:
             print(f"    Puzzle type: {self.puzzle_type.name}")
             print(f"    Size: {pomdp.size}, Goal: {pomdp.goal}, Budget: {pomdp.budget}")
             print(f"    Observation function: {obs_function}")
-            print(f"    Memory bound: {memory_bound}")
+            print(f"    Memory-full (finite-state controller, memory-less belief exploration)")
 
         # Build constants string
         constants_str = self._build_constants_cli_string(obs_function, pomdp)
@@ -373,6 +379,7 @@ class StormExecutor:
                 "--belief-exploration",
                 "--exact",
                 "--memorybound", str(memory_bound),
+                # "--exportdot", "model.dot",
             ]
 
             if self.verbose:
@@ -417,12 +424,9 @@ class StormExecutor:
 
 
 if __name__ == "__main__":
-    tpmc = LineTPMC(budget=1, goal=3, length=7)
+    tpmc = LineTPMC(budget=29, goal=30, length=61)
     pomdp = POMDPAdapter(tpmc)
     exec = StormExecutor(verbose=True, puzzle_type=pomdp.puzzle_type)
-    result = exec.evaluate_pomdp_finite_state(
-        pomdp,
-        [0] * 2 + [1] + [-1] + [0] * 3,
-        10000
-    )
+    f_obs = [0] + [1]*29 + [-1] + [0]*30
+    result = exec.evaluate_pomdp_fsc_cli(pomdp, f_obs, 30000)
     print(f"Reward: {result.reward} in {result.analysis_time}s")
