@@ -28,6 +28,10 @@ class World(ABC):
     def cluster(self) -> dict[Direction, List[int]]:
         raise NotImplementedError()
 
+    @abstractmethod
+    def minimal_pos_budget(self) -> int:
+        raise NotImplementedError()
+
 
 class Line(World):
     def __init__(self, length: int, goal: int):
@@ -62,6 +66,9 @@ class Line(World):
             elif state > self.goal:
                 clusters.setdefault(Direction.W, set()).add(state)
         return clusters
+
+    def minimal_pos_budget(self) -> int:
+        return len(self.clusters)
 
 
 class Grid(World):
@@ -145,6 +152,18 @@ class Grid(World):
             elif state_x > goal_x and state_y > goal_y:
                 clusters.setdefault(Direction.NW, set()).add(state)
         return clusters
+
+    def minimal_pos_budget(self) -> int:
+        goal_column = self.goal % self.width
+        goal_row = self.goal // self.width
+        is_row_edge = goal_row in [0, self.size - 1]
+        is_col_edge = goal_column in [0, self.width - 1]
+        if is_row_edge and is_col_edge:
+            return 2
+        elif is_row_edge or is_col_edge:
+            return 3
+        else:
+            return 4
 
 
 class Maze(World):
@@ -230,3 +249,6 @@ class Maze(World):
             elif (state_x != goal_x and state_y > 0) or (state_x == goal_x and state_y > goal_y):
                 clusters.setdefault(Direction.N, set()).add(state)
         return clusters
+
+    def minimal_pos_budget(self) -> int:
+        return len(self.clusters)

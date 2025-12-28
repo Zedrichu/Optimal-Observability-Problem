@@ -4,9 +4,50 @@ from z3 import sat, BoolRef, unknown
 
 from Z3SolverResult import Z3SolverResult
 from Z3Executor import Z3Executor
-from builders.POMDPSpec import POMDPAdapter
+from builders.POMDPAdapter import POMDPAdapter
 from builders.pop.POPSpec import POPSpec
+from builders.ssp.SSPSpec import SSPSpec
 from utils import stirling_partitions
+
+
+def rank_partitions(tpmc: POPSpec | SSPSpec, partitions: list[list[list[int]]]) -> list[tuple[int, int, int]]:
+    """
+    Compute heuristic scores for each partition and return a ranking of partition indices.
+
+    Heuristics used:
+    - equivalence_score: counts how many blocks in the partition contain a common action for
+      all atomic groups in that block (i.e. an 'equivalence' relation where a single action
+      is optimal across the block).
+    - constraint_score: the number of constraints that can be imposed on the strategy
+      variables when the partition is applied. For example, blocks with an equivalence relation
+      can stay optimal when set the rate of a common action to 1 and the rest to 0 (adding |Act| constraints).
+
+    Args:
+        tpmc (POPSpec | SSPSpec): a tpMC specification object.
+        partitions (list[list[list[int]]]): The list of partitions to score.
+
+    Returns:
+        list[tuple[int,int,int]]: A list of tuples (partition_index, equivalence_score,
+            constraint_score), sorted in descending order by (equivalence_score, constraint_score).
+    """
+
+    atomic_groups = list(tpmc.clusters.keys())
+    ranking_partitions = []
+    for (p, partition) in enumerate(partitions):
+        equivalence_score = 0
+        constraint_score = 0
+        for block in partition:
+            actions_per_atomic_group = [atomic_groups[atomic_group_idx].actions for atomic_group_idx in block]
+            actions_in_block = set.union(*actions_per_atomic_group)
+            equivalence_relation = True if len(set.intersection(*actions_per_atomic_group)) > 0 else False
+
+            if equivalence_relation:
+                equivalence_score += 1
+                constraint_score += len(tpmc.actions)
+            else:
+                constraint_score += sum(1 for a in tpmc.actions if a not in actions_in_block)
+        ranking_partitions.append((p, equivalence_score, constraint_score))
+    return sorted(ranking_partitions, key=lambda ranking: (ranking[1], ranking[2]), reverse=True)
 
 
 class ClusterPOPSolver:
@@ -27,8 +68,8 @@ class ClusterPOPSolver:
         Attempts to solve a POP instance by solving and evaluating the underlying POMDPs in it.
 
         The core algorithmic idea is to group states into 'atomic groups' based on their respective
-        optimal action(s) in the underlying MDP, and then explore a constant number of observation
-        functions that combine the atomic groups into observation classes.
+        optimal action(s) in the underlying MDP. Eventually we explore a constant number of observation
+        functions that combine the atomic distinguishability groups into observation classes.
 
         The observation functions are solved in an order specified by heuristic scores that estimate
         1) how close an observation function is to the optimal, and
@@ -54,7 +95,7 @@ class ClusterPOPSolver:
             print(f"Generated partitions in {(now - start):.4f}s")
         start = now
 
-        ranking_partitions = self.rank_partitions(partitions)
+        ranking_partitions = rank_partitions(self.tpmc, partitions)
         now = time.process_time()
         if self.verbose:
             print(f"\nRanking of observation functions completed in {(now - start):.4f}s")
@@ -93,7 +134,9 @@ class ClusterPOPSolver:
 
             # We use a default 30s timeout for each POMDP evaluation
             result = self.solver.evaluate_pomdp(self.adapter, observation_function, 30000, strategy_constraints)
+
             if result.result == sat:
+                result.obs = self.adapter.extract_obs_solution(observation_function)
                 result.solve_time += total_solve_time
                 return result
             else:
@@ -110,44 +153,6 @@ class ClusterPOPSolver:
 
         # Call the TPMC solver as a fallback
         return self.solver.solve(timeout_ms=timeout_ms - total_solve_time * 1000)
-
-    def rank_partitions(self, partitions: list[list[list[int]]]) -> list[tuple[int, int, int]]:
-        """
-        Compute heuristic scores for each partition and return a ranking of partition indices.
-
-        Heuristics used:
-        - equivalence_score: counts how many blocks in the partition contain a common action for
-          all atomic groups in that block (i.e. an 'equivalence' relation where a single action
-          is optimal across the block).
-        - constraint_score: the number of constraints that can be imposed on the strategy
-          variables when the partition is applied. For example, blocks with an equivalence relation
-          can stay optimal when set the rate of a common action to 1 and the rest to 0 (adding |Act| constraints).
-
-        Args:
-            partitions (list[list[list[int]]]): The list of partitions to score.
-
-        Returns:
-            list[tuple[int,int,int]]: A list of tuples (partition_index, equivalence_score,
-                constraint_score), sorted in descending order by (equivalence_score, constraint_score).
-        """
-
-        atomic_groups = list(self.tpmc.clusters.keys())
-        ranking_partitions = []
-        for (p, partition) in enumerate(partitions):
-            equivalence_score = 0
-            constraint_score = 0
-            for block in partition:
-                actions_per_atomic_group = [atomic_groups[atomic_group_idx].actions for atomic_group_idx in block]
-                actions_in_block = set.union(*actions_per_atomic_group)
-                equivalence_relation = True if len(set.intersection(*actions_per_atomic_group)) > 0 else False
-
-                if equivalence_relation:
-                    equivalence_score += 1
-                    constraint_score += len(self.tpmc.actions)
-                else:
-                    constraint_score += sum(1 for a in self.tpmc.actions if a not in actions_in_block)
-            ranking_partitions.append((p, equivalence_score, constraint_score))
-        return sorted(ranking_partitions, key=lambda ranking: (ranking[1], ranking[2]), reverse=True)
 
     def apply_partition_to_states(self, partition: list[list[int]]) -> tuple[list[int], list[BoolRef]]:
         """

@@ -1,6 +1,6 @@
 # RL-Based Sensor Selection Summary for POMDP/TPMC Framework
 
-This document summarizes the architecture, goals, and implementation plan for integrating a reinforcement learning (RL) module into a POMDP/TPMC-based optimization pipeline for learning observation assignments (sensor placements).
+This document summarizes the architecture, goals, and implementation plan for integrating a reinforcement learning (RL) module into a POMDP/TPMC-based optimization pipeline for learning observation assignments (sensor placements). It provides all context necessary for an automated coding assistant to contribute effectively to the project.
 
 ---
 
@@ -49,8 +49,8 @@ The oracle is expensive but exact, making it suitable for RL-as-black-box evalua
 We want:
 
 - An RL module that searches over Y-space
-- Uses the oracle as a reward function
-- Learns sensor configurations Y that maximize MinExpRew
+- Uses the oracle as a reward function (returning MinExpRew = minimum expected steps to goal)
+- Learns sensor configurations Y that **minimize MinExpRew** (fewer steps to reach goal)
 - Optionally supports transfer to modified world layouts or goals
 
 The RL operates **above** the oracle and does not interact with the POMDP step-by-step.
@@ -81,20 +81,22 @@ p[i,k] = exp(theta[i,k]) / sum_j exp(theta[i,j])
 - Sampling: `Y[i] = sample from Categorical(p[i,1..8])`
 - `Y` is passed directly to the oracle as the observation assignment.
 
-### **REINFORCE Update (Binary or Multi-Class)**
+### **REINFORCE Update (Binary or Multi-Class) - MINIMIZATION**
 After receiving reward R(Y):
 
-- **Binary case:**
+- **Binary case (gradient descent for minimization):**
 ```
 grad = (Y - probs)
-theta += lr * (R(Y) - baseline) * grad
+advantage = R(Y) - baseline
+theta -= lr * advantage * grad  # Note: MINUS sign for minimization
 ```
 
-- **Multi-class case:**
+- **Multi-class case (gradient descent for minimization):**
 ```
 onehot = indicator_vector(Y[i])
 grad = onehot - probs[i]
-theta[i] += lr * (R(Y) - baseline) * grad
+advantage = R(Y) - baseline
+theta[i] -= lr * advantage * grad  # Note: MINUS sign for minimization
 ```
 
 In both cases, `baseline` is a running average of rewards to reduce variance.
@@ -134,10 +136,11 @@ If exactly K sensors must be active:
 
 ### 6.4. Timeout Handling
 
-If solver times out:
+If solver times out or returns unsat:
 
-- Assign a default penalty reward
-- Skip or partially update
+- Assign a default penalty reward (large positive value for minimization)
+- The penalty should be worse than any valid solution to discourage infeasible configurations
+- Skip or partially update theta based on the penalty
 
 ### 6.5. Logging
 

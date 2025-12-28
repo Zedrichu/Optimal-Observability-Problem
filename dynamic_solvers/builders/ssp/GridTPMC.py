@@ -42,7 +42,7 @@ class GridTPMC(Grid, SSPSpec):
                 state = y * self.width + x
 
                 if state == goal_state:
-                    state_line += f" {state:{num_width}} "
+                    state_line += f" {state:{num_width}}  "
                     # Center the symbol in the cell
                     padding = (cell_width - 1) // 2
                     sensor_line += " " * padding + "✓" + " " * (cell_width - padding)
@@ -59,8 +59,8 @@ class GridTPMC(Grid, SSPSpec):
             lines.append("")
 
         lines.append(f"Legend: ✓=goal, "
-                     f"{get_observation_marker(0, use_color, binary=True)}=sensor on, "
-                     f"{get_observation_marker(1, use_color, binary=True)}=sensor off")
+                     f"{get_observation_marker(0, use_color, binary=True)}=sensor off, "
+                     f"{get_observation_marker(1, use_color, binary=True)}=sensor on")
 
         return "\n".join(lines)
 

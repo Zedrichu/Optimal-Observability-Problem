@@ -51,10 +51,13 @@ class BasePOMDPEnvironment(World, gymnasium.Env, ABC):
         """
         self.actions = ['up', 'right', 'down', 'left']
         self.obs_function = np.array(obs_function)
+        self.pomdp_variant = pomdp_variant  # Store variant for get_observation
 
         if pomdp_variant is OOPVariant.SSP:
-            self.n_obs = np.sum(obs_function)
-            self.observation_space = spaces.MultiBinary(obs_function.shape)
+            # SSP: Sensors reveal state identity, non-sensors don't
+            # Number of unique observations = n_states (one per sensor location) + 1 (no sensor)
+            self.n_obs = len(obs_function)
+            self.observation_space = spaces.Discrete(self.n_obs)
         else: # OOPVariant.POP
             self.n_obs = len(np.unique(obs_function))
             self.observation_space = spaces.Discrete(self.n_obs)
@@ -127,6 +130,12 @@ class BasePOMDPEnvironment(World, gymnasium.Env, ABC):
         """
         Map true state to observation class using the observation function.
 
+        Semantics:
+            - POP: Returns obs_function[state] (states with same obs are aliased)
+            - SSP: If obs_function[state] == 1 (sensor), returns state_idx + 1 (unique, offset to avoid collision)
+                   If obs_function[state] == 0 (no sensor), returns 0 (aliased "unknown")
+                   If obs_function[state] == -1 (goal), returns -1
+
         Args:
             state: True state (hidden from agent)
 
@@ -134,7 +143,20 @@ class BasePOMDPEnvironment(World, gymnasium.Env, ABC):
             Observation class that agent sees
         """
         state_idx = self._state_to_index(state)
-        return self.obs_function[state_idx]
+        obs_value = self.obs_function[state_idx]
+
+        if self.pomdp_variant == OOPVariant.SSP:
+            # SSP: Sensors reveal state identity, non-sensors are aliased
+            if obs_value == 1:  # Sensor present
+                # Return state_idx + 1 to avoid collision with "no sensor" (0)
+                return state_idx + 1  # Observations 1, 2, 3, ... for states 0, 1, 2, ...
+            elif obs_value == -1:  # Goal
+                return -1  # Goal marker
+            else:  # No sensor (obs_value == 0)
+                return 0  # Unknown observation (all non-sensor states aliased)
+        else:
+            # POP: Direct observation from obs_function (states can be aliased)
+            return obs_value
 
     @abstractmethod
     def _state_to_index(self, state: Any) -> int:
@@ -196,12 +218,11 @@ class LinePOMDPEnv(Line, BasePOMDPEnvironment):
         assert len(obs_function) == size, f"Y length {len(obs_function)} must match size {size}"
         assert 0 <= goal < size, f"Goal {goal} out of bounds [0, {size})"
 
-        Line.__init__(self, length=size)
+        Line.__init__(self, length=size, goal=goal)
         BasePOMDPEnvironment.__init__(self, obs_function, pomdp_variant, seed)
         # Restore Line actions (BasePOMDPEnvironment.__init__ overwrites them)
         self.actions = ['l', 'r']
         self.action_space = spaces.Discrete(len(self.actions))
-        self.goal = goal
         self.step_penalty = step_penalty
         self.goal_reward = goal_reward
         self.stochastic = stochastic
@@ -322,15 +343,16 @@ class GridPOMDPEnv(Grid, BasePOMDPEnvironment):
         assert len(obs_function) == rows * cols, f"Y length {len(obs_function)} must match grid size {rows * cols}"
         assert 0 <= goal[0] < rows and 0 <= goal[1] < cols, "Goal out of bounds"
 
-        Grid.__init__(self, width=cols, height=rows)
+        self.rows = rows
+        self.cols = cols
+        self.goal_state = goal
+
+        Grid.__init__(self, width=cols, height=rows, goal=self._state_to_index(goal))
         BasePOMDPEnvironment.__init__(self, obs_function, pomdp_variant, seed)
 
         # Override actions to match POMDP ordering: 0=up, 1=right, 2=down, 3=left
         self.actions = ['u', 'r', 'd', 'l']
 
-        self.rows = rows
-        self.cols = cols
-        self.goal = goal
         self.step_penalty = step_penalty
         self.goal_reward = goal_reward
         self.stochastic = stochastic
@@ -341,8 +363,8 @@ class GridPOMDPEnv(Grid, BasePOMDPEnvironment):
         self._np_random = np.random.default_rng(seed)
 
         while True:
-            row = self.np_random.integers(0, self.rows)
-            col = self.np_random.integers(0, self.cols)
+            row = int(self.np_random.integers(0, self.rows))
+            col = int(self.np_random.integers(0, self.cols))
             if (row, col) != self.goal:
                 self.state = (row, col)
                 break
@@ -425,7 +447,7 @@ class GridPOMDPEnv(Grid, BasePOMDPEnvironment):
             raise Exception("Should call environment.reset() before rendering")
 
         grid = [['.' for _ in range(self.cols)] for _ in range(self.rows)]
-        grid[self.goal[0]][self.goal[1]] = 'G'
+        grid[self.goal_state[0]][self.goal_state[1]] = 'G'
         grid[self.state[0]][self.state[1]] = 'A'
 
         obs = self.get_observation(self.state)
@@ -478,7 +500,7 @@ class MazePOMDPEnv(Maze, BasePOMDPEnvironment):
         assert len(obs_function) == expected_size, f"Y length {len(obs_function)} must match maze size {expected_size}"
         assert 0 <= goal < expected_size, f"Goal {goal} out of bounds [0, {expected_size})"
 
-        Maze.__init__(self, width=width, depth=depth)
+        Maze.__init__(self, width=width, depth=depth, goal=goal)
         BasePOMDPEnvironment.__init__(self, obs_function, pomdp_variant, seed)
 
         # Override actions to match POMDP ordering: 0=up, 1=right, 2=down, 3=left
@@ -602,8 +624,8 @@ class MazePOMDPEnv(Maze, BasePOMDPEnvironment):
 if __name__ == '__main__':
     grid_env = GridPOMDPEnv(
         rows=5, cols=5, goal=(4,3),
-        obs_function=np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, -1, 2]),
-        pomdp_variant=OOPVariant.POP,
+        obs_function=np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, -1, 1]),
+        pomdp_variant=OOPVariant.SSP,
         step_penalty=-1,
         goal_reward=0
     )
@@ -612,6 +634,9 @@ if __name__ == '__main__':
     while obs != -1:
         action_index = int(input("Action index: "))
         obs, reward, _, _, _ =  grid_env.step(action_index)
-        print(f"Observed: {obs}")
+        if obs > 1:
+            print(f"Observed sensor for state: {grid_env._index_to_state(obs - 1)}")
+        else:
+            print(f"Observed: {obs}")
     print(f"Goal achieved!")
     print(f"Info: {info}")

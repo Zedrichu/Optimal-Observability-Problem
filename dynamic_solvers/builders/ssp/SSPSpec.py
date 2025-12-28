@@ -5,7 +5,7 @@ from typing import List, override
 from z3 import z3, Or, Sum, And, Implies, Not, PbEq, PbLe
 
 from builders.OOPSpec import OOPSpec
-from builders.enums import Precision, BellmanFormat
+from builders.enums import Precision, BellmanFormat, OOPVariant
 from utils import init_var_type
 
 
@@ -183,3 +183,11 @@ class SSPSpec(OOPSpec, ABC):
         if self.budget_repair:
             return [self.build_budget_constraint()]
         return []
+
+    @override
+    def extract_obs_solution(self, obs_function: list[int]) -> dict[str, int]:
+        return {f"ys{i}": obs_function[i] for i in range(self.size)}
+
+    @override
+    def variant(self):
+        return OOPVariant.SSP

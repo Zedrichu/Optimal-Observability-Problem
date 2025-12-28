@@ -43,6 +43,10 @@ class OOPSpec(World, ABC):
         raise NotImplementedError()
 
     @abstractmethod
+    def extract_obs_solution(self, obs_function: list[int]) -> dict[str, int]:
+        raise NotImplementedError()
+
+    @abstractmethod
     def declare_observation_function(self, observable_states: List[z3.ArithRef]) -> List[z3.ArithRef]:
         raise NotImplementedError()
 
@@ -247,3 +251,7 @@ class OOPSpec(World, ABC):
             return lambda model, name: model.get(name, False)
         else:
             return lambda model, name: model.get(name, 0) == 1
+
+    @abstractmethod
+    def variant(self):
+        raise NotImplementedError()

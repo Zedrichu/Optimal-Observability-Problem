@@ -15,7 +15,7 @@ import z3
 from z3 import sat
 
 from ClusterPOPSolver import ClusterPOPSolver
-from builders.POMDPSpec import POMDPAdapter
+from builders.POMDPAdapter import POMDPAdapter
 from builders.pop.POPSpec import POPSpec
 from utils import convert_text_to_html
 from Z3Executor import Z3Executor
@@ -314,9 +314,11 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
         file_res = open(args.results, 'w')
         if result.model is None:
             file_res.write("")
-            model_groups = {}
+            model_groups = { "ys": result.obs }
         else:
             model_groups = group_model_vars(result.model)
+            if result.obs is not None:
+                model_groups.update({ "ys": [(k, bool(v)) for k, v in result.obs.items()] })
             sorted_prefixes = sorted(set(model_groups.keys()))
 
             file_res = open(args.results, 'w')
@@ -332,14 +334,14 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
         file_rew.write(f"{result.reward if result.result == sat else "N/A"}\n")
         file_rew.close()
 
-        if args.draw and result.model is not None:
+        if args.draw and (result.model is not None or result.obs is not None):
             obs_fun = dict(model_groups.get('ys'))
             drawing = tpmc_instance.draw_model(obs_fun, args.goal, args.budget, use_color=True)
             with open('drawing.html', 'w') as file:
                 file.write(convert_text_to_html(drawing))
             with open('drawing.txt', 'w') as file:
                 file.write(drawing)
-                tpmc_instance.console.print(f"\n{drawing}\n", highlight=False)
+                print(f"\n{drawing}\n")
                 file.close()
 
         txt = tpmc_instance.console.export_text(clear=True)
