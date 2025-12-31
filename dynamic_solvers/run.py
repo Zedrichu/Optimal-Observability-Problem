@@ -305,7 +305,7 @@ def solve_problem(args: argparse.Namespace, benchmark=False) -> None:
 
             # Call for finite-state controller through `storm-pomdp` subprocess calls (using Sparse Exact POMDP)
             storm_res = storm_solver.evaluate_pomdp_fsc_cli(adapter, args.pomdp, args.timeout)
-            sat_res = CheckSatResult(-1*(1 + int(storm_res.result)) if storm_res.result else 0)
+            sat_res = CheckSatResult((-1) ** (1 + int(storm_res.result)) if storm_res.result else 0)
             result = Z3SolverResult(storm_res.analysis_time, sat_res, None, storm_res.reward)
         else:
             solver.prepare_constraints(adapter, args.threshold)

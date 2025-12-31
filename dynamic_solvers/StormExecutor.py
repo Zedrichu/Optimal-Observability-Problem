@@ -1,10 +1,15 @@
 import re
 import subprocess
+import sys
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional
 
 import stormpy
+
+# Get the directory containing this module for resolving relative paths
+_MODULE_DIR = Path(__file__).parent.resolve()
 import stormpy.pomdp
 from stormpy import BuilderOptions, PrismProgram
 from stormpy.pomdp import BeliefExplorationModelCheckerOptionsDouble
@@ -45,16 +50,19 @@ class StormModelRegistry:
 
     def _initialize_default_configs(self):
         """Initialize with default model configurations."""
+        # Resolve paths relative to the module directory
+        integration_dir = _MODULE_DIR / "storm-integration"
+
         self.register(StormWorldConfig(
             puzzle_type=PuzzleType.LINE,
-            model_path="storm-integration/line.prism",
+            model_path=str(integration_dir / "line.prism"),
             max_budget=50,
             max_dim1=250,  # Update based on your actual model
         ))
 
         self.register(StormWorldConfig(
             puzzle_type=PuzzleType.GRID,
-            model_path="storm-integration/grid.prism",
+            model_path=str(integration_dir / "grid.prism"),
             max_budget=10,
             max_dim1=10,  # width - Update based on your actual model
             max_dim2=10,   # height
@@ -62,7 +70,7 @@ class StormModelRegistry:
 
         self.register(StormWorldConfig(
             puzzle_type=PuzzleType.MAZE,
-            model_path="storm-integration/maze.prism",
+            model_path=str(integration_dir / "maze.prism"),
             max_budget=30,
             max_dim1=20,  # width - Update based on your actual model
             max_dim2=10,  # depth
@@ -245,7 +253,7 @@ class StormExecutor:
             raise ValueError(f"Budget {pomdp.budget} exceeds maximum admissible budget in the static model "
                              f"<{self.world_config.max_budget}>.")
 
-        if sum(obs_function) + 1 != pomdp.budget:
+        if sum(obs_function) + 1 > pomdp.budget:
             raise ValueError(f"Observation function exceeds the budget of the declared POMDP {pomdp.budget} ")
 
         if len(obs_function) != pomdp.size:
@@ -408,7 +416,8 @@ class StormExecutor:
         except subprocess.TimeoutExpired:
             if self.verbose:
                 print(f" ⏱️  storm-pomdp timed out after {timeout_ms}ms")
-            raise
+            obs = pomdp.extract_obs_solution(obs_function)
+            return StormResult("timeout", timeout_ms, 0.0, 0.0, 0.0, 0.0, obs, False, None)
 
         except subprocess.CalledProcessError as e:
             if self.verbose:
