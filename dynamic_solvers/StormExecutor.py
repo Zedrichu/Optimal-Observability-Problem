@@ -93,9 +93,9 @@ class StormModelRegistry:
         return "\n".join(lines)
 
 
-def _build_world_definition_const(pomdp: POMDPAdapter) -> dict[str, int]:
+def _build_world_definition_const(pomdp: POMDPAdapter, used_budget: int) -> dict[str, int]:
     world_consts = {
-        "BUDGET": pomdp.budget,
+        "BUDGET": used_budget,
         "GOAL": pomdp.goal,
     }
     dim1, dim2 = pomdp.get_dimensions()
@@ -281,8 +281,10 @@ class StormExecutor:
         # Get sensor selections
         sensor_consts = _build_sensor_selection_const(obs_function, self.world_config.max_budget)
 
+        used_budget = obs_function.count(1)
+
         # Get world definition
-        world_consts = _build_world_definition_const(pomdp)
+        world_consts = _build_world_definition_const(pomdp, used_budget)
 
         # Combine all constants
         all_constants = {**world_consts, **sensor_consts}
