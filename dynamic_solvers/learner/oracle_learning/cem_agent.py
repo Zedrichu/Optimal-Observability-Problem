@@ -1,9 +1,7 @@
 import numpy as np
-import z3
-from z3 import sat, unsat, unknown, CheckSatResult
+from z3 import sat, unsat
 
 from StormExecutor import StormExecutor
-from Z3SolverResult import Z3SolverResult
 from builders.pop.POPSpec import POPSpec
 from builders.ssp import LineTPMC
 from builders.ssp.SSPSpec import SSPSpec
@@ -17,7 +15,7 @@ class CEMAgent:
 
     def __init__(self, tpmc: POPSpec | SSPSpec,
                  goal: int, n_states: int, n_classes: int, budget: int,
-                 elite_frac: float = 0.5, smoothing: float = 0.1):
+                 elite_frac: float = 0.4, smoothing: float = 0.1):
         """
         Args:
             goal: Goal state index
@@ -145,7 +143,7 @@ def train_cem(agent: CEMAgent, oracle: Z3Executor | StormExecutor, pomdp: POMDPA
     for iteration in range(iterations):
         # Sample batch
         samples = agent.sample_batch(batch_size)
-        print(samples)
+        # print(samples)
         rewards = []
 
         # Evaluate all samples
@@ -155,12 +153,11 @@ def train_cem(agent: CEMAgent, oracle: Z3Executor | StormExecutor, pomdp: POMDPA
                 result = oracle.evaluate_pomdp(pomdp, Y, timeout)
             elif isinstance(oracle, StormExecutor):
                 # Call for finite-state controller through `storm-pomdp` subprocess calls (using Sparse Exact POMDP)
-                storm_res = storm_solver.evaluate_pomdp_fsc_cli(pomdp, Y, timeout)
-                sat_res = CheckSatResult((-1) ** (1 + int(storm_res.result)) if storm_res.result else 0)
-                result = Z3SolverResult(storm_res.analysis_time, sat_res, None, storm_res.reward)
+                storm_res = oracle.evaluate_pomdp_fsc_cli(pomdp, Y, timeout)
+                result = oracle.convert_storm_z3_result(storm_res)
 
             if result.result == sat:
-                reward = float(result.reward) # result.reward.as_fraction()
+                reward = float(result.reward)
                 stats['sat'] += 1
                 if reward < stats['best_reward']:
                     stats['best_reward'] = reward

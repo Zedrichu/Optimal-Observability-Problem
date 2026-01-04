@@ -1,12 +1,14 @@
 import re
 import subprocess
-import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
 import stormpy
+from z3 import CheckSatResult
+
+from Z3SolverResult import Z3SolverResult
 
 # Get the directory containing this module for resolving relative paths
 _MODULE_DIR = Path(__file__).parent.resolve()
@@ -253,8 +255,8 @@ class StormExecutor:
             raise ValueError(f"Budget {pomdp.budget} exceeds maximum admissible budget in the static model "
                              f"<{self.world_config.max_budget}>.")
 
-        if sum(obs_function) + 1 > pomdp.budget:
-            raise ValueError(f"Observation function exceeds the budget of the declared POMDP {pomdp.budget} ")
+        # if sum(obs_function) + 1 > pomdp.budget:
+        #     raise ValueError(f"Observation function exceeds the budget of the declared POMDP {pomdp.budget} ")
 
         if len(obs_function) != pomdp.size:
             raise ValueError(f"Observation function length {len(obs_function)} "
@@ -432,6 +434,10 @@ class StormExecutor:
                 "storm-pomdp not found in PATH. "
                 "Please ensure Storm is installed and storm-pomdp is accessible."
             )
+
+    def convert_storm_z3_result(self, input: StormResult) -> Z3SolverResult:
+        sat_res = CheckSatResult((-1) ** (1 + int(input.result)) if input.result else 0)
+        return Z3SolverResult(input.analysis_time, sat_res, None, input.reward)
 
 
 if __name__ == "__main__":
