@@ -9,7 +9,7 @@ from guess import start_observation_function
 
 
 class ObservativeAgent:
-    """Agent for POP problem with multi-class observations using Categorical distribution."""
+    """Agent for positional observability problem (POP) with multi-class observations using Categorical distribution."""
 
     def __init__(self, tpmc: POPSpec, goal: int,
                  n_states: int, n_classes: int, lr: float = 0.05):

@@ -17,7 +17,7 @@ class SensorSelectionAgent:
             goal: Goal state index
             n_states: Number of states
             lr: Learning rate
-            init_strategy: Initialization strategy - "uniform", "spatial_split", "distance_decay"
+            init_strategy: Initialization strategy - "uniform", "atomic", "distance_decay"
             init_bias: Initial logit bias for uniform strategy
         """
         self.n = n_states
