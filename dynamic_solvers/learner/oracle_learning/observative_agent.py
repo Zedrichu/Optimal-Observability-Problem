@@ -9,7 +9,7 @@ from guess import start_observation_function
 
 
 class ObservativeAgent:
-    """Agent for POP problem with multi-class observations using Categorical distribution."""
+    """Agent for positional observability problem (POP) with multi-class observations using Categorical distribution."""
 
     def __init__(self, tpmc: POPSpec, goal: int,
                  n_states: int, n_classes: int, lr: float = 0.05):
@@ -19,18 +19,18 @@ class ObservativeAgent:
             n_states: Number of states
             n_classes: Number of observation classes (budget)
             lr: Learning rate
-            init_strategy: Initialization strategy - "uniform", "spatial", "alternating", "random_bias"
         """
         self.n = n_states
         self.goal = goal
         self.k = n_classes
         self.lr = lr
+        self.tpmc = tpmc
 
         # theta[i, c] is the logit for observation class c at state i
-        self.theta = self._initialize_theta(tpmc, "atomic")
+        self.theta = self._initialize_theta("atomic")
         self.baseline = 0.0 # prevent random noise from destabilizing the update
 
-    def _initialize_theta(self, tpmc: POPSpec, strategy: str) -> np.ndarray:
+    def _initialize_theta(self, strategy: str) -> np.ndarray:
         """Initialize theta with different strategies.
 
         Args:
@@ -55,7 +55,7 @@ class ObservativeAgent:
 
         elif strategy == "atomic":
             # Perform initial guess based on merging of atomic groups
-            obs_function = start_observation_function(tpmc, tpmc.budget)
+            obs_function = start_observation_function(self.tpmc, self.tpmc.budget)
             print(" ".join(list(map(str, obs_function))))
             beta = 2.5
             for i in range(len(obs_function)):
@@ -71,7 +71,6 @@ class ObservativeAgent:
         """Reset theta with a new initialization strategy."""
         self.theta = self._initialize_theta(strategy)
         self.baseline = 0.0
-        self.init_strategy = strategy
 
     def softmax(self, logits):
         """Numerically stable softmax."""

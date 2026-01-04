@@ -70,7 +70,8 @@ class Z3Executor:
         self.exp_rew_formula = spec.exp_rew_evaluator
         self.solver.add(base_constraints)
 
-    def evaluate_pomdp(self, pomdp: POMDPAdapter, obs_function: list[int], timeout_ms: int, extra_constraints: None | list[BoolRef] = None) -> Z3SolverResult:
+    def evaluate_pomdp(self, pomdp: POMDPAdapter, obs_function: list[int], timeout_ms: int,
+                       extra_constraints: None | list[BoolRef] = None) -> Z3SolverResult:
         """
         Evaluate a POMDP with a specific observation function using push/pop.
 
@@ -134,11 +135,13 @@ class Z3Executor:
 
         model = None
         reward = None
+        reward_frac = None
         if result == sat:
             if self.verbose:
                 print(' ✅  Solution found!')
             model = self.solver.model()
-            reward = model.eval(self.exp_rew_formula)
+            reward_frac = model.eval(self.exp_rew_formula)
+            reward = reward_frac.as_fraction()
         elif result == unsat:
             if self.verbose:
                 print(' ❌  No solution!')
@@ -150,6 +153,7 @@ class Z3Executor:
             solve_time=solve_time,
             result=result,
             reward=reward,
+            reward_frac=reward_frac,
             model=model
         )
 

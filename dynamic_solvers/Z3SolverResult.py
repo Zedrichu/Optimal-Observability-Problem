@@ -19,6 +19,7 @@ class Z3SolverResult:
     # memory_used: int  # bytes
     result: CheckSatResult
     model: Optional[ModelRef] = None
-    reward: Optional[ArithRef | float] = None
+    reward: Optional[float] = None
+    reward_frac: Optional[ArithRef] = None
     obs: Optional[dict[str, int]] = None
     # constraint_count: int = 0

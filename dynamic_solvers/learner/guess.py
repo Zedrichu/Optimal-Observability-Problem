@@ -66,7 +66,7 @@ def activate_sensors(tpmc: SSPSpec, partition: list[list[int]], budget: int) -> 
                 active.extend(tpmc.clusters[atomic_groups[ag_idx]])
             else:
                 delta = budget - allocated
-                active.extend(tpmc.clusters[atomic_groups[ag_idx]][:delta])
+                active.extend(list(tpmc.clusters[atomic_groups[ag_idx]])[:delta])
                 break
 
     # print(active)

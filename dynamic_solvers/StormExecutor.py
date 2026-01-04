@@ -2,9 +2,16 @@ import re
 import subprocess
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Optional
 
 import stormpy
+from z3 import CheckSatResult
+
+from Z3SolverResult import Z3SolverResult
+
+# Get the directory containing this module for resolving relative paths
+_MODULE_DIR = Path(__file__).parent.resolve()
 import stormpy.pomdp
 from stormpy import BuilderOptions, PrismProgram
 from stormpy.pomdp import BeliefExplorationModelCheckerOptionsDouble
@@ -45,16 +52,19 @@ class StormModelRegistry:
 
     def _initialize_default_configs(self):
         """Initialize with default model configurations."""
+        # Resolve paths relative to the module directory
+        integration_dir = _MODULE_DIR / "storm-integration"
+
         self.register(StormWorldConfig(
             puzzle_type=PuzzleType.LINE,
-            model_path="storm-integration/line.prism",
+            model_path=str(integration_dir / "line.prism"),
             max_budget=50,
             max_dim1=250,  # Update based on your actual model
         ))
 
         self.register(StormWorldConfig(
             puzzle_type=PuzzleType.GRID,
-            model_path="storm-integration/grid.prism",
+            model_path=str(integration_dir / "grid.prism"),
             max_budget=10,
             max_dim1=10,  # width - Update based on your actual model
             max_dim2=10,   # height
@@ -62,7 +72,7 @@ class StormModelRegistry:
 
         self.register(StormWorldConfig(
             puzzle_type=PuzzleType.MAZE,
-            model_path="storm-integration/maze.prism",
+            model_path=str(integration_dir / "maze.prism"),
             max_budget=30,
             max_dim1=20,  # width - Update based on your actual model
             max_dim2=10,  # depth
@@ -85,9 +95,9 @@ class StormModelRegistry:
         return "\n".join(lines)
 
 
-def _build_world_definition_const(pomdp: POMDPAdapter) -> dict[str, int]:
+def _build_world_definition_const(pomdp: POMDPAdapter, used_budget: int) -> dict[str, int]:
     world_consts = {
-        "BUDGET": pomdp.budget,
+        "BUDGET": used_budget,
         "GOAL": pomdp.goal,
     }
     dim1, dim2 = pomdp.get_dimensions()
@@ -245,8 +255,8 @@ class StormExecutor:
             raise ValueError(f"Budget {pomdp.budget} exceeds maximum admissible budget in the static model "
                              f"<{self.world_config.max_budget}>.")
 
-        if sum(obs_function) + 1 != pomdp.budget:
-            raise ValueError(f"Observation function exceeds the budget of the declared POMDP {pomdp.budget} ")
+        # if sum(obs_function) + 1 > pomdp.budget:
+        #     raise ValueError(f"Observation function exceeds the budget of the declared POMDP {pomdp.budget} ")
 
         if len(obs_function) != pomdp.size:
             raise ValueError(f"Observation function length {len(obs_function)} "
@@ -273,8 +283,10 @@ class StormExecutor:
         # Get sensor selections
         sensor_consts = _build_sensor_selection_const(obs_function, self.world_config.max_budget)
 
+        used_budget = obs_function.count(1)
+
         # Get world definition
-        world_consts = _build_world_definition_const(pomdp)
+        world_consts = _build_world_definition_const(pomdp, used_budget)
 
         # Combine all constants
         all_constants = {**world_consts, **sensor_consts}
@@ -408,7 +420,8 @@ class StormExecutor:
         except subprocess.TimeoutExpired:
             if self.verbose:
                 print(f" ⏱️  storm-pomdp timed out after {timeout_ms}ms")
-            raise
+            obs = pomdp.extract_obs_solution(obs_function)
+            return StormResult("timeout", timeout_ms, 0.0, 0.0, 0.0, 0.0, obs, False, None)
 
         except subprocess.CalledProcessError as e:
             if self.verbose:
@@ -421,6 +434,10 @@ class StormExecutor:
                 "storm-pomdp not found in PATH. "
                 "Please ensure Storm is installed and storm-pomdp is accessible."
             )
+
+    def convert_storm_z3_result(self, input: StormResult) -> Z3SolverResult:
+        sat_res = CheckSatResult((-1) ** (1 + int(input.result)) if input.result else 0)
+        return Z3SolverResult(input.analysis_time, sat_res, None, input.reward)
 
 
 if __name__ == "__main__":
