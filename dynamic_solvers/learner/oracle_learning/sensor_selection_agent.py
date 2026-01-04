@@ -1,6 +1,7 @@
 import numpy as np
-from z3 import sat, unsat
+from z3 import sat, unsat, CheckSatResult
 
+from StormExecutor import StormExecutor
 from builders.ssp import LineTPMC
 from builders.ssp.SSPSpec import SSPSpec
 from dynamic_solvers.Z3Executor import Z3Executor
@@ -134,10 +135,9 @@ class SensorSelectionAgent:
             self.theta[i] -= self.lr * advantage * grad
 
 
-def train(agent: SensorSelectionAgent, oracle: Z3Executor, pomdp: POMDPAdapter,
+def train(agent: SensorSelectionAgent, oracle: Z3Executor | StormExecutor, pomdp: POMDPAdapter,
           episodes: int = 200, budget: int | None = None, timeout: int = 10000,
-            penalty_unsat: float = 20, penalty_timeout: float = 50,
-          budget_penalty: float = 0.0):
+          penalty_unsat: float = 20, penalty_timeout: float = 50, budget_penalty: float = 0.0):
     """
     Train SSP agent with oracle feedback.
 
@@ -158,10 +158,16 @@ def train(agent: SensorSelectionAgent, oracle: Z3Executor, pomdp: POMDPAdapter,
         Y, probs = agent.sample()
         print(f"Sample: {Y}")
         n_active = sum(1 for y in Y if y == 1)
-        result = oracle.evaluate_pomdp(pomdp, Y, timeout)
+        result = None
+        if isinstance(oracle, Z3Executor):
+            result = oracle.evaluate_pomdp(pomdp, Y, timeout)
+        elif isinstance(oracle, StormExecutor):
+            # Call for finite-state controllers through `storm-pomdp` subprocess calls (using Sparse Exact POMDP)
+            storm_res = oracle.evaluate_pomdp_fsc_cli(pomdp, Y, timeout)
+            result = oracle.convert_storm_z3_result(storm_res)
 
         if result.result == sat:
-            reward = float(result.reward.as_fraction())
+            reward = float(result.reward)
 
             # Apply budget penalty if over budget (increase reward = worse for minimization)
             if budget is not None and n_active > budget:
@@ -180,7 +186,7 @@ def train(agent: SensorSelectionAgent, oracle: Z3Executor, pomdp: POMDPAdapter,
 
         agent.update(Y, probs, reward)
 
-        if ep % 10 == 0:
+        if ep % 5 == 0:
             print(f"EP {ep:03d} | R={reward:7.2f} | B={agent.baseline:7.2f} | "
                   f"SAT={stats['sat']:3d} UNSAT={stats['unsat']:2d} TO={stats['timeout']:2d} | "
                   f"Active={n_active}/{budget if budget else '?'}")
@@ -188,24 +194,26 @@ def train(agent: SensorSelectionAgent, oracle: Z3Executor, pomdp: POMDPAdapter,
     return agent, stats
 
 if __name__ == "__main__":
-    budget = 30
+    budget = 29
     size = 61
     goal = 30
     tau = 31
-    threshold_q = 1
+    threshold_q = 2
     threshold = f"<= Q({tau * threshold_q}, 2)"
     tpmc = LineTPMC(budget, goal, size, determinism=False, verbose=False)
     context = tpmc.ctx
     pomdp = POMDPAdapter(tpmc)
 
-    solver = Z3Executor(context, verbose=True)
-    solver.prepare_constraints(pomdp, threshold)
+    z3_solver = Z3Executor(context, verbose=True)
+    storm_solver = StormExecutor(verbose=False, puzzle_type=tpmc.puzzle_type)
+
+    z3_solver.prepare_constraints(pomdp, threshold)
 
     agent = SensorSelectionAgent(tpmc, goal, n_states=size)
 
     # Training: soft guidance toward budget
-    trained_agent, stats = train(agent, solver, pomdp, episodes=40, budget=budget,
-                                 timeout=10000, budget_penalty=0.3)
+    trained_agent, stats = train(agent, z3_solver, pomdp, episodes=40, budget=budget,
+                                 timeout=10000, budget_penalty=0.5)
 
     # Inference: enforce exact budget via top-k
     final_Y, _ = trained_agent.sample(budget=budget, enforce_budget=True)
