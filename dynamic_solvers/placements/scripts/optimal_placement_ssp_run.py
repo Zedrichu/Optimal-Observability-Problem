@@ -65,8 +65,9 @@ if __name__ == "__main__":
         for j, term in enumerate(terms):
             action_rate_var = strategy[j][0]
             action_rate_strat = term[0]/term[1] if len(term) > 1 else term[0]
+            strategy_strings.append(f"{action_rate_var}={action_rate_strat:.4f}")
         print(f"Strategy for iteration {i} (τ <= {thresholds[i]}): {" | ".join(strategy_strings)}")
-    print(f"The optimal sensor threshold is approximately {thresholds[max(strategies.keys())]} ± {tolerance}")
+    print(f"The MinExpRew is approximately {thresholds[max(strategies.keys())]} ± {tolerance}")
 
     print()
     if model is not None:
