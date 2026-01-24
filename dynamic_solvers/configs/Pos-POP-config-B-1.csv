@@ -1,3 +1,3 @@
 "variant","world","budget","goal","threshold","length","width","height","deterministic","timeout"
-pop,grid,3,10,"<= Q(342,100)",,4,4,false,300000
-pop,maze,3,41,"<= Q(930,30)",,25,13,false,300000
+pop,grid,3,24,"<= Q(29,1)",,7,7,false,180000
+pop,maze,3,41,"<= Q(31,1)",,25,13,false,180000
